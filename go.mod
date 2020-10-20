@@ -1,4 +1,4 @@
-module g.tesamc.com/xiangxi/zaipkg
+module g.tesamc.com/IT/zaipkg
 
 go 1.14
 
