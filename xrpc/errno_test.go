@@ -16,7 +16,6 @@ package xrpc
 
 import (
 	"errors"
-	"math"
 	"testing"
 
 	"github.com/zaibyte/pkg/xerrors"
@@ -26,7 +25,7 @@ import (
 
 func TestErrno_Error(t *testing.T) {
 	assert.Equal(t, "", Errno(0).Error())
-	for i := 1; i <= math.MaxUint16; i++ {
+	for i := 1; i < len(errnoStr); i++ {
 		err := Errno(i)
 		if errnoStr[i] == "" {
 			assert.Equal(t, "unknown error", err.Error())
