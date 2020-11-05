@@ -21,9 +21,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zaibyte/pkg/version"
-	"github.com/zaibyte/pkg/xlog"
-	_ "github.com/zaibyte/pkg/xlog/xlogtest"
+	"g.tesamc.com/IT/zaipkg/version"
+	"g.tesamc.com/IT/zaipkg/xlog"
+	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
 )
 
 var (

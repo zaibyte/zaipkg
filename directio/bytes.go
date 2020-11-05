@@ -18,7 +18,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/zaibyte/pkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xbytes"
 )
 
 // A BytesBuffer implements the io.ReadCloser, io.Writer interface by reading from

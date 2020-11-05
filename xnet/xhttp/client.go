@@ -30,10 +30,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zaibyte/pkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 
-	"github.com/zaibyte/pkg/uid"
-	"github.com/zaibyte/pkg/version"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/version"
 )
 
 // Client is an xhttp client.

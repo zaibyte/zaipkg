@@ -34,9 +34,9 @@ package xtcp
 import (
 	"encoding/binary"
 
-	"github.com/zaibyte/pkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/xrpc"
 
-	"github.com/zaibyte/pkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 )
 
 type header interface {

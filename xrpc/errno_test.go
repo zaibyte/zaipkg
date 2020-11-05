@@ -18,7 +18,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zaibyte/pkg/xerrors"
+	"g.tesamc.com/IT/zaipkg/xerrors"
 
 	"github.com/stretchr/testify/assert"
 )

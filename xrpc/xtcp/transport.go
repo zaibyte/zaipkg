@@ -44,7 +44,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/zaibyte/pkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/xrpc"
 )
 
 var (

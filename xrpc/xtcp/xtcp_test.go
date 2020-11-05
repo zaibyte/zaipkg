@@ -48,20 +48,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zaibyte/pkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xbytes"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/templexxx/tsc"
 
+	"g.tesamc.com/IT/zaipkg/xstrconv"
 	"github.com/templexxx/xhex"
-	"github.com/zaibyte/pkg/xstrconv"
 
-	"github.com/zaibyte/pkg/uid"
-	"github.com/zaibyte/pkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 
-	_ "github.com/zaibyte/pkg/xlog/xlogtest"
-	"github.com/zaibyte/pkg/xrpc"
+	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	"g.tesamc.com/IT/zaipkg/xrpc"
 )
 
 func testPutFunc(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {

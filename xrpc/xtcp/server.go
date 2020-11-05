@@ -48,11 +48,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zaibyte/pkg/xbytes"
-	"github.com/zaibyte/pkg/xdigest"
-	"github.com/zaibyte/pkg/xerrors"
-	"github.com/zaibyte/pkg/xlog"
-	"github.com/zaibyte/pkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xerrors"
+	"g.tesamc.com/IT/zaipkg/xlog"
+	"g.tesamc.com/IT/zaipkg/xrpc"
 )
 
 // Server implements RPC server.

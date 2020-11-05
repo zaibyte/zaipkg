@@ -18,7 +18,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/zaibyte/pkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xbytes"
 )
 
 // Objecter is the object RPC client.

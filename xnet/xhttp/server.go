@@ -28,13 +28,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zaibyte/pkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 
+	"g.tesamc.com/IT/zaipkg/config"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/version"
+	"g.tesamc.com/IT/zaipkg/xlog"
 	"github.com/julienschmidt/httprouter"
-	"github.com/zaibyte/pkg/config"
-	"github.com/zaibyte/pkg/uid"
-	"github.com/zaibyte/pkg/version"
-	"github.com/zaibyte/pkg/xlog"
 )
 
 // ServerConfig is the config of Server.

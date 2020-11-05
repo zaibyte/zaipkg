@@ -35,11 +35,11 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/zaibyte/pkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/xrpc"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/zaibyte/pkg/uid"
+	"g.tesamc.com/IT/zaipkg/uid"
 )
 
 func TestRequestHeaderCanBeEncodedAndDecoded(t *testing.T) {

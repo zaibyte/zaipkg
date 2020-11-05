@@ -31,7 +31,7 @@ import (
 	"hash"
 	"hash/crc32"
 
-	"github.com/zaibyte/pkg/xstrconv"
+	"g.tesamc.com/IT/zaipkg/xstrconv"
 )
 
 type Digest struct {

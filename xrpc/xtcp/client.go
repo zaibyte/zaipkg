@@ -49,14 +49,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xerrors"
+	"g.tesamc.com/IT/zaipkg/xlog"
+	"g.tesamc.com/IT/zaipkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/xstrconv"
 	"github.com/templexxx/xhex"
-	"github.com/zaibyte/pkg/uid"
-	"github.com/zaibyte/pkg/xbytes"
-	"github.com/zaibyte/pkg/xdigest"
-	"github.com/zaibyte/pkg/xerrors"
-	"github.com/zaibyte/pkg/xlog"
-	"github.com/zaibyte/pkg/xrpc"
-	"github.com/zaibyte/pkg/xstrconv"
 )
 
 // Client implements xtcp client.

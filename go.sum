@@ -1,3 +1,5 @@
+g.tesamc.com/IT/zaipkg v0.0.0-20200816125345-341ffff3269a h1:oiCZsqnr/6oyvgEiZjRWIcbnamlkPig2hEr/6i5rysk=
+g.tesamc.com/IT/zaipkg v0.0.0-20200816125345-341ffff3269a/go.mod h1:9h4X8F3/VB7yX2n/JT5HbAXu2cF5/TS14pmuVFzRRLg=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

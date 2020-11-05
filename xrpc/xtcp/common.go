@@ -43,7 +43,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zaibyte/pkg/xlog"
+	"g.tesamc.com/IT/zaipkg/xlog"
 )
 
 const (

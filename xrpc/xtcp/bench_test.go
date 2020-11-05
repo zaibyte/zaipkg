@@ -44,8 +44,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zaibyte/pkg/uid"
-	"github.com/zaibyte/pkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 )
 
 func BenchmarkClient_Put(b *testing.B) {

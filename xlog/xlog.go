@@ -22,8 +22,8 @@ package xlog
 import (
 	"path/filepath"
 
-	"github.com/zaibyte/pkg/config"
-	"github.com/zaibyte/pkg/config/settings"
+	"g.tesamc.com/IT/zaipkg/config"
+	"g.tesamc.com/IT/zaipkg/config/settings"
 )
 
 // Config is the log configs of a zai application.
