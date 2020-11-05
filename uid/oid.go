@@ -17,137 +17,78 @@
 package uid
 
 import (
-	"encoding/binary"
-	"sync"
-	"time"
-
-	"github.com/templexxx/tsc"
-
-	"github.com/templexxx/xhex"
-
-	"github.com/zaibyte/pkg/xstrconv"
+	"fmt"
 )
 
-// oid struct:
-// +-----------+-------------+---------+------------+----------+----------+
-// | boxID(10) | groupID(22) |  ts(32) | digest(32) | size(24) | otype(8) |
-// +-----------+-------------+---------+------------+----------+----------+
+// oid struct(uint64):
+// +----------+-------------+----------+------------+
+// | boxID(8) | groupID(20) | otype(4) | digest(32) |
+// +----------+-------------+----------+------------+
+// 0                                               64
 //
-// Total length: 16B. After hex encoding, it will be 32B.
+// Total length: 8B.
 //
-// boxID: 10bit
-// groupID: 22bit
-// digest: 32bit
-// ts: 32bit
-// size: 24bit
-// otype: 8bit
+// boxID: [0, 8)
+// groupID: [8, 28)
+// otype: [28, 32)
+// digest: [32, 64)
 
 const (
-	// epoch is an Unix time.
-	// 2020-06-03T08:39:34.000+0800.
-	epoch     int64 = 1591144774
-	epochNano       = epoch * int64(time.Second)
-	// doom is the zai's max Unix time.
-	// It will reach the end after 136 years from epoch.
-	doom int64 = 5880040774 // epoch + 136 years (about 2^32 seconds).
-	// maxTS is the zai's max timestamp.
-	maxTS = uint32(doom - epoch)
+	MaxBoxID   = (1 << 8) - 1
+	MaxGroupID = (1 << 20) - 1
+	MaxOType   = (1 << 4) - 1
 )
 
 // Object types.
+// 0 is reserved.
 const (
-	NormalObj uint8 = 1 // Normal Object, maximum size is 8MB.
-	LinkObj   uint8 = 2 // Link Object, it links 131072 objects together (at most 1TB).
+	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
+	LinkObj   uint8 = 2 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
 )
 
-const groupIDMask = (1 << 22) - 1
-
-var oidMPool = sync.Pool{
-	New: func() interface{} {
-		p := make([]byte, 16+32, 16+32) // 16 for raw bytes slice, 32 for hex.
-		return &p
-	},
-}
-
-// MakeOID makes oid.
-// Returns ts & hex codes.
-func MakeOID(boxID, groupID, digest, size uint32, otype uint8) (uint32, string) {
-
-	ts := GetOidTS()
-
-	return ts, MakeOIDWithTS(boxID, groupID, ts, digest, size, otype)
-}
-
-func GetOidTS() uint32 {
-	now := tsc.UnixNano()
-	sec := now / int64(time.Second)
-	ts := uint32(sec - epoch)
-	if ts >= maxTS {
-		panic("zai met its doom")
+func isOkOID(boxID, groupID uint32, otype uint8) bool {
+	if boxID == 0 || boxID > MaxBoxID {
+		return false
 	}
-	return ts
+
+	if groupID == 0 || groupID > MaxGroupID {
+		return false
+	}
+
+	if otype == 0 || otype > MaxOType {
+		return false
+	}
+
+	return true
 }
 
-// MakeOIDWithTS makes oid with provided ts.
-// Returns hex codes.
-func MakeOIDWithTS(boxID, groupID, ts, digest, size uint32, otype uint8) string {
+// MakeOID makes a new oid.
+func MakeOID(boxID, groupID, digest uint32, otype uint8) uint64 {
 
-	p := oidMPool.Get().(*[]byte)
-	b := *p
+	if !isOkOID(boxID, groupID, otype) {
+		panic(fmt.Sprintf("illegal OID elements, "+
+			"boxID: %d, groupID: %d, otype: %d",
+			boxID, groupID, otype))
+	}
 
-	binary.LittleEndian.PutUint32(b[:4], boxID<<22|groupID)
-	binary.LittleEndian.PutUint32(b[4:8], ts)
-
-	binary.LittleEndian.PutUint32(b[8:12], digest)
-	binary.LittleEndian.PutUint32(b[12:16], size<<8|uint32(otype))
-
-	xhex.Encode(b[16:16+32], b[:16])
-	v := string(b[16 : 16+32])
-	oidMPool.Put(p)
-
-	return v
+	return uint64(digest)<<32 | uint64(otype)<<28 | uint64(groupID)<<8 | uint64(boxID)
 }
 
-var oidPPool = sync.Pool{
-	New: func() interface{} {
-		p := make([]byte, 16, 16)
-		return &p
-	},
-}
+// ParseReqID parses reqID.
+func ParseOID(oid uint64) (boxID, groupID, digest uint32, otype uint8, err error) {
 
-// ParseOID parses oid.
-func ParseOID(oid string) (boxID, groupID, ts, digest, size uint32, otype uint8, err error) {
+	bgo := uint32(oid)
+	boxID = bgo & MaxBoxID
+	groupID = (bgo >> 8) & MaxGroupID
+	otype = uint8(bgo >> 28)
 
-	p := oidPPool.Get().(*[]byte)
-	b := *p
+	digest = uint32(oid >> 32)
 
-	err = xhex.Decode(b[:16], xstrconv.ToBytes(oid))
-	if err != nil {
-		oidPPool.Put(p)
+	if !isOkOID(boxID, groupID, otype) {
+		err = fmt.Errorf("illegal OID elements, "+
+			"boxID: %d, groupID: %d, otype: %d",
+			boxID, groupID, otype)
 		return
 	}
-
-	boxID, groupID, ts, digest, size, otype = ParseOIDBytes(b)
-
-	oidPPool.Put(p)
-
-	return
-}
-
-// ParseOIDBytes parses oid in bytes.
-// Assume there are enough space in oid bytes.
-func ParseOIDBytes(oid []byte) (boxID, groupID, ts, digest, size uint32, otype uint8) {
-	b := oid
-	bg := binary.LittleEndian.Uint32(b[:4])
-	boxID = bg >> 22
-	groupID = bg & groupIDMask
-
-	ts = binary.LittleEndian.Uint32(b[4:8])
-
-	digest = binary.LittleEndian.Uint32(b[8:12])
-
-	so := binary.LittleEndian.Uint32(b[12:16])
-	size = so >> 8
-	otype = uint8(so)
 	return
 }

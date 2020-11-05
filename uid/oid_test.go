@@ -26,33 +26,30 @@ import (
 
 func TestOIDMinMax(t *testing.T) {
 
-	_, min := MakeOID(0, 0, 0, 0, NormalObj)
-	boxID, groupID, _, digest, size, otype, err := ParseOID(min)
+	min := MakeOID(1, 1, 0, NormalObj)
+	boxID, groupID, digest, otype, err := ParseOID(min)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != 0 || groupID != 0 ||
-		digest != 0 || size != 0 || otype != NormalObj {
-		t.Fatal("min misamtch")
+	if boxID != 1 || groupID != 1 ||
+		digest != 0 || otype != NormalObj {
+		t.Fatal("min mismatch", boxID, groupID, digest, otype)
 	}
 
-	_, max := MakeOID(1<<10-1, 1<<22-1, 1<<32-1, 1<<22-1, NormalObj)
-	boxID, groupID, _, digest, size, otype, err = ParseOID(max)
+	max := MakeOID(MaxBoxID, MaxGroupID, 1<<32-1, MaxOType)
+	boxID, groupID, digest, otype, err = ParseOID(max)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != 1<<10-1 || groupID != 1<<22-1 ||
-		digest != 1<<32-1 || size != 1<<22-1 || otype != NormalObj {
-		t.Fatal("max misamtch")
+	if boxID != MaxBoxID || groupID != MaxGroupID ||
+		digest != 1<<32-1 || otype != MaxOType {
+		t.Fatal("max mismatch")
 	}
 }
 
 func TestOID(t *testing.T) {
 
-	oidStrs := new(sync.Map)
-
-	// Because it's fast, second ts won't change.
-	expTS := GetOidTS()
+	oids := new(sync.Map)
 
 	wg := new(sync.WaitGroup)
 	n := runtime.NumCPU()
@@ -64,11 +61,10 @@ func TestOID(t *testing.T) {
 			boxID := uint32(seed + 1)
 			extID := uint32(seed + 2)
 			digest := uint32(seed + 3)
-			size := uint32(seed + 4)
-			otype := uint8(seed & 7)
+			otype := uint8((seed + 1) & 7)
 
-			_, oid := MakeOID(boxID, extID, digest, size, otype)
-			oidStrs.Store(seed, oid)
+			oid := MakeOID(boxID, extID, digest, otype)
+			oids.Store(seed, oid)
 
 		}(i)
 	}
@@ -80,24 +76,21 @@ func TestOID(t *testing.T) {
 		go func(i int) {
 			defer wg2.Done()
 
-			v, ok := oidStrs.Load(i)
+			v, ok := oids.Load(i)
 			assert.True(t, ok)
 
-			oid := v.(string)
-			boxID, extID, ts, digest, size, otype, err := ParseOID(oid)
+			oid := v.(uint64)
+			boxID, extID, digest, otype, err := ParseOID(oid)
 			assert.Nil(t, err)
 
 			expboxID := uint32(i + 1)
 			expextID := uint32(i + 2)
 			expdigest := uint32(i + 3)
-			expsize := uint32(i + 4)
-			expotype := uint8(i & 7)
+			expotype := uint8((i + 1) & 7)
 
 			assert.Equal(t, expboxID, boxID)
 			assert.Equal(t, expextID, extID)
-			assert.Equal(t, expTS, ts)
 			assert.Equal(t, expdigest, digest)
-			assert.Equal(t, expsize, size)
 			assert.Equal(t, expotype, otype)
 		}(i)
 	}
@@ -107,7 +100,7 @@ func TestOID(t *testing.T) {
 func BenchmarkMakeOID(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
-		_, _ = MakeOID(1, 1, 1, 1, 1)
+		_ = MakeOID(1, 1, 1, 1)
 	}
 }
 
@@ -115,27 +108,27 @@ func BenchmarkMakeOID_Parallel(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _ = MakeOID(1, 1, 1, 1, 1)
+			_ = MakeOID(1, 1, 1, 1)
 		}
 	})
 }
 
 func BenchmarkParseOID(b *testing.B) {
 
-	_, oid := MakeOID(1, 2, 3, 4, 1)
+	oid := MakeOID(1, 2, 3, 4)
 
 	for i := 0; i < b.N; i++ {
-		_, _, _, _, _, _, _ = ParseOID(oid)
+		_, _, _, _, _ = ParseOID(oid)
 	}
 }
 
 func BenchmarkParseOID_Parallel(b *testing.B) {
 
-	_, oid := MakeOID(1, 2, 3, 4, 1)
+	oid := MakeOID(1, 2, 3, 4)
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			_, _, _, _, _, _, _ = ParseOID(oid)
+			_, _, _, _, _ = ParseOID(oid)
 		}
 	})
 }

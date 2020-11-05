@@ -23,6 +23,13 @@ import (
 	"github.com/templexxx/tsc"
 )
 
+const (
+	// epoch is an Unix time.
+	// 2020-06-03T08:39:34.000+0800.
+	epoch     int64 = 1591144774
+	epochNano       = epoch * int64(time.Second)
+)
+
 // reqid struct:
 // +-----------+---------------+
 // | randID(2) | timestamp(62) |
