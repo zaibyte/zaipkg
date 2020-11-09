@@ -15,7 +15,7 @@
 // package xhttp provides http implementation for Zai.
 // Zai uses HTTP/1.1 for handling management requests,
 // these requests are not performance sensitive,
-// HTTP/1.1 is a good choice to make things easier.
+// HTTP/1.1 is a good choice to make normal operations easier.
 //
 // Compare with HTTP/1.1 in standard lib:
 // 1. Add some default server/client configs.
