@@ -29,8 +29,6 @@ import (
 
 	"g.tesamc.com/IT/zaipkg/xchecksum"
 
-	"g.tesamc.com/IT/zaipkg/xdigest"
-
 	"g.tesamc.com/IT/zaipkg/config"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/version"
@@ -276,7 +274,7 @@ func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int, encrypted
 	w.WriteHeader(statusCode)
 
 	if !encrypted {
-		w.Header().Set(ChecksumHeader, strconv.FormatInt(int64(xdigest.Checksum(msg)), 10))
+		w.Header().Set(ChecksumHeader, strconv.FormatInt(int64(xchecksum.Sum32(msg)), 10))
 	}
 
 	_, err := w.Write(msg)

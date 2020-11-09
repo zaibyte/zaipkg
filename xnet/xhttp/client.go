@@ -31,8 +31,6 @@ import (
 
 	"g.tesamc.com/IT/zaipkg/xchecksum"
 
-	"g.tesamc.com/IT/zaipkg/xdigest"
-
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/version"
 )
@@ -191,7 +189,7 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 				return resp, err2
 			}
 
-			if incoming != int(xdigest.Checksum(b)) {
+			if incoming != int(xchecksum.Sum32(b)) {
 				return resp, ErrHeaderCheckFailed
 			}
 
