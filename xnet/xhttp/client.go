@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
-	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"net"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"g.tesamc.com/IT/zaipkg/xchecksum"
 
 	"g.tesamc.com/IT/zaipkg/xdigest"
 
@@ -165,7 +166,7 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 	req.Header.Set(ReqIDHeader, reqID)
 
 	if !c.encrypted {
-		h := crc32.New(xdigest.CrcTbl)
+		h := xchecksum.New()
 		h.Write([]byte(req.URL.RequestURI()))
 		h.Write(buf)
 		req.Header.Set(ChecksumHeader, strconv.Itoa(int(h.Sum32())))

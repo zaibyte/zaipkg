@@ -1,5 +1,3 @@
-g.tesamc.com/IT/zaipkg v0.0.0-20200816125345-341ffff3269a h1:oiCZsqnr/6oyvgEiZjRWIcbnamlkPig2hEr/6i5rysk=
-g.tesamc.com/IT/zaipkg v0.0.0-20200816125345-341ffff3269a/go.mod h1:9h4X8F3/VB7yX2n/JT5HbAXu2cF5/TS14pmuVFzRRLg=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -106,6 +104,7 @@ github.com/templexxx/xhex v0.0.0-20200614015412-aed53437177b/go.mod h1:7rwmCH0wC
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zaibyte/nanozap v0.0.3 h1:opOIFFHu63sXu2FqiCcPFptNL68z8x/scHCunYR4vnE=
 github.com/zaibyte/nanozap v0.0.3/go.mod h1:sObsuIlWGRGkBrAyHMtJR1DzUGPKU9asgvwbYWa3nwQ=
+github.com/zaibyte/nanozap v0.0.4-0.20201105044908-77f1118db06b h1:ZQxPD6RD3iuqwi8Tx60jPseHtKkoYgopb5t5PexPfzc=
 github.com/zaibyte/nanozap v0.0.4-0.20201105044908-77f1118db06b/go.mod h1:Zx9WXMuP2n/2eqtsByAUbzW4xL6XsxAp5rl6Pp+ZImA=
 github.com/zaibyte/pkg v0.0.0-20200816125345-341ffff3269a/go.mod h1:9h4X8F3/VB7yX2n/JT5HbAXu2cF5/TS14pmuVFzRRLg=
 go.uber.org/atomic v1.6.0 h1:Ezj3JGmsOnG1MoRWQkPBsKLe9DwWD9QeXzTRzzldNVk=

@@ -9,11 +9,8 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/prometheus/client_golang v1.6.0
 	github.com/stretchr/testify v1.6.1
-	github.com/templexxx/cpu v0.0.8-0.20200904080713-862a179c181c
 	github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415
 	github.com/templexxx/xhex v0.0.0-20200614015412-aed53437177b
 	github.com/zaibyte/nanozap v0.0.4-0.20201105044908-77f1118db06b
-	go.uber.org/goleak v1.0.0
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
-	golang.org/x/tools v0.0.0-20200403190813-44a64ad78b9b // indirect
 )

@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -27,6 +26,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"g.tesamc.com/IT/zaipkg/xchecksum"
 
 	"g.tesamc.com/IT/zaipkg/xdigest"
 
@@ -151,7 +152,7 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 				return
 			}
 
-			h := crc32.New(xdigest.CrcTbl)
+			h := xchecksum.New()
 			h.Write([]byte(r.URL.RequestURI()))
 			h.Write(b)
 			if incoming != int(h.Sum32()) {

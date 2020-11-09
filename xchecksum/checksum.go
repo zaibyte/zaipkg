@@ -12,20 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Package xdigest provides hash functions on byte sequences by wrapping xxhash.
+// Package xchecksum provides Application layer checksum,
+// avoiding silent data corruption in header,
+// checksum should be ignored only when TLS is enabled.
+//
 // These hash functions are intended to be used to implement zai object digest
 // that need to map byte sequences to a uniform distribution on unsigned 32-bit integers.
 //
-// For Zai, the needs of object digest:
-// 1. Fast.
-// candidates: xxh3, xxhash, hashes based on AES, crc32
-// 2. Low collisions with 32bits sum.
-// candidates: xxh3_low, xxhash_low (hashes based on AES can't pass smhasher sparse test, crc32 can't pass smhasher avalanche test)
-// 3. Stable
-// candidates: xxh3 (may not change after v0.7.4), xxhash
-// 4. Could satisfy hash.Hash32 interface.
-// candidates: xxhash (xxh3 only has one-shot hash API)
-package xdigest
+// CRC32 is enough fast and reliable.
+package xchecksum
 
 import (
 	"hash"
@@ -35,20 +30,23 @@ import (
 )
 
 type Digest struct {
-	xxh hash.Hash32
+	h32 hash.Hash32
 }
 
-// New creates a xdigest.
+// crcTable uses Castagnoli which has better error detection characteristics than IEEE and faster.
+var crcTable = crc32.MakeTable(crc32.Castagnoli)
+
+// New creates a Digest.
 func New() *Digest {
-	// TODO use crc32 temporarily. Maybe use wyhash in future.
-	return &Digest{xxh: crc32.New(CrcTbl)}
+
+	return &Digest{h32: crc32.New(crcTable)}
 	//return &Digest{xxhash.New()}
 }
 
 // Write (via the embedded io.Writer interface) adds more data to the running hash.
 // It never returns an error.
 func (d *Digest) Write(b []byte) (n int, err error) {
-	return d.xxh.Write(b)
+	return d.h32.Write(b)
 }
 
 // WriteString (via the embedded io.Writer interface) adds more data to the running hash.
@@ -60,17 +58,17 @@ func (d *Digest) WriteString(s string) (n int, err error) {
 // Sum appends the current hash to b and returns the resulting slice.
 // It does not change the underlying hash state.
 func (d *Digest) Sum(b []byte) []byte {
-	return d.xxh.Sum(b)
+	return d.h32.Sum(b)
 }
 
 // Sum32 returns the current hash.
 func (d *Digest) Sum32() uint32 {
-	return d.xxh.Sum32()
+	return d.h32.Sum32()
 }
 
 // Reset resets the Hash to its initial state.
 func (d *Digest) Reset() {
-	d.xxh.Reset()
+	d.h32.Reset()
 }
 
 // Size returns the number of bytes Sum will return.
@@ -83,15 +81,10 @@ func (d *Digest) Size() int {
 // of data, but it may operate more efficiently if all writes
 // are a multiple of the block size.
 func (d *Digest) BlockSize() int {
-	return d.xxh.BlockSize()
+	return d.h32.BlockSize()
 }
 
-// Sum32 computes the 32-bit xxHash_low32bit digest of b.
+// Sum32 computes the 32-bit checksum of b directly.
 func Sum32(b []byte) uint32 {
-	return Checksum(b) // TODO use crc temporarily
+	return crc32.Checksum(b, crcTable)
 }
-
-//// Sum32String computes the 32-bit xxHash_low32bit digest of b.
-//func Sum32String(s string) uint32 {
-//	return Sum32(xstrconv.ToBytes(s))
-//}
