@@ -1,10 +1,10 @@
 # xrpc
 
-xrpc is built for Zai's objects transport, only includes:
+xrpc is built for performance sensitive application:
 
-1. Put Object
+1. Zai's objects transport
+2. Zai's object/cluster meta transport
 
-2. Get Object
+## Data Integrity
 
-3. Delete Object
-
+xrpc will check both the request header and body if TLS is disabled.
