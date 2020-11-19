@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/docker/go-units v0.4.0
 	github.com/google/uuid v1.1.1
+	github.com/hanwen/go-fuse/v2 v2.0.3 // indirect
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/prometheus/client_golang v1.6.0
 	github.com/stretchr/testify v1.6.1
