@@ -27,15 +27,22 @@ import (
 )
 
 func init() {
-	New()
+	New(true)
 }
 
 // New init global logger with stdout.
-func New() {
+func New(discard bool) {
+
+	var syncer zapcore.WriteSyncer
+	if !discard {
+		syncer = &Stdouter{}
+	} else {
+		syncer = &Discarder{}
+	}
 
 	lvl := nanozap.NewAtomicLevel()
 	lvl.SetLevel(zapcore.InfoLevel)
-	core := zapcore.NewCore(zapcore.NewJSONEncoder(xlog.DefaultEncoderConfig()), &Discarder{}, lvl)
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(xlog.DefaultEncoderConfig()), syncer, lvl)
 
 	el := &xlog.ErrorLogger{
 		Logger:   nanozap.New(core),
@@ -86,5 +93,5 @@ func (s *Stdouter) Write(b []byte) (int, error) {
 
 // Close closes logger.
 func Close() {
-	xlog.Close()
+	_ = xlog.Close()
 }
