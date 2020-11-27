@@ -54,7 +54,7 @@ func BenchmarkClient_Put(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, testPutFunc, testGetFunc, testDeleteFunc)
+	s := NewServer(addr, newTestHandler())
 
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
@@ -70,7 +70,7 @@ func BenchmarkClient_Put(b *testing.B) {
 	objData := make([]byte, 3952)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
-	_, oid := uid.MakeOID(1, 1, digest, 3952, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 	b.SetParallelism(64)
 	b.ResetTimer()
@@ -90,7 +90,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, testPutFunc, testGetFunc, testDeleteFunc)
+	s := NewServer(addr, newTestHandler())
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
 	}
@@ -103,7 +103,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 	req := make([]byte, 4096)
 	rand.Read(req)
 	digest := xdigest.Sum32(req)
-	_, oid := uid.MakeOID(1, 1, digest, 4096, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 	b.SetParallelism(256)
 	b.ResetTimer()

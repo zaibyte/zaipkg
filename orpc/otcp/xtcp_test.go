@@ -47,32 +47,49 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xbytes"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/templexxx/tsc"
-
-	"g.tesamc.com/IT/zaipkg/xstrconv"
-	"github.com/templexxx/xhex"
-
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xdigest"
-
 	"g.tesamc.com/IT/zaipkg/orpc"
-	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	"github.com/stretchr/testify/assert"
+	"github.com/templexxx/tsc"
 )
 
-func testPutFunc(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
-	return nil
+func init() {
+	xlogtest.New(true)
 }
 
-func testGetFunc(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-	return
+type testHandler struct {
+	putFn func(reqid uint64, oid uint64, objData xbytes.Buffer) error
+	getFn func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error)
+	delFn func(reqid uint64, oid uint64) error
 }
 
-func testDeleteFunc(reqid uint64, oid [16]byte) error {
-	return nil
+func newTestHandler() *testHandler {
+	return &testHandler{
+		putFn: func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+			return nil
+		},
+		getFn: func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+			return nil, nil
+		},
+		delFn: func(reqid uint64, oid uint64) error {
+			return nil
+		},
+	}
+}
+
+func (h *testHandler) PutObj(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+	return h.putFn(reqid, oid, objData)
+}
+
+func (h *testHandler) GetObj(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+	return h.getFn(reqid, oid)
+}
+
+func (h *testHandler) DeleteObj(reqid uint64, oid uint64) error {
+	return h.delFn(reqid, oid)
 }
 
 func getRandomAddr() string {
@@ -84,10 +101,12 @@ func TestRequestTimeout(t *testing.T) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
+	h := newTestHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
 		time.Sleep(10 * time.Millisecond)
 		return nil
-	}, testGetFunc, testDeleteFunc)
+	}
+	s := NewServer(addr, h)
 	if err := s.Start(); err != nil {
 		t.Fatalf("cannot start server: %s", err)
 	}
@@ -100,7 +119,7 @@ func TestRequestTimeout(t *testing.T) {
 	objData := make([]byte, 16)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
-	_, oid := uid.MakeOID(1, 1, digest, 16, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 	for i := 0; i < 10; i++ {
 		err := c.PutObj(0, oid, objData, time.Millisecond)
@@ -116,20 +135,26 @@ func TestRequestTimeout(t *testing.T) {
 func TestClient_GetObj(t *testing.T) {
 	addr := getRandomAddr()
 
-	stor := make(map[[16]byte][]byte)
+	stor := make(map[uint64][]byte)
+	sizes := make(map[uint64]uint32)
 
-	s := NewServer(addr, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
+	h := newTestHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
 		o := make([]byte, len(objData.Bytes()))
 		copy(o, objData.Bytes())
 		stor[oid] = o
+		sizes[oid] = uint32(len(o))
 		return nil
-	}, func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-		_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
+	}
+	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+		size := sizes[oid]
 		objData = xbytes.GetNBytes(int(size))
 		o := stor[oid]
 		objData.Write(o)
 		return
-	}, testDeleteFunc)
+	}
+
+	s := NewServer(addr, h)
 	if err := s.Start(); err != nil {
 		t.Fatalf("cannot start server: %s", err)
 	}
@@ -147,7 +172,7 @@ func TestClient_GetObj(t *testing.T) {
 		size := (1 << i) * 1024
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		_, oid := uid.MakeOID(1, 1, digest, uint32(size), uid.NormalObj)
+		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
@@ -156,13 +181,11 @@ func TestClient_GetObj(t *testing.T) {
 	}
 
 	for oid, objBytes := range stor {
-		b := make([]byte, 32)
-		xhex.Encode(b, oid[:])
-		bf, err := c.GetObj(0, xstrconv.ToString(b), 0)
+		bf, err := c.GetObj(0, oid, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
+		size := sizes[oid]
 		act := make([]byte, size)
 
 		n, err := bf.Read(act)
@@ -181,34 +204,37 @@ func TestClient_GetObj(t *testing.T) {
 func TestClient_DeleteObj(t *testing.T) {
 	addr := getRandomAddr()
 
-	stor := make(map[[16]byte][]byte)
+	stor := make(map[uint64][]byte)
+	sizes := make(map[uint64]uint32)
 
-	s := NewServer(addr,
-		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
-			o := make([]byte, len(objData.Bytes()))
-			copy(o, objData.Bytes())
-			stor[oid] = o
-			return nil
-		},
-		func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
+	h := newTestHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+		o := make([]byte, len(objData.Bytes()))
+		copy(o, objData.Bytes())
+		stor[oid] = o
+		sizes[oid] = uint32(len(o))
+		return nil
+	}
+	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+		o, ok := stor[oid]
+		if !ok {
+			return nil, orpc.ErrNotFound
+		}
+		size := sizes[oid]
+		objData = xbytes.GetNBytes(int(size))
+		objData.Write(o)
+		return
+	}
+	h.delFn = func(reqid uint64, oid uint64) error {
+		_, ok := stor[oid]
+		if !ok {
+			return orpc.ErrNotFound
+		}
+		delete(stor, oid)
+		return nil
+	}
 
-			o, ok := stor[oid]
-			if !ok {
-				return nil, orpc.ErrNotFound
-			}
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			objData = xbytes.GetNBytes(int(size))
-			objData.Write(o)
-			return
-		},
-		func(reqid uint64, oid [16]byte) error {
-			_, ok := stor[oid]
-			if !ok {
-				return orpc.ErrNotFound
-			}
-			delete(stor, oid)
-			return nil
-		})
+	s := NewServer(addr, h)
 	if err := s.Start(); err != nil {
 		t.Fatalf("cannot start server: %s", err)
 	}
@@ -226,7 +252,7 @@ func TestClient_DeleteObj(t *testing.T) {
 		size := (1 << i) * 1024
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		_, oid := uid.MakeOID(1, 1, digest, uint32(size), uid.NormalObj)
+		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
@@ -234,32 +260,26 @@ func TestClient_DeleteObj(t *testing.T) {
 		}
 	}
 
-	deleted := make([][16]byte, 3)
+	deleted := make([]uint64, 3)
 	cnt := 0
 	for oid := range stor {
 		if cnt >= 3 {
 			break
 		}
-		b := make([]byte, 32)
-		xhex.Encode(b, oid[:])
-		err := c.DeleteObj(0, xstrconv.ToString(b), 0)
+		err := c.DeleteObj(0, oid, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		var do [16]byte
-		copy(do[:], oid[:])
-		deleted[cnt] = do
+		deleted[cnt] = oid
 		cnt++
 	}
 
 	for oid, objBytes := range stor {
-		b := make([]byte, 32)
-		xhex.Encode(b, oid[:])
-		bf, err := c.GetObj(0, xstrconv.ToString(b), 0)
+		bf, err := c.GetObj(0, oid, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
+		size := sizes[oid]
 		act := make([]byte, size)
 		n, err := bf.Read(act)
 		if err != nil {
@@ -274,9 +294,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 
 	for _, oid := range deleted {
-		b := make([]byte, 32)
-		xhex.Encode(b, oid[:])
-		bf, err := c.GetObj(0, xstrconv.ToString(b), 0)
+		bf, err := c.GetObj(0, oid, 0)
 
 		assert.Nil(t, bf)
 		assert.Equal(t, orpc.ErrNotFound, err)
@@ -287,31 +305,35 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	addr := getRandomAddr()
 
 	stor := new(sync.Map)
+	sizes := new(sync.Map)
 
-	s := NewServer(addr,
-		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			o := make([]byte, size)
-			n, err := objData.Read(o)
-			if err != nil {
-				return orpc.ErrInternalServer
-			}
-			if n != int(size) {
-				return orpc.ErrInternalServer
-			}
-			stor.Store(oid, o)
-			return nil
-		}, func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			objData = xbytes.GetNBytes(int(size))
-			v, ok := stor.Load(oid)
-			if !ok {
-				return nil, orpc.ErrNotFound
-			}
-			o := v.([]byte)
-			objData.Write(o)
-			return
-		}, testDeleteFunc)
+	h := newTestHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+
+		o := make([]byte, len(objData.Bytes()))
+		copy(o, objData.Bytes())
+		stor.Store(oid, o)
+		sizes.Store(oid, len(o))
+		return nil
+	}
+	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+
+		v, ok := sizes.Load(oid)
+		if !ok {
+			return nil, orpc.ErrNotFound
+		}
+		size := v.(int)
+		objData = xbytes.GetNBytes(size)
+
+		o, ok := stor.Load(oid)
+		if !ok {
+			return nil, orpc.ErrNotFound
+		}
+		objData.Write(o.([]byte))
+		return
+	}
+
+	s := NewServer(addr, h)
 	if err := s.Start(); err != nil {
 		t.Fatalf("cannot start server: %s", err)
 	}
@@ -324,14 +346,14 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	req := make([]byte, 1024*1024)
 	rand.Read(req)
 
-	oids := make([]string, 18)
+	oids := make([]uint64, 18)
 
 	for i := 0; i < 18; i++ {
 
 		size := (1 << i) * 2
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		_, oid := uid.MakeOID(1, 1, digest, uint32(size), uid.NormalObj)
+		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
@@ -342,7 +364,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	for _, oid := range oids {
 		wg.Add(1)
-		go func(oid string) {
+		go func(oid uint64) {
 			defer wg.Done()
 			bf, err := c.GetObj(0, oid, 0)
 			if err != nil {
@@ -350,16 +372,18 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			}
 			defer bf.Close()
 
-			_, _, _, _, size, _, _ := uid.ParseOID(oid)
-			act := make([]byte, size)
-			bf.Read(act)
-			var ob [16]byte // Using byte array to save function stack space.
-			xhex.Decode(ob[:16], xstrconv.ToBytes(oid))
-			v, ok := stor.Load(ob)
+			v, ok := sizes.Load(oid)
 			if !ok {
 				t.Fatal("not found")
 			}
-			if !bytes.Equal(act, v.([]byte)) {
+			size := v.(int)
+			act := make([]byte, size)
+			bf.Read(act)
+			v2, ok := stor.Load(oid)
+			if !ok {
+				t.Fatal("not found")
+			}
+			if !bytes.Equal(act, v2.([]byte)) {
 				t.Fatal("get obj data mismatch")
 			}
 
@@ -373,24 +397,22 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	addr := getRandomAddr()
 
 	stor := new(sync.Map)
+	sizes := new(sync.Map)
 
-	s := NewServer(addr,
-		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			o := make([]byte, size)
-			n, err := objData.Read(o)
-			if err != nil {
-				return orpc.ErrInternalServer
-			}
-			if n != int(size) {
-				return orpc.ErrInternalServer
-			}
-			stor.Store(oid, o)
-			return nil
-		}, func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-			err = orpc.ErrNotFound
-			return
-		}, testDeleteFunc)
+	h := newTestHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+		o := make([]byte, len(objData.Bytes()))
+		copy(o, objData.Bytes())
+		stor.Store(oid, o)
+		sizes.Store(oid, len(o))
+		return nil
+	}
+	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+		err = orpc.ErrNotFound
+		return
+	}
+
+	s := NewServer(addr, h)
 	if err := s.Start(); err != nil {
 		t.Fatalf("cannot start server: %s", err)
 	}
@@ -403,14 +425,14 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	req := make([]byte, 1024*1024)
 	rand.Read(req)
 
-	oids := make([]string, 18)
+	oids := make([]uint64, 18)
 
 	for i := 0; i < 18; i++ {
 
 		size := (1 << i) * 2
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		_, oid := uid.MakeOID(1, 1, digest, uint32(size), uid.NormalObj)
+		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
@@ -421,7 +443,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	for _, oid := range oids {
 		wg.Add(1)
-		go func(oid string) {
+		go func(oid uint64) {
 			defer wg.Done()
 			bf, err := c.GetObj(0, oid, 0)
 			if err != orpc.ErrNotFound {
