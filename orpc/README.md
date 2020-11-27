@@ -34,3 +34,10 @@ ORPC will check the integrity of both the header and body.
 ## TLS
 
 There is no need to use TLS, removing all parts of TLS help to tidy codes.
+
+## Why not make it general?
+
+The network layer of ORPC is designed for performance sensitive application. It maybe a good news if we could use it
+somewhere else.
+
+The main issue is that it really hard to add/remove handler because the protocol limitation.
