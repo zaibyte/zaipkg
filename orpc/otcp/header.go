@@ -34,9 +34,9 @@ package otcp
 import (
 	"encoding/binary"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"g.tesamc.com/IT/zaipkg/xchecksum"
 
-	"g.tesamc.com/IT/zaipkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
 type header interface {
@@ -45,16 +45,16 @@ type header interface {
 	getBodySize() uint32
 }
 
-const reqHeaderSize = 25 + 16
+const reqHeaderSize = 33
 
 // reqHeader is the header for request.
 type reqHeader struct {
-	method   uint8    // [0, 1)
-	msgID    uint64   // [1, 9)
-	reqid    uint64   // [9, 17)
-	bodySize uint32   // [17, 21)
-	oid      [16]byte // [21, 37)
-	crc      uint32   // [37, 41)
+	method   uint8  // [0, 1)
+	msgID    uint64 // [1, 9)
+	reqid    uint64 // [9, 17)
+	bodySize uint32 // [17, 21)
+	oid      uint64 // [21, 29)
+	crc      uint32 // [29, 33)
 }
 
 func (h *reqHeader) encode(buf []byte) []byte {
@@ -65,10 +65,10 @@ func (h *reqHeader) encode(buf []byte) []byte {
 	binary.BigEndian.PutUint64(buf[1:9], h.msgID)
 	binary.BigEndian.PutUint64(buf[9:17], h.reqid)
 	binary.BigEndian.PutUint32(buf[17:21], h.bodySize)
-	copy(buf[21:37], h.oid[:])
-	binary.BigEndian.PutUint32(buf[37:41], 0)
-	crc := xdigest.Checksum(buf[:reqHeaderSize])
-	binary.BigEndian.PutUint32(buf[37:41], crc)
+	binary.BigEndian.PutUint64(buf[21:29], h.oid)
+	binary.BigEndian.PutUint32(buf[29:33], 0)
+	crc := xchecksum.Sum32(buf[:reqHeaderSize])
+	binary.BigEndian.PutUint32(buf[29:33], crc)
 	h.crc = crc
 	return buf[:reqHeaderSize]
 }
@@ -78,19 +78,19 @@ func (h *reqHeader) decode(buf []byte) error {
 		panic("input buf too small")
 	}
 
-	incoming := binary.BigEndian.Uint32(buf[37:41])
-	binary.BigEndian.PutUint32(buf[37:41], 0)
-	expected := xdigest.Checksum(buf[:reqHeaderSize])
+	incoming := binary.BigEndian.Uint32(buf[29:33])
+	binary.BigEndian.PutUint32(buf[29:33], 0)
+	expected := xchecksum.Sum32(buf[:reqHeaderSize])
 	if incoming != expected {
 		return orpc.ErrChecksumMismatch
 	}
-	binary.BigEndian.PutUint32(buf[37:41], incoming)
+	binary.BigEndian.PutUint32(buf[29:33], incoming)
 
 	h.method = buf[0]
 	h.msgID = binary.BigEndian.Uint64(buf[1:9])
 	h.reqid = binary.BigEndian.Uint64(buf[9:17])
 	h.bodySize = binary.BigEndian.Uint32(buf[17:21])
-	copy(h.oid[:], buf[21:37])
+	h.oid = binary.BigEndian.Uint64(buf[21:29])
 	h.crc = incoming
 
 	return nil
@@ -118,7 +118,7 @@ func (h *respHeader) encode(buf []byte) []byte {
 	binary.BigEndian.PutUint16(buf[8:10], h.errno)
 	binary.BigEndian.PutUint32(buf[10:14], h.bodySize)
 	binary.BigEndian.PutUint32(buf[14:18], 0)
-	crc := xdigest.Checksum(buf[:respHeaderSize])
+	crc := xchecksum.Sum32(buf[:respHeaderSize])
 	binary.BigEndian.PutUint32(buf[14:18], crc)
 	h.crc = crc
 	return buf[:respHeaderSize]
@@ -131,7 +131,7 @@ func (h *respHeader) decode(buf []byte) error {
 
 	incoming := binary.BigEndian.Uint32(buf[14:18])
 	binary.BigEndian.PutUint32(buf[14:18], 0)
-	expected := xdigest.Checksum(buf[:respHeaderSize])
+	expected := xchecksum.Sum32(buf[:respHeaderSize])
 	if incoming != expected {
 		return orpc.ErrChecksumMismatch
 	}
