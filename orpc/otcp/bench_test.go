@@ -61,7 +61,7 @@ func BenchmarkClient_Put(b *testing.B) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Conns = 4
 
 	c.Start()
@@ -96,7 +96,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 

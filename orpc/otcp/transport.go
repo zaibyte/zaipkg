@@ -40,7 +40,6 @@
 package otcp
 
 import (
-	"crypto/tls"
 	"net"
 	"time"
 
@@ -73,21 +72,18 @@ func NewServer(addr string, h orpc.Handler) *Server {
 	return s
 }
 
-// NewClient creates a client connecting over TLS (if has) or TCP
+// NewClient creates a client connecting TCP
 // to the server listening to the given addr.
 //
 // The returned client must be started after optional settings' adjustment.
 //
 // The corresponding server must be created with NewServer().
-func NewClient(addr string, cfg *tls.Config) *Client {
+func NewClient(addr string) *Client {
 	c := &Client{
 		Addr: addr,
 		Dial: func(addr string) (conn net.Conn, err error) {
-			return getConnection(addr, cfg)
+			return getConnection(addr)
 		},
-	}
-	if cfg != nil {
-		c.encrypted = true
 	}
 
 	return c
@@ -104,10 +100,10 @@ var (
 type DialFunc func(addr string) (conn net.Conn, err error)
 
 func defaultDial(addr string) (conn net.Conn, err error) {
-	return getConnection(addr, nil)
+	return getConnection(addr)
 }
 
-func getConnection(target string, tlsConfig *tls.Config) (net.Conn, error) {
+func getConnection(target string) (net.Conn, error) {
 	conn, err := dialer.Dial("tcp", target)
 	if err != nil {
 		return nil, err
@@ -117,9 +113,6 @@ func getConnection(target string, tlsConfig *tls.Config) (net.Conn, error) {
 		return nil, err
 	}
 
-	if tlsConfig != nil {
-		conn = tls.Client(conn, tlsConfig)
-	}
 	return conn, nil
 }
 

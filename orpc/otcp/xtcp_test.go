@@ -94,7 +94,7 @@ func TestRequestTimeout(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 
@@ -136,7 +136,7 @@ func TestClient_GetObj(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 
@@ -215,7 +215,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 
@@ -318,7 +318,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 
@@ -397,7 +397,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, nil)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 
@@ -445,10 +445,6 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 		t.Fatalf("cannot load TLS certificates: [%s]", err)
 	}
 
-	clientCfg := &tls.Config{
-		InsecureSkipVerify: true,
-	}
-
 	stor := new(sync.Map)
 
 	s := NewServer(addr,
@@ -480,7 +476,7 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr, clientCfg)
+	c := NewClient(addr)
 	c.Start()
 	defer c.Close()
 

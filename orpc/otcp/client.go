@@ -114,10 +114,6 @@ type Client struct {
 	// By default it returns TCP connections established to the Client.Addr.
 	Dial DialFunc
 
-	// If TLS is enabled, encrypted will be set true, otherwise it's false.
-	// When it's false, otcp will check the request/response body by the checksum.
-	encrypted bool
-
 	requestsChan chan *asyncResult
 
 	stopChan chan struct{}
