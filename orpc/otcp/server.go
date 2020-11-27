@@ -109,9 +109,7 @@ type Server struct {
 	// By default it returns TCP connections accepted from Server.Addr.
 	Listener *defaultListener
 
-	PutObj    orpc.PutFunc
-	GetObj    orpc.GetFunc
-	DeleteObj orpc.DeleteFunc
+	Handler orpc.Handler
 
 	serverStopChan chan struct{}
 	stopWg         sync.WaitGroup

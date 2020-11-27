@@ -37,20 +37,15 @@ type Client interface {
 
 // Server is the object RPC server.
 type Server interface {
-	// RegisterHandler registers handlers for server.
-	// Call it before Start().
-	RegisterHandler(putFunc PutFunc, getFunc GetFunc, deleteFunc DeleteFunc)
 	// Start Server.
 	Start() error
 	// Stop Server, release resource.
 	Close() error
 }
 
-// PutFunc is the object put function.
-type PutFunc func(reqid, oid uint64, objData xbytes.Buffer) error
-
-// GetFunc is the object get function.
-type GetFunc func(reqid, oid uint64) (objData xbytes.Buffer, err error)
-
-// DeleteFunc is the object delete function.
-type DeleteFunc func(reqid, oid uint64) error
+// Handler is the object rpc handler.
+type Handler interface {
+	PutObj(reqid, oid uint64, objData xbytes.Buffer) error
+	GetObj(reqid, oid uint64) (objData xbytes.Buffer, err error)
+	DeleteObj(reqid, oid uint64) error
+}

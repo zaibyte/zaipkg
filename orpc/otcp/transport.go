@@ -56,20 +56,18 @@ var (
 	keepAlivePeriod   = 30 * time.Second
 )
 
-// NewTCPServer creates a server listening for TLS (if has) or TCP connections
+// NewTCPServer creates a server listening TCP connections
 // on the given addr and processing incoming requests
 // with the given Router.
 //
 // The returned server must be started after optional settings' adjustment.
 //
 // The corresponding client must be created with NewClient().
-func NewServer(addr string, put orpc.PutFunc, get orpc.GetFunc, del orpc.DeleteFunc) *Server {
+func NewServer(addr string, h orpc.Handler) *Server {
 	s := &Server{
-		Addr:      addr,
-		Listener:  &defaultListener{},
-		PutObj:    put,
-		GetObj:    get,
-		DeleteObj: del,
+		Addr:     addr,
+		Listener: &defaultListener{},
+		Handler:  h,
 	}
 
 	return s
