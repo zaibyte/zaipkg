@@ -37,77 +37,83 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
-	"sync"
+	"math/rand"
+	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xdigest"
 )
 
-const (
-	objPutMethod uint8 = 1
-	objGetMethod uint8 = 2
-	objDelMethod uint8 = 3
-)
+func BenchmarkClient_Put(b *testing.B) {
 
-const (
-	// DefaultPendingMessages is the default number of pending messages
-	// handled by Client and Server.
-	DefaultPendingMessages = 32 * 1024
+	rand.Seed(time.Now().UnixNano())
 
-	// DefaultFlushDelay is the default delay between message flushes
-	// on Client and Server.
-	DefaultFlushDelay = time.Microsecond * 100
-)
+	addr := getRandomAddr()
 
-var timerPool sync.Pool
+	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
 
-func acquireTimer(timeout time.Duration) *time.Timer {
-	tv := timerPool.Get()
-	if tv == nil {
-		return time.NewTimer(timeout)
+	if err := s.Start(); err != nil {
+		b.Fatalf("cannot start server: %s", err)
 	}
+	defer s.Stop()
 
-	t := tv.(*time.Timer)
-	if t.Reset(timeout) {
-		xlog.Panic("bug: active timer trapped into acquireTimer()")
-	}
-	return t
-}
+	c := NewClient(addr, nil)
+	c.Conns = 4
 
-func releaseTimer(t *time.Timer) {
-	if !t.Stop() {
-		// Collect possibly added time from the channel
-		// if timer has been stopped and nobody collected its' value.
-		select {
-		case <-t.C:
-		default:
+	c.Start()
+	defer c.Close()
+
+	objData := make([]byte, 3952)
+	rand.Read(objData)
+	digest := xdigest.Sum32(objData)
+	_, oid := uid.MakeOID(1, 1, digest, 3952, uid.NormalObj)
+
+	b.SetParallelism(64)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			err := c.PutObj(uid.MakeReqID(), oid, objData, 0)
+			if err != nil {
+				b.Fatalf("Unexpected error: %s", err)
+			}
 		}
-	}
-
-	timerPool.Put(t)
+	})
 }
 
-var closedFlushChan = make(chan time.Time)
+func BenchmarkClient_Delete(b *testing.B) {
 
-func init() {
-	close(closedFlushChan)
-}
+	rand.Seed(time.Now().UnixNano())
 
-func getFlushChan(t *time.Timer, flushDelay time.Duration) <-chan time.Time {
-	if flushDelay <= 0 {
-		return closedFlushChan
+	addr := getRandomAddr()
+
+	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
+	if err := s.Start(); err != nil {
+		b.Fatalf("cannot start server: %s", err)
 	}
+	defer s.Stop()
 
-	if !t.Stop() {
-		// Exhaust expired timer's chan.
-		select {
-		case <-t.C:
-		default:
+	c := NewClient(addr, nil)
+	c.Start()
+	defer c.Close()
+
+	req := make([]byte, 4096)
+	rand.Read(req)
+	digest := xdigest.Sum32(req)
+	_, oid := uid.MakeOID(1, 1, digest, 4096, uid.NormalObj)
+
+	b.SetParallelism(256)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			err := c.DeleteObj(uid.MakeReqID(), oid, 0)
+			if err != nil {
+				b.Fatalf("Unexpected error: %s", err)
+			}
+
 		}
-	}
-	t.Reset(flushDelay)
-	return t.C
+	})
 }

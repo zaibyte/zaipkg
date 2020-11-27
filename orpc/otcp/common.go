@@ -37,83 +37,77 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
-	"math/rand"
-	"testing"
+	"sync"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xdigest"
+	"g.tesamc.com/IT/zaipkg/xlog"
 )
 
-func BenchmarkClient_Put(b *testing.B) {
+const (
+	objPutMethod uint8 = 1
+	objGetMethod uint8 = 2
+	objDelMethod uint8 = 3
+)
 
-	rand.Seed(time.Now().UnixNano())
+const (
+	// DefaultPendingMessages is the default number of pending messages
+	// handled by Client and Server.
+	DefaultPendingMessages = 32 * 1024
 
-	addr := getRandomAddr()
+	// DefaultFlushDelay is the default delay between message flushes
+	// on Client and Server.
+	DefaultFlushDelay = time.Microsecond * 100
+)
 
-	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
+var timerPool sync.Pool
 
-	if err := s.Start(); err != nil {
-		b.Fatalf("cannot start server: %s", err)
+func acquireTimer(timeout time.Duration) *time.Timer {
+	tv := timerPool.Get()
+	if tv == nil {
+		return time.NewTimer(timeout)
 	}
-	defer s.Stop()
 
-	c := NewClient(addr, nil)
-	c.Conns = 4
-
-	c.Start()
-	defer c.Stop()
-
-	objData := make([]byte, 3952)
-	rand.Read(objData)
-	digest := xdigest.Sum32(objData)
-	_, oid := uid.MakeOID(1, 1, digest, 3952, uid.NormalObj)
-
-	b.SetParallelism(64)
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-			err := c.PutObj(uid.MakeReqID(), oid, objData, 0)
-			if err != nil {
-				b.Fatalf("Unexpected error: %s", err)
-			}
-		}
-	})
+	t := tv.(*time.Timer)
+	if t.Reset(timeout) {
+		xlog.Panic("bug: active timer trapped into acquireTimer()")
+	}
+	return t
 }
 
-func BenchmarkClient_Delete(b *testing.B) {
-
-	rand.Seed(time.Now().UnixNano())
-
-	addr := getRandomAddr()
-
-	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
-	if err := s.Start(); err != nil {
-		b.Fatalf("cannot start server: %s", err)
-	}
-	defer s.Stop()
-
-	c := NewClient(addr, nil)
-	c.Start()
-	defer c.Stop()
-
-	req := make([]byte, 4096)
-	rand.Read(req)
-	digest := xdigest.Sum32(req)
-	_, oid := uid.MakeOID(1, 1, digest, 4096, uid.NormalObj)
-
-	b.SetParallelism(256)
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-			err := c.DeleteObj(uid.MakeReqID(), oid, 0)
-			if err != nil {
-				b.Fatalf("Unexpected error: %s", err)
-			}
-
+func releaseTimer(t *time.Timer) {
+	if !t.Stop() {
+		// Collect possibly added time from the channel
+		// if timer has been stopped and nobody collected its' value.
+		select {
+		case <-t.C:
+		default:
 		}
-	})
+	}
+
+	timerPool.Put(t)
+}
+
+var closedFlushChan = make(chan time.Time)
+
+func init() {
+	close(closedFlushChan)
+}
+
+func getFlushChan(t *time.Timer, flushDelay time.Duration) <-chan time.Time {
+	if flushDelay <= 0 {
+		return closedFlushChan
+	}
+
+	if !t.Stop() {
+		// Exhaust expired timer's chan.
+		select {
+		case <-t.C:
+		default:
+		}
+	}
+	t.Reset(flushDelay)
+	return t.C
 }

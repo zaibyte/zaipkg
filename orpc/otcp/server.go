@@ -37,7 +37,7 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
 	"encoding/binary"
@@ -48,11 +48,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xerrors"
 	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zaipkg/xrpc"
 )
 
 // Server implements RPC server.
@@ -109,9 +109,9 @@ type Server struct {
 	// By default it returns TCP connections accepted from Server.Addr.
 	Listener *defaultListener
 
-	PutObj    xrpc.PutFunc
-	GetObj    xrpc.GetFunc
-	DeleteObj xrpc.DeleteFunc
+	PutObj    orpc.PutFunc
+	GetObj    orpc.GetFunc
+	DeleteObj orpc.DeleteFunc
 
 	encrypted bool
 
@@ -133,7 +133,7 @@ const (
 func (s *Server) Start() error {
 
 	if s.serverStopChan != nil {
-		xlog.Panic("server is already running. Stop it before starting it again")
+		xlog.Panic("server is already running. Close it before starting it again")
 	}
 	s.serverStopChan = make(chan struct{})
 
@@ -341,7 +341,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	for {
 		err := dec.decode(req, headerBuf)
 		if err != nil {
-			if err == xrpc.ErrTimeout {
+			if err == orpc.ErrTimeout {
 				continue // Keeping trying to read request header.
 			}
 			xlog.Errorf("failed to read request from %s: %s", r.RemoteAddr().String(), err)
@@ -364,8 +364,8 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 		if !s.encrypted && m.bodySize != 0 {
 			actDigest := hash.Sum32()
 			if actDigest != digest {
-				xlog.ErrorID(m.reqid, xerrors.WithMessage(xrpc.ErrChecksumMismatch, fmt.Sprintf("request exp: %d, but: %d", digest, actDigest)).Error())
-				m.err = xrpc.ErrChecksumMismatch
+				xlog.ErrorID(m.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("request exp: %d, but: %d", digest, actDigest)).Error())
+				m.err = orpc.ErrChecksumMismatch
 				if body != nil {
 					_ = body.Close()
 				}
@@ -441,7 +441,7 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid [16]byte
 	case objDelMethod:
 		err = s.DeleteObj(reqid, oid)
 	default:
-		err = xrpc.ErrNotImplemented
+		err = orpc.ErrNotImplemented
 	}
 
 	return
@@ -503,7 +503,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		} else {
 			header.bodySize = 0
 		}
-		header.errno = uint16(xrpc.ErrToErrno(m.err))
+		header.errno = uint16(orpc.ErrToErrno(m.err))
 		msg.header = header
 		msg.body = resp
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package xrpc
+package orpc
 
 import "errors"
 
@@ -42,7 +42,7 @@ import "errors"
 // Bad request: could happen when there is an illegal request.
 // Not implemented: request a method which is not found.
 // For saving network cost, the method will be checked in client side.
-// (Client created by xtcp.Router will check method)
+// (Client created by otcp.Router will check method)
 // Connection error means network issues.
 type Errno uint16
 

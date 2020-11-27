@@ -37,7 +37,7 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
 	"bytes"
@@ -60,8 +60,8 @@ import (
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 
+	"g.tesamc.com/IT/zaipkg/orpc"
 	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
-	"g.tesamc.com/IT/zaipkg/xrpc"
 )
 
 func testPutFunc(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
@@ -96,7 +96,7 @@ func TestRequestTimeout(t *testing.T) {
 
 	c := NewClient(addr, nil)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	objData := make([]byte, 16)
 	rand.Read(objData)
@@ -108,7 +108,7 @@ func TestRequestTimeout(t *testing.T) {
 		if err == nil {
 			t.Fatalf("Timeout error must be returned")
 		}
-		if err != xrpc.ErrTimeout {
+		if err != orpc.ErrTimeout {
 			t.Fatalf("Unexpected error returned: [%s]", err)
 		}
 	}
@@ -138,7 +138,7 @@ func TestClient_GetObj(t *testing.T) {
 
 	c := NewClient(addr, nil)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	req := make([]byte, xbytes.MaxBytesSizeInPool*2)
 	rand.Read(req)
@@ -165,6 +165,7 @@ func TestClient_GetObj(t *testing.T) {
 		}
 		_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
 		act := make([]byte, size)
+
 		n, err := bf.Read(act)
 		if err != nil {
 			bf.Close()
@@ -194,7 +195,7 @@ func TestClient_DeleteObj(t *testing.T) {
 
 			o, ok := stor[oid]
 			if !ok {
-				return nil, xrpc.ErrNotFound
+				return nil, orpc.ErrNotFound
 			}
 			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
 			objData = xbytes.GetNBytes(int(size))
@@ -204,7 +205,7 @@ func TestClient_DeleteObj(t *testing.T) {
 		func(reqid uint64, oid [16]byte) error {
 			_, ok := stor[oid]
 			if !ok {
-				return xrpc.ErrNotFound
+				return orpc.ErrNotFound
 			}
 			delete(stor, oid)
 			return nil
@@ -216,7 +217,7 @@ func TestClient_DeleteObj(t *testing.T) {
 
 	c := NewClient(addr, nil)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	req := make([]byte, xbytes.MaxBytesSizeInPool*2)
 	rand.Read(req)
@@ -279,7 +280,7 @@ func TestClient_DeleteObj(t *testing.T) {
 		bf, err := c.GetObj(0, xstrconv.ToString(b), 0)
 
 		assert.Nil(t, bf)
-		assert.Equal(t, xrpc.ErrNotFound, err)
+		assert.Equal(t, orpc.ErrNotFound, err)
 	}
 }
 
@@ -294,10 +295,10 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			o := make([]byte, size)
 			n, err := objData.Read(o)
 			if err != nil {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			if n != int(size) {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			stor.Store(oid, o)
 			return nil
@@ -306,7 +307,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			objData = xbytes.GetNBytes(int(size))
 			v, ok := stor.Load(oid)
 			if !ok {
-				return nil, xrpc.ErrNotFound
+				return nil, orpc.ErrNotFound
 			}
 			o := v.([]byte)
 			objData.Write(o)
@@ -319,7 +320,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 
 	c := NewClient(addr, nil)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	req := make([]byte, 1024*1024)
 	rand.Read(req)
@@ -380,15 +381,15 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 			o := make([]byte, size)
 			n, err := objData.Read(o)
 			if err != nil {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			if n != int(size) {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			stor.Store(oid, o)
 			return nil
 		}, func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-			err = xrpc.ErrNotFound
+			err = orpc.ErrNotFound
 			return
 		}, testDeleteFunc)
 	if err := s.Start(); err != nil {
@@ -398,7 +399,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 
 	c := NewClient(addr, nil)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	req := make([]byte, 1024*1024)
 	rand.Read(req)
@@ -424,7 +425,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		go func(oid string) {
 			defer wg.Done()
 			bf, err := c.GetObj(0, oid, 0)
-			if err != xrpc.ErrNotFound {
+			if err != orpc.ErrNotFound {
 				t.Fatal("error should be not found")
 			}
 			assert.Nil(t, bf)
@@ -458,10 +459,10 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 			o := make([]byte, size)
 			n, err := objData.Read(o)
 			if err != nil {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			if n != int(size) {
-				return xrpc.ErrInternalServer
+				return orpc.ErrInternalServer
 			}
 			stor.Store(oid, o)
 			return nil
@@ -470,7 +471,7 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 			objData = xbytes.GetNBytes(int(size))
 			v, ok := stor.Load(oid)
 			if !ok {
-				return nil, xrpc.ErrNotFound
+				return nil, orpc.ErrNotFound
 			}
 			o := v.([]byte)
 			objData.Write(o)
@@ -483,7 +484,7 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 
 	c := NewClient(addr, clientCfg)
 	c.Start()
-	defer c.Stop()
+	defer c.Close()
 
 	req := make([]byte, 1024*1024)
 	rand.Read(req)

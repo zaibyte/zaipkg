@@ -37,7 +37,7 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
 	"encoding/binary"
@@ -49,17 +49,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xerrors"
 	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zaipkg/xrpc"
 	"g.tesamc.com/IT/zaipkg/xstrconv"
 	"github.com/templexxx/xhex"
 )
 
-// Client implements xtcp client.
+// Client implements otcp client.
 //
 // The client must be started with Client.Start() before use.
 //
@@ -81,7 +81,7 @@ type Client struct {
 	//
 	// The number of pending requests should exceed the expected number
 	// of concurrent goroutines calling client's methods.
-	// Otherwise a lot of xrpc.ErrRequestQueueOverflow errors may appear.
+	// Otherwise a lot of orpc.ErrRequestQueueOverflow errors may appear.
 	//
 	// Default is DefaultPendingMessages.
 	PendingRequests int
@@ -115,7 +115,7 @@ type Client struct {
 	Dial DialFunc
 
 	// If TLS is enabled, encrypted will be set true, otherwise it's false.
-	// When it's false, xtcp will check the request/response body by the checksum.
+	// When it's false, otcp will check the request/response body by the checksum.
 	encrypted bool
 
 	requestsChan chan *asyncResult
@@ -211,7 +211,7 @@ func (c *Client) Start() error {
 }
 
 // Stop stops rpc client. Stopped client can be started again.
-func (c *Client) Stop() error {
+func (c *Client) Close() error {
 	if c.stopChan == nil {
 		xlog.Panic("client must be started before stopping it")
 	}
@@ -221,18 +221,18 @@ func (c *Client) Stop() error {
 	return nil
 }
 
-// Put puts object to the ZBuf node which Objecter connected.
+// Put puts object to the ZBuf node which orpc.Client connected.
 func (c *Client) PutObj(reqid uint64, oid string, objData []byte, timeout time.Duration) error {
 	_, err := c.callTimeout(reqid, objPutMethod, oid, objData, timeout)
 	return err
 }
 
-// Get gets object from the ZBuf node which Objecter connected.
+// Get gets object from the ZBuf node which orpc.Client connected.
 func (c *Client) GetObj(reqid uint64, oid string, timeout time.Duration) (obj io.ReadCloser, err error) {
 	return c.callTimeout(reqid, objGetMethod, oid, nil, timeout)
 }
 
-// Delete deletes object in the ZBuf node which Objecter connected.
+// Delete deletes object in the ZBuf node which orpc.Client connected.
 func (c *Client) DeleteObj(reqid uint64, oid string, timeout time.Duration) error {
 	_, err := c.callTimeout(reqid, objDelMethod, oid, nil, timeout)
 	return err
@@ -281,7 +281,7 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid string, body []byte
 		// If write broken, ar may not be put back to the pool.
 		ar.cancel()
 		resp = nil
-		err = xrpc.ErrTimeout
+		err = orpc.ErrTimeout
 	}
 
 	releaseTimer(t)
@@ -295,7 +295,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid [16]byte, body []byte
 	}
 
 	if method == 0 || method > 3 {
-		return nil, xrpc.ErrNotImplemented
+		return nil, orpc.ErrNotImplemented
 	}
 
 	ar = acquireAsyncResult()
@@ -325,7 +325,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid [16]byte, body []byte
 		select {
 		case ar2 := <-c.requestsChan:
 			if ar2.done != nil {
-				ar2.err = xrpc.ErrRequestQueueOverflow
+				ar2.err = orpc.ErrRequestQueueOverflow
 				close(ar2.done)
 			} else {
 				releaseAsyncResult(ar2)
@@ -340,7 +340,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid [16]byte, body []byte
 		default:
 			// RequestsChan is filled, release it since m wasn't exposed to the caller yet.
 			releaseAsyncResult(ar)
-			return nil, xrpc.ErrRequestQueueOverflow
+			return nil, orpc.ErrRequestQueueOverflow
 		}
 	}
 }
@@ -497,7 +497,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 			}
 
 			if ar.done != nil {
-				ar.err = xrpc.ErrCanceled
+				ar.err = orpc.ErrCanceled
 				close(ar.done)
 			} else {
 				releaseAsyncResult(ar)
@@ -521,7 +521,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if n > 10*c.PendingRequests {
 			xlog.ErrorIDf(ar.reqid, "server: %s didn't return %d responses yet: closing connection", c.Addr, n)
-			err = xrpc.ErrConnection
+			err = orpc.ErrConnection
 			return
 		}
 
@@ -569,7 +569,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	for {
 		err := dec.decode(msg, headerBuf)
 		if err != nil {
-			if err == xrpc.ErrTimeout {
+			if err == orpc.ErrTimeout {
 				msg.body = nil
 				continue // Keeping trying to read request header.
 			}
@@ -595,7 +595,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if !ok {
 			xlog.Errorf("unexpected msgID: %d obtained from: %s", msgID, c.Addr)
-			err = xrpc.ErrInternalServer
+			err = orpc.ErrInternalServer
 			if msg.body != nil {
 				_ = msg.body.Close()
 			}
@@ -607,8 +607,8 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 		if !c.encrypted && n != 0 {
 			actDigest := hash.Sum32()
 			if actDigest != digest {
-				xlog.ErrorID(ar.reqid, xerrors.WithMessage(xrpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
-				ar.err = xrpc.ErrChecksumMismatch
+				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
+				ar.err = orpc.ErrChecksumMismatch
 				if body != nil {
 					_ = body.Close()
 				}
@@ -622,7 +622,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		if errno != 0 {
-			ar.err = xrpc.Errno(errno).ToErr()
+			ar.err = orpc.Errno(errno).ToErr()
 			if body != nil {
 				_ = body.Close()
 			}

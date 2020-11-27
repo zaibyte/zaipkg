@@ -29,12 +29,12 @@
 // This file contains code derived from Dragonboat.
 // The main logic & codes are copied from Dragonboat.
 
-package xtcp
+package otcp
 
 import (
 	"encoding/binary"
 
-	"g.tesamc.com/IT/zaipkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/orpc"
 
 	"g.tesamc.com/IT/zaipkg/xdigest"
 )
@@ -82,7 +82,7 @@ func (h *reqHeader) decode(buf []byte) error {
 	binary.BigEndian.PutUint32(buf[37:41], 0)
 	expected := xdigest.Checksum(buf[:reqHeaderSize])
 	if incoming != expected {
-		return xrpc.ErrChecksumMismatch
+		return orpc.ErrChecksumMismatch
 	}
 	binary.BigEndian.PutUint32(buf[37:41], incoming)
 
@@ -133,7 +133,7 @@ func (h *respHeader) decode(buf []byte) error {
 	binary.BigEndian.PutUint32(buf[14:18], 0)
 	expected := xdigest.Checksum(buf[:respHeaderSize])
 	if incoming != expected {
-		return xrpc.ErrChecksumMismatch
+		return orpc.ErrChecksumMismatch
 	}
 	binary.BigEndian.PutUint32(buf[14:18], incoming)
 

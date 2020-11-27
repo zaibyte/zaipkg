@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package xtcp
+package otcp
 
 import (
 	"bufio"
@@ -24,7 +24,7 @@ import (
 
 	"g.tesamc.com/IT/zaipkg/xdigest"
 
-	"g.tesamc.com/IT/zaipkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
 type timeoutConnReader struct {
@@ -67,7 +67,7 @@ func (d *decoder) decode(msg *message, headerBuf []byte) error {
 	if err != nil {
 		operr, ok := err.(net.Error)
 		if ok && operr.Timeout() {
-			return xrpc.ErrTimeout
+			return orpc.ErrTimeout
 		}
 		return err
 	}

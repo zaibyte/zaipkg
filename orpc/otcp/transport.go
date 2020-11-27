@@ -37,14 +37,14 @@
 // This file contains code derived from gorpc.
 // The main logic & codes are copied from gorpc.
 
-package xtcp
+package otcp
 
 import (
 	"crypto/tls"
 	"net"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
 var (
@@ -63,7 +63,7 @@ var (
 // The returned server must be started after optional settings' adjustment.
 //
 // The corresponding client must be created with NewClient().
-func NewServer(addr string, cfg *tls.Config, put xrpc.PutFunc, get xrpc.GetFunc, del xrpc.DeleteFunc) *Server {
+func NewServer(addr string, cfg *tls.Config, put orpc.PutFunc, get orpc.GetFunc, del orpc.DeleteFunc) *Server {
 	s := &Server{
 		Addr:      addr,
 		Listener:  &defaultListener{tlsCfg: cfg},

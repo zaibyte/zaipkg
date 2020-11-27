@@ -29,13 +29,13 @@
 // This file contains code derived from Dragonboat.
 // The main logic & codes are copied from Dragonboat.
 
-package xtcp
+package otcp
 
 import (
 	"encoding/binary"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xrpc"
+	"g.tesamc.com/IT/zaipkg/orpc"
 
 	"github.com/stretchr/testify/assert"
 
@@ -77,13 +77,13 @@ func TestRequestHeaderCRCIsChecked(t *testing.T) {
 
 	crc := binary.BigEndian.Uint32(result[37:])
 	binary.BigEndian.PutUint32(result[37:], crc+1)
-	assert.Equal(t, xrpc.ErrChecksumMismatch, rr.decode(result))
+	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 
 	binary.BigEndian.PutUint32(result[37:], crc)
 	assert.Nil(t, rr.decode(result))
 
 	result[0] = 0
-	assert.Equal(t, xrpc.ErrChecksumMismatch, rr.decode(result))
+	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 }
 
 func TestRespHeaderCanBeEncodedAndDecoded(t *testing.T) {
@@ -117,11 +117,11 @@ func TestRespHeaderCRCIsChecked(t *testing.T) {
 
 	crc := binary.BigEndian.Uint32(result[14:])
 	binary.BigEndian.PutUint32(result[14:], crc+1)
-	assert.Equal(t, xrpc.ErrChecksumMismatch, rr.decode(result))
+	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 
 	binary.BigEndian.PutUint32(result[14:], crc)
 	assert.Nil(t, rr.decode(result))
 
 	binary.BigEndian.PutUint64(result[0:], 0)
-	assert.Equal(t, xrpc.ErrChecksumMismatch, rr.decode(result))
+	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 }
