@@ -40,13 +40,14 @@
 package otcp
 
 import (
-	"encoding/binary"
 	"fmt"
 	"net"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"g.tesamc.com/IT/zaipkg/uid"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/xbytes"
@@ -61,14 +62,7 @@ import (
 // them without valid reason.
 type Server struct {
 	// Address to listen to for incoming connections.
-	//
-	// The address format depends on the underlying transport provided
-	// by Server.Listener. The following transports are provided
-	// out of the box:
-	//   * TCP - see NewTCPServer() and NewTCPClient().
-	//   * TLS (aka SSL) - see NewTLSServer() and NewTLSClient().
-	//
-	// By default TCP transport is used.
+	// TCP transport is used.
 	Addr string
 
 	// The maximum number of concurrent rpc calls the server may perform.
@@ -102,11 +96,7 @@ type Server struct {
 	// and/or client authentication/authorization.
 	// Don't forget overriding Client.Dial() callback accordingly.
 	//
-	// * NewTLSClient() and NewTLSServer() can be used for encrypted rpc.
-	// * NewUnixClient() and NewUnixServer() can be used for fast local
-	//   inter-process rpc.
-	//
-	// By default it returns TCP connections accepted from Server.Addr.
+	// It returns TCP connections accepted from Server.Addr.
 	Listener *defaultListener
 
 	Handler orpc.Handler
@@ -133,8 +123,8 @@ func (s *Server) Start() error {
 	}
 	s.serverStopChan = make(chan struct{})
 
-	if s.PutObj == nil || s.GetObj == nil || s.DeleteObj == nil {
-		xlog.Panic("not enough handler function")
+	if s.Handler == nil {
+		xlog.Panic("no handler registered")
 	}
 
 	if s.Concurrency <= 0 {
@@ -291,7 +281,7 @@ type serverMessage struct {
 	method   uint8
 	msgID    uint64
 	reqid    uint64
-	oid      [16]byte
+	oid      uint64
 	bodySize uint32
 	reqbody  xbytes.Buffer
 
@@ -326,9 +316,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	}()
 
 	hash := xdigest.New()
-	if s.encrypted {
-		hash = nil
-	}
+
 	dec := newDecoder(r, s.RecvBufferSize, hash)
 	req := &message{
 		header: new(reqHeader),
@@ -355,7 +343,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 		m.oid = h.oid
 		m.bodySize = h.bodySize
 
-		digest := binary.LittleEndian.Uint32(m.oid[8:12])
+		digest := uid.GetDigest(m.oid)
 
 		if m.bodySize != 0 {
 			actDigest := hash.Sum32()
@@ -419,7 +407,7 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	<-workersCh
 }
 
-func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid [16]byte, reqData xbytes.Buffer) (resp xbytes.Buffer, err error) {
+func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, reqData xbytes.Buffer) (resp xbytes.Buffer, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			stackTrace := make([]byte, 1<<20)
@@ -431,11 +419,11 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid [16]byte
 
 	switch method {
 	case objPutMethod:
-		err = s.PutObj(reqid, oid, reqData)
+		err = s.Handler.PutObj(reqid, oid, reqData)
 	case objGetMethod:
-		resp, err = s.GetObj(reqid, oid)
+		resp, err = s.Handler.GetObj(reqid, oid)
 	case objDelMethod:
-		err = s.DeleteObj(reqid, oid)
+		err = s.Handler.DeleteObj(reqid, oid)
 	default:
 		err = orpc.ErrNotImplemented
 	}

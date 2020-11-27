@@ -92,3 +92,8 @@ func ParseOID(oid uint64) (boxID, groupID, digest uint32, otype uint8, err error
 	}
 	return
 }
+
+// GetDigest gets digest from an oid.
+func GetDigest(oid uint64) uint32 {
+	return uint32(oid >> 32)
+}

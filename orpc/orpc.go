@@ -26,7 +26,7 @@ type Client interface {
 	// Start Client.
 	Start() error
 	// Stop Client, release resource.
-	Close() error
+	Stop() error
 	// Put puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid string, objData []byte, timeout time.Duration) error
 	// Get gets object from the ZBuf node which Client connected.
@@ -40,7 +40,7 @@ type Server interface {
 	// Start Server.
 	Start() error
 	// Stop Server, release resource.
-	Close() error
+	Stop() error
 }
 
 // Handler is the object rpc handler.
