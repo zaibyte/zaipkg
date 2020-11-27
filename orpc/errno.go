@@ -42,8 +42,8 @@ import "errors"
 // Bad request: could happen when there is an illegal request.
 // Not implemented: request a method which is not found.
 // For saving network cost, the method will be checked in client side.
-// (Client created by otcp.Router will check method)
 // Connection error means network issues.
+
 type Errno uint16
 
 func (e Errno) Error() string {

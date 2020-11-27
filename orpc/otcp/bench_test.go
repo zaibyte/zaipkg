@@ -54,7 +54,7 @@ func BenchmarkClient_Put(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
+	s := NewServer(addr, testPutFunc, testGetFunc, testDeleteFunc)
 
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
@@ -90,7 +90,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, nil, testPutFunc, testGetFunc, testDeleteFunc)
+	s := NewServer(addr, testPutFunc, testGetFunc, testDeleteFunc)
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
 	}

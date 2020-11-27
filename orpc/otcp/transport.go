@@ -63,17 +63,15 @@ var (
 // The returned server must be started after optional settings' adjustment.
 //
 // The corresponding client must be created with NewClient().
-func NewServer(addr string, cfg *tls.Config, put orpc.PutFunc, get orpc.GetFunc, del orpc.DeleteFunc) *Server {
+func NewServer(addr string, put orpc.PutFunc, get orpc.GetFunc, del orpc.DeleteFunc) *Server {
 	s := &Server{
 		Addr:      addr,
-		Listener:  &defaultListener{tlsCfg: cfg},
+		Listener:  &defaultListener{},
 		PutObj:    put,
 		GetObj:    get,
 		DeleteObj: del,
 	}
-	if cfg != nil {
-		s.encrypted = true
-	}
+
 	return s
 }
 
@@ -148,8 +146,7 @@ type Listener interface {
 }
 
 type defaultListener struct {
-	L      net.Listener
-	tlsCfg *tls.Config
+	L net.Listener
 }
 
 func (ln *defaultListener) Init(addr string) (err error) {
@@ -167,9 +164,7 @@ func (ln *defaultListener) Accept() (conn net.Conn, err error) {
 		_ = c.Close()
 		return nil, err
 	}
-	if ln.tlsCfg != nil {
-		c = tls.Server(c, ln.tlsCfg)
-	}
+
 	return c, nil
 }
 

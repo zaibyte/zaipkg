@@ -85,7 +85,7 @@ func TestRequestTimeout(t *testing.T) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, nil, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
+	s := NewServer(addr, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 		time.Sleep(10 * time.Millisecond)
 		return nil
 	}, testGetFunc, testDeleteFunc)
@@ -119,7 +119,7 @@ func TestClient_GetObj(t *testing.T) {
 
 	stor := make(map[[16]byte][]byte)
 
-	s := NewServer(addr, nil, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
+	s := NewServer(addr, func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 		o := make([]byte, len(objData.Bytes()))
 		copy(o, objData.Bytes())
 		stor[oid] = o
@@ -184,7 +184,7 @@ func TestClient_DeleteObj(t *testing.T) {
 
 	stor := make(map[[16]byte][]byte)
 
-	s := NewServer(addr, nil,
+	s := NewServer(addr,
 		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 			o := make([]byte, len(objData.Bytes()))
 			copy(o, objData.Bytes())
@@ -289,7 +289,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 
 	stor := new(sync.Map)
 
-	s := NewServer(addr, nil,
+	s := NewServer(addr,
 		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
 			o := make([]byte, size)
@@ -375,7 +375,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 
 	stor := new(sync.Map)
 
-	s := NewServer(addr, nil,
+	s := NewServer(addr,
 		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
 			o := make([]byte, size)
@@ -440,20 +440,18 @@ func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
 
 	certFile := "./ssl-cert-snakeoil.pem"
 	keyFile := "./ssl-cert-snakeoil.key"
-	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	_, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
 		t.Fatalf("cannot load TLS certificates: [%s]", err)
 	}
-	serverCfg := &tls.Config{
-		Certificates: []tls.Certificate{cert},
-	}
+
 	clientCfg := &tls.Config{
 		InsecureSkipVerify: true,
 	}
 
 	stor := new(sync.Map)
 
-	s := NewServer(addr, serverCfg,
+	s := NewServer(addr,
 		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
 			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
 			o := make([]byte, size)

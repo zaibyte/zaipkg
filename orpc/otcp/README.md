@@ -30,7 +30,7 @@ Based on [goproc](https://github.com/valyala/gorpc) with these modifications:
 
 The origin has tried its best to make things non-blocking.
 
-It's hard to compare directly, because the features of otcp is limited. But use almost "same" benchmark test,
+It's hard to compare directly, because the features of otcp is limited. Under almost "same" benchmark test,
 otcp gets 3x better than gorpc. (Both of them are using same configs, including buffer size, client connections, flush delay)
 
 ### Done

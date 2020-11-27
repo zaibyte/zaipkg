@@ -113,8 +113,6 @@ type Server struct {
 	GetObj    orpc.GetFunc
 	DeleteObj orpc.DeleteFunc
 
-	encrypted bool
-
 	serverStopChan chan struct{}
 	stopWg         sync.WaitGroup
 }
@@ -361,7 +359,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 
 		digest := binary.LittleEndian.Uint32(m.oid[8:12])
 
-		if !s.encrypted && m.bodySize != 0 {
+		if m.bodySize != 0 {
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(m.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("request exp: %d, but: %d", digest, actDigest)).Error())
