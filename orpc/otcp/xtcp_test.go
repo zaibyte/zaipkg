@@ -41,7 +41,6 @@ package otcp
 
 import (
 	"bytes"
-	"crypto/tls"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -429,99 +428,6 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 				t.Fatal("error should be not found")
 			}
 			assert.Nil(t, bf)
-		}(oid)
-	}
-
-	wg.Wait()
-}
-
-func TestClient_GetObj_ConcurrencyTLS(t *testing.T) {
-	addr := getRandomAddr()
-
-	certFile := "./ssl-cert-snakeoil.pem"
-	keyFile := "./ssl-cert-snakeoil.key"
-	_, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		t.Fatalf("cannot load TLS certificates: [%s]", err)
-	}
-
-	stor := new(sync.Map)
-
-	s := NewServer(addr,
-		func(reqid uint64, oid [16]byte, objData xbytes.Buffer) error {
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			o := make([]byte, size)
-			n, err := objData.Read(o)
-			if err != nil {
-				return orpc.ErrInternalServer
-			}
-			if n != int(size) {
-				return orpc.ErrInternalServer
-			}
-			stor.Store(oid, o)
-			return nil
-		}, func(reqid uint64, oid [16]byte) (objData xbytes.Buffer, err error) {
-			_, _, _, _, size, _ := uid.ParseOIDBytes(oid[:])
-			objData = xbytes.GetNBytes(int(size))
-			v, ok := stor.Load(oid)
-			if !ok {
-				return nil, orpc.ErrNotFound
-			}
-			o := v.([]byte)
-			objData.Write(o)
-			return
-		}, testDeleteFunc)
-	if err := s.Start(); err != nil {
-		t.Fatalf("cannot start server: %s", err)
-	}
-	defer s.Stop()
-
-	c := NewClient(addr)
-	c.Start()
-	defer c.Close()
-
-	req := make([]byte, 1024*1024)
-	rand.Read(req)
-
-	oids := make([]string, 18)
-
-	for i := 0; i < 18; i++ {
-
-		size := (1 << i) * 2
-		objData := req[:size]
-		digest := xdigest.Sum32(objData)
-		_, oid := uid.MakeOID(1, 1, digest, uint32(size), uid.NormalObj)
-		err := c.PutObj(0, oid, objData, 0)
-		if err != nil {
-			t.Fatal(err, size)
-		}
-		oids[i] = oid
-	}
-
-	var wg sync.WaitGroup
-	for _, oid := range oids {
-		wg.Add(1)
-		go func(oid string) {
-			defer wg.Done()
-			bf, err := c.GetObj(0, oid, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer bf.Close()
-
-			_, _, _, _, size, _, _ := uid.ParseOID(oid)
-			act := make([]byte, size)
-			bf.Read(act)
-			var ob [16]byte // Using byte array to save function stack space.
-			xhex.Decode(ob[:16], xstrconv.ToBytes(oid))
-			v, ok := stor.Load(ob)
-			if !ok {
-				t.Fatal("not found")
-			}
-			if !bytes.Equal(act, v.([]byte)) {
-				t.Fatal("get obj data mismatch")
-			}
-
 		}(oid)
 	}
 
