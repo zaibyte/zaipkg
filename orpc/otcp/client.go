@@ -40,7 +40,6 @@
 package otcp
 
 import (
-	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
@@ -55,11 +54,9 @@ import (
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xerrors"
 	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zaipkg/xstrconv"
-	"github.com/templexxx/xhex"
 )
 
-// Client implements otcp client.
+// Client implements orpc.Client.
 //
 // The client must be started with Client.Start() before use.
 //
@@ -124,7 +121,7 @@ type Client struct {
 type asyncResult struct {
 	method  uint8
 	reqid   uint64
-	oid     [16]byte
+	oid     uint64
 	reqData xbytes.Buffer // It only can be released after writing or writing failed.
 
 	respBody xbytes.Buffer
@@ -218,18 +215,18 @@ func (c *Client) Close() error {
 }
 
 // Put puts object to the ZBuf node which orpc.Client connected.
-func (c *Client) PutObj(reqid uint64, oid string, objData []byte, timeout time.Duration) error {
+func (c *Client) PutObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
 	_, err := c.callTimeout(reqid, objPutMethod, oid, objData, timeout)
 	return err
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid uint64, oid string, timeout time.Duration) (obj io.ReadCloser, err error) {
+func (c *Client) GetObj(reqid, oid uint64, timeout time.Duration) (obj io.ReadCloser, err error) {
 	return c.callTimeout(reqid, objGetMethod, oid, nil, timeout)
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
-func (c *Client) DeleteObj(reqid uint64, oid string, timeout time.Duration) error {
+func (c *Client) DeleteObj(reqid, oid uint64, timeout time.Duration) error {
 	_, err := c.callTimeout(reqid, objDelMethod, oid, nil, timeout)
 	return err
 }
@@ -240,20 +237,14 @@ func (c *Client) DeleteObj(reqid uint64, oid string, timeout time.Duration) erro
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) callTimeout(reqid uint64, method uint8, oid string, body []byte, timeout time.Duration) (resp xbytes.Buffer, err error) {
+func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte, timeout time.Duration) (resp xbytes.Buffer, err error) {
 
 	if timeout == 0 {
 		timeout = c.RequestTimeout
 	}
 
-	var ob [16]byte // Using byte array to save function stack space.
-	err = xhex.Decode(ob[:16], xstrconv.ToBytes(oid))
-	if err != nil {
-		return
-	}
-
 	var ar *asyncResult
-	if ar, err = c.callAsync(reqid, method, ob, body); err != nil {
+	if ar, err = c.callAsync(reqid, method, oid, body); err != nil {
 		return nil, err
 	}
 
@@ -284,7 +275,7 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid string, body []byte
 	return
 }
 
-func (c *Client) callAsync(reqid uint64, method uint8, oid [16]byte, body []byte) (ar *asyncResult, err error) {
+func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) (ar *asyncResult, err error) {
 
 	if reqid == 0 {
 		reqid = uid.MakeReqID()
@@ -554,9 +545,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	}()
 
 	hash := xdigest.New()
-	if c.encrypted {
-		hash = nil
-	}
+
 	dec := newDecoder(r, c.RecvBufferSize, hash)
 	msg := &message{
 		header: new(respHeader),
@@ -599,8 +588,8 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		// Ignore response if any error. And the response must be nil.
-		digest := binary.LittleEndian.Uint32(ar.oid[8:12])
-		if !c.encrypted && n != 0 {
+		digest := uid.GetDigest(ar.oid)
+		if n != 0 {
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
@@ -658,7 +647,7 @@ func acquireAsyncResult() *asyncResult {
 func releaseAsyncResult(ar *asyncResult) {
 	ar.method = 0
 	ar.reqid = 0
-	ar.oid = [16]byte{}
+	ar.oid = 0
 	ar.reqData = nil
 
 	ar.respBody = nil

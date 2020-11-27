@@ -56,7 +56,7 @@ import (
 	"g.tesamc.com/IT/zaipkg/xlog"
 )
 
-// Server implements RPC server.
+// Server implements orpc.Server.
 //
 // Default server settings are optimized for high load, so don't override
 // them without valid reason.
