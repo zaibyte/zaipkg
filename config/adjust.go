@@ -43,5 +43,9 @@ func Adjust(val interface{}, defValue interface{}) {
 		if *v == 0 {
 			*v = defValue.(time.Duration)
 		}
+	case *[]string:
+		if len(*v) == 0 {
+			*v = defValue.([]string)
+		}
 	}
 }

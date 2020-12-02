@@ -19,6 +19,8 @@ package config
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAdjust(t *testing.T) {
@@ -56,4 +58,9 @@ func TestAdjust(t *testing.T) {
 	if duration0 != defDuration {
 		t.Fatal("adjust time.Duration mismatch")
 	}
+
+	var defStrings = []string{"def"}
+	var strings0 []string
+	Adjust(&strings0, defStrings)
+	assert.Equal(t, defStrings, strings0, "adjust []string mismatch")
 }
