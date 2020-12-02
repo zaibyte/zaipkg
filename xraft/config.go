@@ -54,8 +54,8 @@ type Config struct {
 	// is required to be replicated.
 	CompactionOverhead uint64
 
-	Member   *MemberConfig   `toml:"member"`
-	NodeHost *NodeHostConfig `toml:"node_host"`
+	Member   MemberConfig   `toml:"member"`
+	NodeHost NodeHostConfig `toml:"node_host"`
 }
 
 //  - starting a brand new Raft cluster, set join to false and specify all initial
