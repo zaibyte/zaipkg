@@ -1,4 +1,4 @@
-package config
+package app
 
 import "g.tesamc.com/IT/zaipkg/xlog"
 
