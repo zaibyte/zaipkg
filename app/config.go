@@ -14,4 +14,6 @@ type Config struct {
 	RackID uint64 `toml:"rack_id"`
 
 	Log xlog.Config `toml:"log"`
+
+	HTTPServerAddr string `toml:"http_server_addr"`
 }
