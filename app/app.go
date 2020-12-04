@@ -2,7 +2,7 @@ package app
 
 import "g.tesamc.com/IT/zaipkg/xlog"
 
-type App struct {
+type Config struct {
 	// Every instance belongs to a certain box.
 	// boxID: [1, 255)
 	BoxID int64 `toml:"box_id"`
