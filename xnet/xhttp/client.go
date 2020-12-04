@@ -17,8 +17,6 @@ package xhttp
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
@@ -38,7 +36,6 @@ import (
 // Client is an xhttp client.
 type Client struct {
 	c         *http.Client
-	encrypted bool
 	addScheme func(url string) string
 }
 
@@ -67,44 +64,7 @@ var (
 
 // NewDefaultClient creates a Client with default configs.
 func NewDefaultClient() (*Client, error) {
-	return NewClient(false, "", "")
-}
-
-// NewClient creates a Client with tls configs.
-func NewClient(encrypted bool, certFile, keyFile string) (*Client, error) {
-
-	tp := DefaultTransport
-
-	if certFile == "" || keyFile == "" {
-		encrypted = false
-	}
-
-	if encrypted != false && certFile != "" && keyFile != "" {
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return nil, err
-		}
-
-		certBytes, err := ioutil.ReadFile(certFile)
-		if err != nil {
-			return nil, err
-		}
-
-		cp := x509.NewCertPool()
-		if !cp.AppendCertsFromPEM(certBytes) {
-			return nil, errors.New("failed to append certs from PEM")
-		}
-
-		tc := &tls.Config{
-			RootCAs:            cp,
-			Certificates:       []tls.Certificate{cert},
-			InsecureSkipVerify: true,
-		}
-
-		tp.TLSClientConfig = tc
-	}
-
-	return NewClientWithTransport(tp), nil
+	return NewClientWithTransport(DefaultTransport), nil
 }
 
 // NewClientWithTransport creates a Client with a transport.
@@ -115,22 +75,12 @@ func NewClientWithTransport(transport *http.Transport) *Client {
 		transport = DefaultTransport
 	}
 
-	addScheme := addHTTPScheme
-	if transport.TLSClientConfig != nil {
-		addScheme = addHTTPSScheme
-	}
-
 	return &Client{
 		c: &http.Client{
 			Transport: transport,
 		},
-		encrypted: transport.TLSClientConfig != nil,
-		addScheme: addScheme,
+		addScheme: addHTTPScheme,
 	}
-}
-
-func addHTTPSScheme(url string) string {
-	return addScheme(url, "https://")
 }
 
 func addHTTPScheme(url string) string {
@@ -163,38 +113,34 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 	}
 	req.Header.Set(ReqIDHeader, reqID)
 
-	if !c.encrypted {
-		h := xchecksum.New()
-		h.Write([]byte(req.URL.RequestURI()))
-		h.Write(buf)
-		req.Header.Set(ChecksumHeader, strconv.Itoa(int(h.Sum32())))
-	}
+	h := xchecksum.New()
+	_, _ = h.Write([]byte(req.URL.RequestURI()))
+	_, _ = h.Write(buf)
+	req.Header.Set(ChecksumHeader, strconv.Itoa(int(h.Sum32())))
 
 	resp, err = c.c.Do(req)
 	if err != nil {
 		return
 	}
 
-	if !c.encrypted {
-		c := resp.Header.Get(ChecksumHeader)
-		if c != "" {
-			incoming, err := strconv.Atoi(c)
-			if err != nil {
-				io.Copy(ioutil.Discard, resp.Body)
-				return resp, ErrHeaderCheckFailed
-			}
-
-			b, err2 := ioutil.ReadAll(resp.Body)
-			if err2 != nil {
-				return resp, err2
-			}
-
-			if incoming != int(xchecksum.Sum32(b)) {
-				return resp, ErrHeaderCheckFailed
-			}
-
-			resp.Body = ioutil.NopCloser(bytes.NewReader(b))
+	ch := resp.Header.Get(ChecksumHeader)
+	if ch != "" {
+		incoming, err := strconv.Atoi(ch)
+		if err != nil {
+			io.Copy(ioutil.Discard, resp.Body)
+			return resp, ErrHeaderCheckFailed
 		}
+
+		b, err2 := ioutil.ReadAll(resp.Body)
+		if err2 != nil {
+			return resp, err2
+		}
+
+		if incoming != int(xchecksum.Sum32(b)) {
+			return resp, ErrHeaderCheckFailed
+		}
+
+		resp.Body = ioutil.NopCloser(bytes.NewReader(b))
 	}
 
 	if resp.StatusCode/100 >= 4 {

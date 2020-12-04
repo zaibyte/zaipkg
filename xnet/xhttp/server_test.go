@@ -36,9 +36,6 @@ var (
 func init() {
 
 	srv := NewServer(&ServerConfig{
-		Encrypted:         false,
-		CertFile:          "",
-		KeyFile:           "",
 		IdleTimeout:       0,
 		ReadHeaderTimeout: 0,
 	})

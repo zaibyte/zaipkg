@@ -40,9 +40,6 @@ import (
 type ServerConfig struct {
 	Address string
 
-	Encrypted         bool
-	CertFile, KeyFile string
-
 	IdleTimeout       time.Duration
 	ReadHeaderTimeout time.Duration
 }
@@ -60,9 +57,6 @@ type Server struct {
 }
 
 func parseConfig(cfg *ServerConfig) {
-	if cfg.CertFile == "" || cfg.KeyFile == "" {
-		cfg.Encrypted = false
-	}
 
 	config.Adjust(&cfg.IdleTimeout, defaultIdleTimeout)
 	config.Adjust(&cfg.ReadHeaderTimeout, defaultReadHeaderTimeout)
@@ -111,11 +105,7 @@ func (s *Server) GetHandler() http.Handler {
 func (s *Server) Start() {
 
 	go func() {
-		if s.cfg.Encrypted && s.cfg.CertFile != "" && s.cfg.KeyFile != "" {
-			_ = s.srv.ListenAndServeTLS(s.cfg.CertFile, s.cfg.KeyFile)
-		} else {
-			_ = s.srv.ListenAndServe()
-		}
+		_ = s.srv.ListenAndServe()
 	}()
 }
 
@@ -136,30 +126,27 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 		}
 		w.Header().Set(ReqIDHeader, reqID)
 
-		if !s.cfg.Encrypted {
-
-			incoming, err := strconv.Atoi(r.Header.Get(ChecksumHeader))
-			if err != nil {
-				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
-				return
-			}
-
-			b, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				ReplyCode(w, http.StatusInternalServerError)
-				return
-			}
-
-			h := xchecksum.New()
-			h.Write([]byte(r.URL.RequestURI()))
-			h.Write(b)
-			if incoming != int(h.Sum32()) {
-				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
-				return
-			}
-
-			r.Body = ioutil.NopCloser(bytes.NewReader(b))
+		incoming, err := strconv.Atoi(r.Header.Get(ChecksumHeader))
+		if err != nil {
+			ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+			return
 		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			ReplyCode(w, http.StatusInternalServerError)
+			return
+		}
+
+		h := xchecksum.New()
+		h.Write([]byte(r.URL.RequestURI()))
+		h.Write(b)
+		if incoming != int(h.Sum32()) {
+			ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+			return
+		}
+
+		r.Body = ioutil.NopCloser(bytes.NewReader(b))
 
 		next(w, r, p)
 	}
@@ -228,7 +215,7 @@ func (s *Server) version(w http.ResponseWriter, _ *http.Request, _ httprouter.Pa
 		Version:   version.ReleaseVersion,
 		GitHash:   version.GitHash,
 		GitBranch: version.GitBranch,
-	}, http.StatusOK, s.cfg.Encrypted)
+	}, http.StatusOK)
 }
 
 // Reply replies HTTP request.
@@ -243,7 +230,7 @@ func (s *Server) version(w http.ResponseWriter, _ *http.Request, _ httprouter.Pa
 // ReplyCode replies to the request with the empty message and HTTP code.
 func ReplyCode(w http.ResponseWriter, statusCode int) {
 
-	ReplyJson(w, nil, statusCode, true) // Only reply code, no need check resp.body.
+	ReplyJson(w, nil, statusCode) // Only reply code, no need check resp.body.
 }
 
 // ReplyError replies to the request with the specified error message and HTTP code.
@@ -263,7 +250,7 @@ func ReplyError(w http.ResponseWriter, msg string, statusCode int) {
 }
 
 // ReplyJson replies to the request with specified ret(in JSON) and HTTP code.
-func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int, encrypted bool) {
+func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int) {
 
 	var msg []byte
 	if ret != nil {
@@ -273,9 +260,7 @@ func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int, encrypted
 	w.Header().Set("Content-Length", strconv.Itoa(len(msg)))
 	w.WriteHeader(statusCode)
 
-	if !encrypted {
-		w.Header().Set(ChecksumHeader, strconv.FormatInt(int64(xchecksum.Sum32(msg)), 10))
-	}
+	w.Header().Set(ChecksumHeader, strconv.FormatInt(int64(xchecksum.Sum32(msg)), 10))
 
 	_, err := w.Write(msg)
 	if err != nil {
