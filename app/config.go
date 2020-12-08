@@ -16,4 +16,7 @@ type Config struct {
 	Log xlog.Config `toml:"log"`
 
 	HTTPServerAddr string `toml:"http_server_addr"`
+
+	// Enable Prometheus time histogram may impact performance.
+	EnableHandlingTimeHistogram bool `toml:"enable_handling_time_histogram"`
 }
