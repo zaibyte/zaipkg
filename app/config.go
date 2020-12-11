@@ -1,6 +1,8 @@
 package app
 
-import "g.tesamc.com/IT/zaipkg/xlog"
+import (
+	"g.tesamc.com/IT/zaipkg/xlog"
+)
 
 type Config struct {
 	// Every instance belongs to a certain box.
@@ -18,5 +20,6 @@ type Config struct {
 	HTTPServerAddr string `toml:"http_server_addr"`
 
 	// Enable Prometheus time histogram may impact performance.
+	// Deprecated.
 	EnableHandlingTimeHistogram bool `toml:"enable_handling_time_histogram"`
 }
