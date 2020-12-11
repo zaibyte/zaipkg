@@ -106,6 +106,9 @@ const (
 	timeBackwards        = 12
 	extentFull           = 13
 	diskWriteStall       = 15
+	extentSealed         = 16
+	diskSealed           = 17
+	instanceSealed       = 18
 )
 
 // Error table.
@@ -125,6 +128,9 @@ var errnoStr = [...]string{
 	timeBackwards:        "time gone backwards",
 	extentFull:           "extent is full",
 	diskWriteStall:       "disk write stall",
+	extentSealed:         "extent is sealed",
+	diskSealed:           "disk is sealed",
+	instanceSealed:       "instance is sealed",
 }
 
 var (
@@ -142,4 +148,7 @@ var (
 	ErrTimeBackwards        = Errno(timeBackwards)
 	ErrExtentFull           = Errno(extentFull)
 	ErrDiskWriteStall       = Errno(diskWriteStall)
+	ErrExtentSealed         = Errno(extentSealed)
+	ErrDiskSealed           = Errno(diskSealed)
+	ErrInstanceSealed       = Errno(instanceSealed)
 )
