@@ -2,15 +2,34 @@ package xhttp
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"strconv"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xchecksum"
+	"g.tesamc.com/IT/zaipkg/xlog"
+
 	"github.com/julienschmidt/httprouter"
 )
+
+func withRecovery(next httprouter.Handle) httprouter.Handle {
+	defer func() {
+		if x := recover(); x != nil {
+			stackTrace := make([]byte, 1<<20)
+			n := runtime.Stack(stackTrace, false)
+			xlog.Error(fmt.Sprintf("panic occured: %v\nStack trace: %s", x, stackTrace[:n]))
+		}
+	}()
+
+	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
+		next(w, r, p)
+	}
+}
 
 func withReqid(next httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {

@@ -111,7 +111,7 @@ func (s *Server) Close() {
 
 // must adds the headers which zai must have and check request body.
 func (s *Server) must(next httprouter.Handle) httprouter.Handle {
-	return withCheck(withReqid(next))
+	return withRecovery(withCheck(withReqid(next)))
 }
 
 // --- Default Handler ---- //
