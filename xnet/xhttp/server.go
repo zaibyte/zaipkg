@@ -24,17 +24,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
-
-	"g.tesamc.com/IT/zaipkg/xchecksum"
-
 	"g.tesamc.com/IT/zaipkg/config"
+	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/version"
+	"g.tesamc.com/IT/zaipkg/xchecksum"
 	"g.tesamc.com/IT/zaipkg/xlog"
+
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -90,11 +88,8 @@ func NewServer(cfg *ServerConfig) (s *Server) {
 }
 
 // AddHandler helps to add handler to Server.
-func (s *Server) AddHandler(method, path string, handler httprouter.Handle, limit int64) {
-	if limit > 0 {
-		l := newReqLimit(limit)
-		handler = l.withLimit(handler)
-	}
+func (s *Server) AddHandler(method, path string, handler httprouter.Handle) {
+
 	s.router.Handle(method, path, s.must(handler))
 }
 
@@ -162,32 +157,6 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 	}
 }
 
-// reqLimit implements the ability to limit request count at the same time.
-type reqLimit struct {
-	limit int64
-	cnt   int64
-}
-
-func newReqLimit(limit int64) *reqLimit {
-	return &reqLimit{
-		limit: limit,
-	}
-}
-
-func (l *reqLimit) withLimit(next httprouter.Handle) httprouter.Handle {
-
-	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-
-		if atomic.AddInt64(&l.cnt, 1) > l.limit {
-			atomic.AddInt64(&l.cnt, -1)
-			ReplyCode(w, http.StatusTooManyRequests)
-		} else {
-			next(w, r, p)
-			atomic.AddInt64(&l.cnt, -1)
-		}
-	}
-}
-
 // --- Default Handler ---- //
 
 // addDefaultHandler add default handler.
@@ -196,8 +165,8 @@ func (s *Server) addDefaultHandler() {
 		s.router = httprouter.New()
 	}
 
-	s.AddHandler(http.MethodPut, "/v1/debug-log/:cmd", s.debug, 1)
-	s.AddHandler(http.MethodGet, "/v1/code-version", s.version, 1)
+	s.AddHandler(http.MethodPut, "/v1/debug-log/:cmd", s.debug)
+	s.AddHandler(http.MethodGet, "/v1/code-version", s.version)
 }
 
 func (s *Server) debug(w http.ResponseWriter, _ *http.Request,

@@ -16,13 +16,10 @@ package xhttp
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
-	"time"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
 
@@ -112,36 +109,6 @@ func TestServerDebug(t *testing.T) {
 
 	if xlog.GetLvl() != "info" {
 		t.Fatal("debug off failed")
-	}
-}
-
-func TestServerLimit(t *testing.T) {
-
-	errMsg := make(chan string, 10)
-	wg := &sync.WaitGroup{}
-	wg.Add(10) // Although the limit is 1, but the op is too fast, so we may need more to pass the test.
-	for i := 0; i < 10; i++ {
-		go func() {
-			defer wg.Done()
-
-			_, err := testClient.Version(testSrvAddr, 0)
-			if err != nil {
-				errMsg <- err.Error()
-			}
-			time.Sleep(256 * time.Microsecond)
-		}()
-	}
-	wg.Wait()
-	close(errMsg)
-	eCnt := 0
-	for msg := range errMsg {
-		eCnt++
-		if msg != http.StatusText(http.StatusTooManyRequests) {
-			t.Fatal(fmt.Sprintf("unexpect error msg, exp: %s, act:%s", http.StatusText(http.StatusTooManyRequests), msg))
-		}
-	}
-	if eCnt <= 0 || eCnt > 9 {
-		t.Fatal("unexpect error count", eCnt)
 	}
 }
 
