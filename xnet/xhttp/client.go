@@ -103,17 +103,19 @@ func addScheme(url string, scheme string) string {
 // All >= 400 response will be closed.
 //
 // On error, any Response can be ignored.
-func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []byte) (resp *http.Response, err error) {
+func (c *Client) Request(ctx context.Context, method, url string, reqID uint64, buf []byte) (resp *http.Response, err error) {
 
 	url = c.addScheme(url)
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(buf))
 	if err != nil {
 		return
 	}
-	if reqID == "" {
-		reqID = strconv.FormatUint(uid.MakeReqID(), 10)
+
+	var reqidStr string
+	if reqID == 0 {
+		reqidStr = strconv.FormatUint(uid.MakeReqID(), 10)
 	}
-	req.Header.Set(ReqIDHeader, reqID)
+	req.Header.Set(ReqIDHeader, reqidStr)
 
 	h := xchecksum.New()
 	_, _ = h.Write([]byte(req.URL.RequestURI()))
@@ -171,7 +173,7 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 const defaultTimeout = 3 * time.Second
 
 // Debug opens/closes a server logger's debug level.
-func (c *Client) Debug(addr string, on bool, reqID string) (err error) {
+func (c *Client) Debug(addr string, on bool, reqID uint64) (err error) {
 
 	cmd := "off"
 	if on {
@@ -192,7 +194,7 @@ func (c *Client) Debug(addr string, on bool, reqID string) (err error) {
 }
 
 // Version returns the code version of a server.
-func (c *Client) Version(addr, reqID string) (ver version.Info, err error) {
+func (c *Client) Version(addr string, reqID uint64) (ver version.Info, err error) {
 
 	url := addr + "/v1/code-version"
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)

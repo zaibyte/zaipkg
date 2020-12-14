@@ -51,7 +51,7 @@ func init() {
 
 func TestServerChecksum(t *testing.T) {
 	// 1. Has check (passing checksum header)
-	_, err := testClient.Version(testSrvAddr, "")
+	_, err := testClient.Version(testSrvAddr, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func TestServerChecksum(t *testing.T) {
 
 func TestServerDebug(t *testing.T) {
 
-	err := testClient.Debug(testSrvAddr, true, "")
+	err := testClient.Debug(testSrvAddr, true, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestServerDebug(t *testing.T) {
 		t.Fatal("debug on failed")
 	}
 
-	err = testClient.Debug(testSrvAddr, false, "")
+	err = testClient.Debug(testSrvAddr, false, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestServerLimit(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			_, err := testClient.Version(testSrvAddr, "")
+			_, err := testClient.Version(testSrvAddr, 0)
 			if err != nil {
 				errMsg <- err.Error()
 			}
@@ -147,7 +147,7 @@ func TestServerLimit(t *testing.T) {
 
 func TestServerVersion(t *testing.T) {
 
-	ret, err := testClient.Version(testSrvAddr, "")
+	ret, err := testClient.Version(testSrvAddr, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
