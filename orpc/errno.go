@@ -152,3 +152,24 @@ var (
 	ErrDiskSealed           = Errno(diskSealed)
 	ErrInstanceSealed       = Errno(instanceSealed)
 )
+
+// StrError is using for other network transport to convert string message to a certain error type.
+var StrError = map[string]error{
+	"bad message":            ErrBadRequest,
+	"not found":              ErrNotFound,
+	"not implemented":        ErrNotImplemented,
+	"timeout":                ErrTimeout,
+	"too many requests":      ErrTooManyRequests,
+	"internal server error":  ErrInternalServer,
+	"connection error":       ErrConnection,
+	"canceled":               ErrCanceled,
+	"checksum mismatch":      ErrChecksumMismatch,
+	"invalid method":         ErrInvalidMethod,
+	"request queue overflow": ErrRequestQueueOverflow,
+	"time gone backwards":    ErrTimeBackwards,
+	"extent is full":         ErrExtentFull,
+	"disk write stall":       ErrDiskWriteStall,
+	"extent is sealed":       ErrExtentFull,
+	"disk is sealed":         ErrDiskSealed,
+	"instance is sealed":     ErrInstanceSealed,
+}
