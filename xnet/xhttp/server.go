@@ -27,6 +27,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/orpc"
+
 	"g.tesamc.com/IT/zaipkg/xchecksum"
 
 	"g.tesamc.com/IT/zaipkg/config"
@@ -141,7 +143,7 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 		if enableCheck {
 			incoming, err := strconv.Atoi(clientSumStr)
 			if err != nil {
-				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+				ReplyError(w, orpc.ErrBadRequest.Error(), http.StatusBadRequest)
 				return
 			}
 			h := xchecksum.New()
@@ -149,7 +151,7 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 			h.Write(b)
 			act := int(h.Sum32())
 			if incoming != act {
-				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+				ReplyError(w, orpc.ErrChecksumMismatch.Error(), http.StatusBadRequest)
 				return
 			}
 		}

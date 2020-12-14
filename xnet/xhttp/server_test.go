@@ -22,6 +22,9 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
+
+	"g.tesamc.com/IT/zaipkg/orpc"
 
 	"g.tesamc.com/IT/zaipkg/version"
 	"g.tesamc.com/IT/zaipkg/xlog"
@@ -85,7 +88,7 @@ func TestServerChecksum(t *testing.T) {
 	buf, _ := ioutil.ReadAll(resp.Body)
 	// See ReplyError for more details.
 	err = errors.New(string(buf[:len(buf)-1])) // drop \n
-	if errors.Is(err, ErrHeaderCheckFailed) {
+	if errors.Is(err, orpc.ErrChecksumMismatch) {
 		t.Fatal("error mismatched")
 	}
 	defer resp.Body.Close()
@@ -125,6 +128,7 @@ func TestServerLimit(t *testing.T) {
 			if err != nil {
 				errMsg <- err.Error()
 			}
+			time.Sleep(256 * time.Microsecond)
 		}()
 	}
 	wg.Wait()

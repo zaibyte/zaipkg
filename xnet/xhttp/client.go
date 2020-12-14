@@ -27,6 +27,8 @@ import (
 	"strings"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/orpc"
+
 	"g.tesamc.com/IT/zaipkg/xchecksum"
 
 	"g.tesamc.com/IT/zaipkg/uid"
@@ -128,16 +130,16 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 		incoming, err := strconv.Atoi(ch)
 		if err != nil {
 			io.Copy(ioutil.Discard, resp.Body)
-			return resp, ErrHeaderCheckFailed
+			return resp, orpc.ErrBadRequest
 		}
 
 		b, err2 := ioutil.ReadAll(resp.Body)
 		if err2 != nil {
-			return resp, err2
+			return resp, orpc.ErrInternalServer
 		}
 
 		if incoming != int(xchecksum.Sum32(b)) {
-			return resp, ErrHeaderCheckFailed
+			return resp, orpc.ErrChecksumMismatch
 		}
 
 		resp.Body = ioutil.NopCloser(bytes.NewReader(b))
@@ -150,10 +152,11 @@ func (c *Client) Request(ctx context.Context, method, url, reqID string, buf []b
 		if resp.ContentLength > 0 && method != http.MethodHead {
 			buf, err2 := ioutil.ReadAll(resp.Body)
 			if err2 != nil {
-				return resp, err2
+				return resp, orpc.ErrInternalServer
 			}
 			// See ReplyError for more details.
-			err = errors.New(string(buf[:len(buf)-1])) // drop \n
+			errMsg := string(buf[:len(buf)-1]) // drop \n
+			err = orpc.StrError[errMsg]
 		}
 		io.Copy(ioutil.Discard, resp.Body)
 		return
