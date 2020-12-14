@@ -15,7 +15,9 @@
 package xhttp
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -42,7 +44,51 @@ func init() {
 	testServer = httptest.NewServer(srv.srv.Handler)
 	testSrvAddr = testServer.URL
 	testClient, _ = NewDefaultClient()
+}
 
+func TestServerChecksum(t *testing.T) {
+	// 1. Has check (passing checksum header)
+	_, err := testClient.Version(testSrvAddr, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 2. No check (no checksum header)
+	req, err := http.NewRequest(http.MethodGet,
+		testSrvAddr+"/v1/code-version", nil)
+	if err != nil {
+		return
+	}
+	resp, err := testClient.c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 200 {
+		t.Fatal("should ok")
+	}
+	resp.Body.Close()
+
+	// 3. Pass wrong checksum
+	req, err = http.NewRequest(http.MethodGet,
+		testSrvAddr+"/v1/code-version", nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set(ChecksumHeader, "1")
+	resp, err = testClient.c.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 400 {
+		t.Fatal("should bad request")
+	}
+	buf, _ := ioutil.ReadAll(resp.Body)
+	// See ReplyError for more details.
+	err = errors.New(string(buf[:len(buf)-1])) // drop \n
+	if errors.Is(err, ErrHeaderCheckFailed) {
+		t.Fatal("error mismatched")
+	}
+	defer resp.Body.Close()
 }
 
 func TestServerDebug(t *testing.T) {

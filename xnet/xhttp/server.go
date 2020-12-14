@@ -126,10 +126,10 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 		}
 		w.Header().Set(ReqIDHeader, reqID)
 
-		incoming, err := strconv.Atoi(r.Header.Get(ChecksumHeader))
-		if err != nil {
-			ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
-			return
+		enableCheck := true
+		clientSumStr := r.Header.Get(ChecksumHeader)
+		if clientSumStr == "" {
+			enableCheck = false
 		}
 
 		b, err := ioutil.ReadAll(r.Body)
@@ -138,12 +138,20 @@ func (s *Server) must(next httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		h := xchecksum.New()
-		h.Write([]byte(r.URL.RequestURI()))
-		h.Write(b)
-		if incoming != int(h.Sum32()) {
-			ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
-			return
+		if enableCheck {
+			incoming, err := strconv.Atoi(clientSumStr)
+			if err != nil {
+				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+				return
+			}
+			h := xchecksum.New()
+			h.Write([]byte(r.URL.RequestURI()))
+			h.Write(b)
+			act := int(h.Sum32())
+			if incoming != act {
+				ReplyError(w, ErrHeaderCheckFailedMsg, http.StatusBadRequest)
+				return
+			}
 		}
 
 		r.Body = ioutil.NopCloser(bytes.NewReader(b))
