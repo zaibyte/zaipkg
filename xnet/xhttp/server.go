@@ -30,6 +30,7 @@ import (
 	"g.tesamc.com/IT/zaipkg/xlog"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/urfave/negroni/v2"
 )
 
 // ServerConfig is the config of Server.
@@ -49,7 +50,9 @@ const (
 type Server struct {
 	cfg    *ServerConfig
 	router *httprouter.Router
-	srv    *http.Server
+	svr    *http.Server
+
+	middle *negroni.Negroni
 }
 
 func parseConfig(cfg *ServerConfig) {
@@ -71,7 +74,7 @@ func NewServer(cfg *ServerConfig) (s *Server) {
 
 	s.addDefaultHandler()
 
-	s.srv = &http.Server{
+	s.svr = &http.Server{
 		Addr:     cfg.Address,
 		ErrorLog: log.New(xlog.GetLogger(), "", 0),
 		Handler:  s.router,
@@ -86,19 +89,26 @@ func NewServer(cfg *ServerConfig) (s *Server) {
 // AddHandler helps to add handler to Server.
 func (s *Server) AddHandler(method, path string, handler httprouter.Handle) {
 
-	s.router.Handle(method, path, s.must(handler))
+	s.router.Handle(method, path, handler)
+}
+
+// RegisterDefaultMiddleware registers default middleware and replacing origin handler.
+func (s *Server) RegisterDefaultMiddleware() {
+	s.middle = negroni.New(new(withRecovery), new(withCheck), new(withReqid))
+	s.middle.UseHandler(s.router)
+	s.svr.Handler = s.middle
 }
 
 // GetHandler gets Server's http.Handler.
 func (s *Server) GetHandler() http.Handler {
-	return s.srv.Handler
+	return s.svr.Handler
 }
 
 // Start starts the Server.
 func (s *Server) Start() {
 
 	go func() {
-		_ = s.srv.ListenAndServe()
+		_ = s.svr.ListenAndServe()
 	}()
 }
 
@@ -106,12 +116,7 @@ func (s *Server) Start() {
 func (s *Server) Close() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	_ = s.srv.Shutdown(ctx)
-}
-
-// must adds the headers which zai must have and check request body.
-func (s *Server) must(next httprouter.Handle) httprouter.Handle {
-	return withRecovery(withCheck(withReqid(next)))
+	_ = s.svr.Shutdown(ctx)
 }
 
 // --- Default Handler ---- //

@@ -103,6 +103,8 @@ github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415 h1:J6jeLh9e1eKbzUj
 github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415/go.mod h1:ggORF7ccw0KhHde+4jT9gopvb989ysiZTubZi/gqOvA=
 github.com/templexxx/xhex v0.0.0-20200614015412-aed53437177b h1:XeDLE6c9mzHpdv3Wb1+pWBaWv/BlHK0ZYIu/KaL6eHg=
 github.com/templexxx/xhex v0.0.0-20200614015412-aed53437177b/go.mod h1:7rwmCH0wC2fQvNEvPZ3sKXukhyCTyiaZ5VTZMQYpZKQ=
+github.com/urfave/negroni/v2 v2.0.2 h1:27gJcVxYJ2a/ytEoCHoJ7ybvyhymV4cAhGuMxkyCsrU=
+github.com/urfave/negroni/v2 v2.0.2/go.mod h1:SjdApKzYrObukpN/NnlejbQiZWIUjfDFzQltScGYigI=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zaibyte/nanozap v0.0.3 h1:opOIFFHu63sXu2FqiCcPFptNL68z8x/scHCunYR4vnE=
 github.com/zaibyte/nanozap v0.0.3/go.mod h1:sObsuIlWGRGkBrAyHMtJR1DzUGPKU9asgvwbYWa3nwQ=

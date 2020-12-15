@@ -37,11 +37,12 @@ var (
 
 func init() {
 
-	srv := NewServer(&ServerConfig{
+	svr := NewServer(&ServerConfig{
 		IdleTimeout:       0,
 		ReadHeaderTimeout: 0,
 	})
-	testServer = httptest.NewServer(srv.srv.Handler)
+	svr.RegisterDefaultMiddleware()
+	testServer = httptest.NewServer(svr.svr.Handler)
 	testSrvAddr = testServer.URL
 	testClient, _ = NewDefaultClient()
 }

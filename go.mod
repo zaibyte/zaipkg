@@ -12,4 +12,5 @@ require (
 	github.com/zaibyte/nanozap v0.0.4-0.20201204021759-39660d91a180
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
+	github.com/urfave/negroni/v2 v2.0.2
 )
