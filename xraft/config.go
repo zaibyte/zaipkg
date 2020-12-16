@@ -1,13 +1,49 @@
 package xraft
 
+import "g.tesamc.com/IT/zaipkg/config"
+
 // Raft config.
-// TODO set CheckQuorum = true
 type Config struct {
+	RaftNode RaftNodeConfig `toml:"raft_node"`
+	Member   MemberConfig   `toml:"member"`
+	NodeHost NodeHostConfig `toml:"node_host"`
+}
+
+func (cfg *Config) Adjust() {
+	cfg.RaftNode.adjust()
+	cfg.NodeHost.adjust()
+}
+
+const (
+	defaultElectionRTT        = 10
+	defaultHeartbeatRTT       = 2
+	defaultCompactionOverhead = 1024
+	defaultMaxInMemLogSize    = 128 * 1024 * 1024
+	defaultRTTMillisecond     = 2
+)
+
+type RaftNodeConfig struct {
 	// NodeID is a non-zero value used to identify a node within a Raft cluster.
-	NodeID uint64 `toml:"node_id"`
+	NodeID uint64
 	// ClusterID is the unique value used to identify a Raft cluster.
-	ClusterID   uint64 `toml:"cluster_id"`
-	ElectionRTT uint64 `toml:"election_rtt"`
+	ClusterID uint64
+	// CheckQuorum specifies whether the leader node should periodically check
+	// non-leader node status and step down to become a follower node when it no
+	// longer has the quorum.
+	CheckQuorum bool
+	// ElectionRTT is the minimum number of message RTT between elections. Message
+	// RTT is defined by NodeHostConfig.RTTMillisecond. The Raft paper suggests it
+	// to be a magnitude greater than HeartbeatRTT, which is the interval between
+	// two heartbeats. In Raft, the actual interval between elections is
+	// randomized to be between ElectionRTT and 2 * ElectionRTT.
+	//
+	// As an example, assuming NodeHostConfig.RTTMillisecond is 100 millisecond,
+	// to set the election interval to be 1 second, then ElectionRTT should be set
+	// to 10.
+	//
+	// When CheckQuorum is enabled, ElectionRTT also defines the interval for
+	// checking leader quorum.
+	ElectionRTT uint64
 	// HeartbeatRTT is the number of message RTT between heartbeats. Message
 	// RTT is defined by NodeHostConfig.RTTMillisecond. The Raft paper suggest the
 	// heartbeat interval to be close to the average RTT between nodes.
@@ -15,9 +51,9 @@ type Config struct {
 	// As an example, assuming NodeHostConfig.RTTMillisecond is 100 millisecond,
 	// to set the heartbeat interval to be every 200 milliseconds, then
 	// HeartbeatRTT should be set to 2.
-	HeartbeatRTT uint64 `toml:"heartbeat_rtt"`
+	HeartbeatRTT uint64
 	// SnapshotEntries defines how often the state machine should be snapshotted
-	// automatically. It is defined in terms of the number of applied Raft log
+	// automcatically. It is defined in terms of the number of applied Raft log
 	// entries. SnapshotEntries can be set to 0 to disable such automatic
 	// snapshotting.
 	//
@@ -36,7 +72,7 @@ type Config struct {
 	// Once automatic snapshotting is disabled by setting the SnapshotEntries
 	// field to 0, users can still use NodeHost's RequestSnapshot or
 	// SyncRequestSnapshot methods to manually request snapshots.
-	SnapshotEntries uint64 `toml:"snapshot_entries"`
+	SnapshotEntries uint64
 	// CompactionOverhead defines the number of most recent entries to keep after
 	// each Raft log compaction. Raft log compaction is performance automatically
 	// every time when a snapshot is created.
@@ -53,9 +89,31 @@ type Config struct {
 	// back to stream the full snapshot if any Raft log entry with index <= 9,500
 	// is required to be replicated.
 	CompactionOverhead uint64
+	// MaxInMemLogSize is the target size in bytes allowed for storing in memory
+	// Raft logs on each Raft node. In memory Raft logs are the ones that have
+	// not been applied yet.
+	// MaxInMemLogSize is a target value implemented to prevent unbounded memory
+	// growth, it is not for precisely limiting the exact memory usage.
+	// When MaxInMemLogSize is 0, the target is set to math.MaxUint64. When
+	// MaxInMemLogSize is set and the target is reached, error will be returned
+	// when clients try to make new proposals.
+	// MaxInMemLogSize is recommended to be significantly larger than the biggest
+	// proposal you are going to use.
+	MaxInMemLogSize uint64
+	// DisableAutoCompactions disables auto compaction used for reclaiming Raft
+	// entry storage spaces. By default, compaction is issued every time when
+	// a snapshot is captured, this helps to reclaim disk spaces as soon as
+	// possible at the cost of higher IO overhead. Users can disable such auto
+	// compactions and use NodeHost.RequestCompaction to manually request such
+	// compactions when necessary.
+	DisableAutoCompactions bool
+}
 
-	Member   MemberConfig   `toml:"member"`
-	NodeHost NodeHostConfig `toml:"node_host"`
+func (cfg *RaftNodeConfig) adjust() {
+	config.Adjust(&cfg.CompactionOverhead, defaultCompactionOverhead)
+	config.Adjust(&cfg.ElectionRTT, defaultElectionRTT)
+	config.Adjust(&cfg.HeartbeatRTT, defaultHeartbeatRTT)
+	config.Adjust(&cfg.MaxInMemLogSize, defaultMaxInMemLogSize)
 }
 
 //  - starting a brand new Raft cluster, set join to false and specify all initial
@@ -93,4 +151,8 @@ type NodeHostConfig struct {
 	// identifier for a NodeHost instance. RaftAddress should be set to the
 	// public address that can be accessed from remote NodeHost instances.
 	RaftAddress string `toml:"raft_address"`
+}
+
+func (cfg *NodeHostConfig) adjust() {
+	config.Adjust(cfg.RTTMillisecond, defaultRTTMillisecond)
 }
