@@ -110,6 +110,7 @@ const (
 	diskSealed           = 17
 	instanceSealed       = 18
 	notBootstrapped      = 19
+	instanceTombstone    = 20
 )
 
 // Error table.
@@ -133,6 +134,7 @@ var errnoStr = [...]string{
 	diskSealed:           "disk is sealed",
 	instanceSealed:       "instance is sealed",
 	notBootstrapped:      "not bootstrapped",
+	instanceTombstone:    "instance is tombstone",
 }
 
 var (
@@ -154,6 +156,7 @@ var (
 	ErrDiskSealed           = Errno(diskSealed)
 	ErrInstanceSealed       = Errno(instanceSealed)
 	ErrNotBootstrapped      = Errno(notBootstrapped)
+	ErrInstanceTombstone    = Errno(instanceTombstone)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
@@ -176,4 +179,5 @@ var StrError = map[string]error{
 	"disk is sealed":         ErrDiskSealed,
 	"instance is sealed":     ErrInstanceSealed,
 	"not Bootstrapped":       ErrNotBootstrapped,
+	"instance is tombstone":  ErrInstanceTombstone,
 }
