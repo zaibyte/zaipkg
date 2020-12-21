@@ -16,7 +16,12 @@
 
 package xlog
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+
+	"github.com/zaibyte/pkg/xlog"
+)
 
 var (
 	_global *ErrorLogger
@@ -153,4 +158,15 @@ func GetLvl() string {
 // GetLogger returns _global logger.
 func GetLogger() *ErrorLogger {
 	return _global
+}
+
+// LogPanic logs the panic reason and stack, then exit the process.
+// Commonly used with a `defer`.
+func LogPanic() {
+	if e := recover(); e != nil {
+		stackTrace := make([]byte, 1<<20)
+		n := runtime.Stack(stackTrace, false)
+		msg := fmt.Sprintf("panic occured: %v\nStack trace: %s", e, stackTrace[:n])
+		xlog.Fatal(msg)
+	}
 }
