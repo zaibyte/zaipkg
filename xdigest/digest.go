@@ -32,7 +32,7 @@
 // 5. *xxhash_low can't work well with hopscotch hashing which being used in zbuf, it cause lots of hashing conflicting,
 // crc32 does a good job there.
 // final answer: crc32.
-// TODO Maybe use wyhash in future.
+// TODO May use wyhash in future.
 //
 // Warn:
 // Don't change the digest algorithm after a zai cluster starting.
