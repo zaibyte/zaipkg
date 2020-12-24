@@ -39,6 +39,10 @@ func Adjust(val interface{}, defValue interface{}) {
 		if *v == 0 {
 			*v = defValue.(uint32)
 		}
+	case *float64:
+		if *v == 0 {
+			*v = defValue.(float64)
+		}
 	case *uint64:
 		if *v == 0 {
 			*v = defValue.(uint64)
