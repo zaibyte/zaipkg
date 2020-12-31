@@ -19,3 +19,15 @@ func IsPropEnabled() bool {
 
 	return *_propEnabled
 }
+
+// DoNothing does nothing, only for some framework testing to test pure framework cost.
+// Using n to control the function total cost, actually a spin is inside this function.
+//
+// e.g. when n = 1, it'll cost 40ns.
+// If you want 400ns wait, n could be 10.
+//
+// It's not a good idea to use time.Sleep as DoNothing, because it'll bring
+// goroutine scheduler make cost unpredictable.
+func DoNothing(n uint32) {
+	spin(n)
+}
