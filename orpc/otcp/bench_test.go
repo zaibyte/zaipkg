@@ -188,6 +188,24 @@ func BenchmarkChanContended(b *testing.B) {
 	})
 }
 
+func BenchmarkChanMultiProds(b *testing.B) {
+
+	const C = 1024
+	myc := make(chan int, C*runtime.GOMAXPROCS(0))
+	go func() {
+		for {
+			<-myc
+		}
+	}()
+	b.SetParallelism(1024)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			myc <- 1
+		}
+	})
+
+}
+
 func demoFunc() {
 	xtest.DoNothing(10) // About 400ns.
 }
