@@ -5,6 +5,6 @@ import "testing"
 func BenchmarkDoNothing(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
-		DoNothing(10)
+		DoNothing(1000)
 	}
 }
