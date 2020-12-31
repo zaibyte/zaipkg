@@ -190,7 +190,7 @@ func BenchmarkChanContended(b *testing.B) {
 
 func BenchmarkChanMultiProds(b *testing.B) {
 
-	const C = 1024
+	const C = 2048
 	myc := make(chan int, C*runtime.GOMAXPROCS(0))
 	go func() {
 		for {
