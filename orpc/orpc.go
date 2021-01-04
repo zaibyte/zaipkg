@@ -44,7 +44,7 @@ type Server interface {
 
 // Handler is the object rpc handler.
 type Handler interface {
-	PutObj(reqid, oid uint64, objData []byte) error
-	GetObj(reqid, oid uint64) (objData xbytes.Buffer, err error)
+	PutObj(reqid, oid uint64, objData xbytes.Buffer) error
+	GetObj(reqid, oid uint64) (objData xbytes.Buffer, err error)	// Using xbytes.Buffer here for saving potential GC overhead.
 	DeleteObj(reqid, oid uint64) error
 }
