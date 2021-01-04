@@ -49,12 +49,17 @@ func newDecoder(conn net.Conn, bufsize int, hash *xdigest.Digest) *decoder {
 	return &decoder{br: bufio.NewReaderSize(r, bufsize), hash: hash}
 }
 
-type message struct {
+type msgBytes struct {
 	header header
-	body   xbytes.Buffer
+	body   []byte
 }
 
-func (d *decoder) decode(msg *message, headerBuf []byte) error {
+type msgBuf struct {
+	header header
+	body xbytes.Buffer
+}
+
+func (d *decoder) decode(msg *msgBuf, headerBuf []byte) error {
 
 	var hbuf []byte
 	_, ok := msg.header.(*reqHeader)
@@ -146,7 +151,30 @@ func newEncoder(conn net.Conn, bufsize int) *encoder {
 	return &encoder{bw: bufio.NewWriterSize(w, bufsize)}
 }
 
-func (e *encoder) encode(msg *message, headerBuf []byte) error {
+func (e *encoder) encode(msg *msgBytes, headerBuf []byte) error {
+	var hbuf []byte
+	_, ok := msg.header.(*reqHeader)
+	if ok {
+		hbuf = headerBuf[:reqHeaderSize]
+	} else {
+		hbuf = headerBuf[:respHeaderSize]
+	}
+	_ = msg.header.encode(hbuf)
+	_, err := e.bw.Write(hbuf)
+	if err != nil {
+		return err
+	}
+
+	n := msg.header.getBodySize()
+	if n == 0 {
+		return nil
+	}
+
+	_, err = e.bw.Write(msg.body)
+	return err
+}
+
+func (e *encoder) encodeBuf(msg *msgBuf, headerBuf []byte) error {
 	var hbuf []byte
 	_, ok := msg.header.(*reqHeader)
 	if ok {
@@ -166,7 +194,6 @@ func (e *encoder) encode(msg *message, headerBuf []byte) error {
 	}
 
 	defer msg.body.Close()
-
 	_, err = e.bw.Write(msg.body.Bytes())
 	return err
 }

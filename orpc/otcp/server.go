@@ -318,7 +318,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	hash := xdigest.New()
 
 	dec := newDecoder(r, s.RecvBufferSize, hash)
-	req := &message{
+	req := &msgBuf{
 		header: new(reqHeader),
 	}
 	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
@@ -446,7 +446,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 	t := time.NewTimer(s.FlushDelay)
 	var flushChan <-chan time.Time
 	enc := newEncoder(w, s.SendBufferSize)
-	msg := new(message)
+	msg := new(msgBuf)
 	header := new(respHeader)
 	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
 	for {
@@ -494,7 +494,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		m.reset()
 		serverMessagePool.Put(m)
 
-		if err := enc.encode(msg, headerBuf); err != nil {
+		if err := enc.encodeBuf(msg, headerBuf); err != nil {
 			xlog.ErrorIDf(reqid, "failed to send response to: %s: %s", w.RemoteAddr().String(), err)
 			return
 		}

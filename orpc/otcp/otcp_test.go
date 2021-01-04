@@ -181,23 +181,16 @@ func TestClient_GetObj(t *testing.T) {
 	}
 
 	for oid, objBytes := range stor {
-		bf, err := c.GetObj(0, oid, 0)
+		size := sizes[oid]
+		act := make([]byte, size)
+		err := c.GetObj(0, oid, act, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		size := sizes[oid]
-		act := make([]byte, size)
 
-		n, err := bf.Read(act)
-		if err != nil {
-			bf.Close()
-			t.Fatal(err, size, n)
-		}
 		if !bytes.Equal(act, objBytes) {
-			bf.Close()
 			t.Fatal("obj data mismatch")
 		}
-		bf.Close()
 	}
 }
 
@@ -275,28 +268,20 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 
 	for oid, objBytes := range stor {
-		bf, err := c.GetObj(0, oid, 0)
+		size := sizes[oid]
+		act := make([]byte, size)
+		err := c.GetObj(0, oid, act, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
-		size := sizes[oid]
-		act := make([]byte, size)
-		n, err := bf.Read(act)
-		if err != nil {
-			bf.Close()
-			t.Fatal(err, size, n)
-		}
+
 		if !bytes.Equal(act, objBytes) {
-			bf.Close()
 			t.Fatal("obj data mismatch")
 		}
-		bf.Close()
 	}
 
 	for _, oid := range deleted {
-		bf, err := c.GetObj(0, oid, 0)
-
-		assert.Nil(t, bf)
+		err := c.GetObj(0, oid, make([]byte, 0), 0)
 		assert.Equal(t, orpc.ErrNotFound, err)
 	}
 }
@@ -366,19 +351,17 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
-			bf, err := c.GetObj(0, oid, 0)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer bf.Close()
-
 			v, ok := sizes.Load(oid)
 			if !ok {
 				t.Fatal("not found")
 			}
 			size := v.(int)
 			act := make([]byte, size)
-			bf.Read(act)
+			err := c.GetObj(0, oid, act, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			v2, ok := stor.Load(oid)
 			if !ok {
 				t.Fatal("not found")
@@ -445,11 +428,10 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
-			bf, err := c.GetObj(0, oid, 0)
+			err := c.GetObj(0, oid, make([]byte, 0), 0)
 			if err != orpc.ErrNotFound {
 				t.Fatal("error should be not found")
 			}
-			assert.Nil(t, bf)
 		}(oid)
 	}
 

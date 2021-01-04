@@ -229,7 +229,10 @@ func (c *Client) GetObj(reqid, oid uint64, objData []byte, timeout time.Duration
 	if err != nil {
 		return err
 	}
-	buf.Close()
+	defer buf.Close()
+
+	copy(objData, buf.Bytes())
+	return nil
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
@@ -299,6 +302,10 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) 
 	ar.method = method
 	ar.oid = oid
 	ar.done = make(chan struct{})
+
+	if method != objPutMethod {
+		ar.reqData = nil
+	}
 
 	select {
 	case c.requestsChan <- ar:
@@ -439,7 +446,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 	defer func() { done <- err }()
 
 	enc := newEncoder(w, c.SendBufferSize)
-	msg := new(message)
+	msg := new(msgBytes)
 	header := new(reqHeader)
 
 	t := time.NewTimer(c.FlushDelay)
@@ -541,7 +548,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	hash := xdigest.New()
 
 	dec := newDecoder(r, c.RecvBufferSize, hash)
-	msg := &message{
+	msg := &msgBuf{
 		header: new(respHeader),
 	}
 	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
@@ -553,9 +560,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 				continue // Keeping trying to read request header.
 			}
 			xlog.Errorf("failed to read request from %s: %s", r.RemoteAddr().String(), err)
-			if msg.body != nil {
-				_ = msg.body.Close()
-			}
+
 			return
 		}
 
@@ -575,9 +580,6 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 		if !ok {
 			xlog.Errorf("unexpected msgID: %d obtained from: %s", msgID, c.Addr)
 			err = orpc.ErrInternalServer
-			if msg.body != nil {
-				_ = msg.body.Close()
-			}
 			return
 		}
 
@@ -588,9 +590,6 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 			if actDigest != digest {
 				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
 				ar.err = orpc.ErrChecksumMismatch
-				if body != nil {
-					_ = body.Close()
-				}
 				ar.respBody = nil
 				msg.body = nil
 				close(ar.done)
@@ -602,9 +601,6 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if errno != 0 {
 			ar.err = orpc.Errno(errno).ToErr()
-			if body != nil {
-				_ = body.Close()
-			}
 			ar.respBody = nil
 			msg.body = nil
 			close(ar.done)
@@ -612,10 +608,6 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		if n == 0 {
-			if body != nil {
-				_ = body.Close()
-			}
-
 			ar.respBody = nil
 			msg.body = nil
 			close(ar.done)
