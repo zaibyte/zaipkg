@@ -15,7 +15,6 @@
 package orpc
 
 import (
-	"io"
 	"time"
 
 	"g.tesamc.com/IT/zaipkg/xbytes"
@@ -28,11 +27,11 @@ type Client interface {
 	// Stop Client, release resource.
 	Stop() error
 	// Put puts object to the ZBuf node which Client connected.
-	PutObj(reqid uint64, oid string, objData []byte, timeout time.Duration) error
+	PutObj(reqid uint64, oid uint64, objData []byte, timeout time.Duration) error
 	// Get gets object from the ZBuf node which Client connected.
-	GetObj(reqid uint64, oid string, timeout time.Duration) (obj io.ReadCloser, err error)
+	GetObj(reqid uint64, oid uint64, objData []byte, timeout time.Duration) error
 	// Delete deletes object in the ZBuf node which Client connected.
-	DeleteObj(reqid uint64, oid string, timeout time.Duration) error
+	DeleteObj(reqid uint64, oid uint64, timeout time.Duration) error
 }
 
 // Server is the object RPC server.
@@ -45,7 +44,7 @@ type Server interface {
 
 // Handler is the object rpc handler.
 type Handler interface {
-	PutObj(reqid, oid uint64, objData xbytes.Buffer) error
+	PutObj(reqid, oid uint64, objData []byte) error
 	GetObj(reqid, oid uint64) (objData xbytes.Buffer, err error)
 	DeleteObj(reqid, oid uint64) error
 }
