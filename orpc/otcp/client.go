@@ -41,7 +41,6 @@ package otcp
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"runtime"
 	"sync"
@@ -117,12 +116,16 @@ type Client struct {
 	stopWg   sync.WaitGroup
 }
 
+func (c *Client) Stop() error {
+	panic("implement me")
+}
+
 // asyncResult is a result returned from Client.callAsync().
 type asyncResult struct {
 	method  uint8
 	reqid   uint64
 	oid     uint64
-	reqData xbytes.Buffer // It only can be released after writing or writing failed.
+	reqData []byte
 
 	respBody xbytes.Buffer
 	// resp is become available after <-done unblocks.
@@ -221,8 +224,12 @@ func (c *Client) PutObj(reqid, oid uint64, objData []byte, timeout time.Duration
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, timeout time.Duration) (obj io.ReadCloser, err error) {
-	return c.callTimeout(reqid, objGetMethod, oid, nil, timeout)
+func (c *Client) GetObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
+	buf, err := c.callTimeout(reqid, objGetMethod, oid, objData, timeout)
+	if err != nil {
+		return err
+	}
+	buf.Close()
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
@@ -287,15 +294,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) 
 
 	ar = acquireAsyncResult()
 
-	// In case of after returning (meet error), the caller will drop the data,
-	// but it's still in the client write process,
-	// it may sent dirty data. Copy is a safe choice.
-	if body != nil {
-		reqData := xbytes.GetNBytes(len(body))
-		_, _ = reqData.Write(body)
-		ar.reqData = reqData
-	}
-
+	ar.reqData = body
 	ar.reqid = reqid
 	ar.method = method
 	ar.oid = oid
@@ -479,9 +478,6 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		if ar.isCanceled() {
-			if ar.reqData != nil {
-				_ = ar.reqData.Close()
-			}
 
 			if ar.done != nil {
 				ar.err = orpc.ErrCanceled
@@ -494,9 +490,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		if ar.done == nil {
-			if ar.reqData != nil {
-				_ = ar.reqData.Close()
-			}
+
 			releaseAsyncResult(ar)
 			continue
 		}
@@ -516,7 +510,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		header.msgID = msgID
 		header.reqid = ar.reqid
 		if ar.reqData != nil {
-			header.bodySize = uint32(len(ar.reqData.Bytes()))
+			header.bodySize = uint32(len(ar.reqData))
 		} else {
 			header.bodySize = 0
 		}
