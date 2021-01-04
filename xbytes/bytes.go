@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO: May cause GC overhead because escape to the heap.
+// https://g.tesamc.com/IT/zaipkg/issues/11
+//
+// You should only using this package for the buffer would be passed around(escape to heap)
+// when the buffer is <= 32KB.
 package xbytes
 
 import (
@@ -25,7 +30,9 @@ type Buffer interface {
 	Set(b []byte)
 }
 
-const MaxBytesSizeInPool = 32 * 1024 // by default, create 32 KiB buffers.
+// I don't think this would be common that needing millions objects which > 128KB in second.
+// 128KB is enough for most cases.
+const MaxBytesSizeInPool = 128 * 1024
 
 // A BytesBuffer implements the io.ReadCloser, io.Writer interface by reading from
 // a byte slice.
