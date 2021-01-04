@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/typeutil"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,11 +54,17 @@ func TestAdjust(t *testing.T) {
 		t.Fatal("adjust uint32 mismatch")
 	}
 
-	var defDuration time.Duration = time.Second
+	var defDuration = time.Second
 	var duration0 time.Duration
 	Adjust(&duration0, defDuration)
 	if duration0 != defDuration {
 		t.Fatal("adjust time.Duration mismatch")
+	}
+
+	var tuduration0 typeutil.Duration
+	Adjust(&tuduration0, defDuration)
+	if tuduration0.Duration != defDuration {
+		t.Fatal("adjust typeutil.Duration mismatch")
 	}
 
 	var defStrings = []string{"def"}

@@ -16,7 +16,11 @@
 
 package config
 
-import "time"
+import (
+	"time"
+
+	"g.tesamc.com/IT/zaipkg/typeutil"
+)
 
 // Adjust val in config to default value if need.
 // val must be a pointer, and the type of defValue must be
@@ -48,8 +52,12 @@ func Adjust(val interface{}, defValue interface{}) {
 			*v = defValue.(uint64)
 		}
 	case *time.Duration:
-		if *v == 0 {
+		if *v <= 0 {
 			*v = defValue.(time.Duration)
+		}
+	case *typeutil.Duration:
+		if v.Duration <= 0 {
+			v.Duration = defValue.(time.Duration)
 		}
 	case *[]string:
 		if len(*v) == 0 {
