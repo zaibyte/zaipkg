@@ -29,9 +29,9 @@ func TestMakeParseReqID(t *testing.T) {
 	expTime := time.Unix(0, tsc.UnixNano())
 	reqID := MakeReqID()
 	ts := GetTSFromReqID(reqID)
-	if expTime.Unix() != ts/int64(time.Second) ||
+	if expTime.Unix() != ts/int64(time.Second) &&
 		expTime.Unix()+1 != ts/int64(time.Second) { // May meet critical point.
-		t.Fatal("mismatch")
+		t.Fatal("mismatch", expTime.Unix(), ts/int64(time.Second))
 	}
 }
 
