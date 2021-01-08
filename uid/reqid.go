@@ -58,15 +58,13 @@ func MakeReqID() uint64 {
 
 const reqTSMask = (1 << 62) - 1
 
-// ParseReqID parses reqID.
-func ParseReqID(reqID uint64) (t time.Time) {
-
-	ts := reqID & reqTSMask
-	return TsNanoToTime(ts)
+// GetTSFromReqID gets unix timestamp from reqID.
+func GetTSFromReqID(reqID uint64) int64 {
+	reqTS := reqID & reqTSMask
+	return TsNanoToTime(reqTS)
 }
 
-// TsNanoToTime converts zai nanosecond ts to time.
-func TsNanoToTime(ts uint64) time.Time {
-	nano := int64(ts) + epochNano
-	return time.Unix(0, nano)
+// TsNanoToTime converts reqID ts to unix ts.
+func TsNanoToTime(ts uint64) int64 {
+	return int64(ts) + epochNano
 }

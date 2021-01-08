@@ -17,52 +17,22 @@
 package uid
 
 import (
-	"runtime"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/templexxx/tsc"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestParseReqID(t *testing.T) {
+func TestMakeParseReqID(t *testing.T) {
 
-	reqids := new(sync.Map)
-	// Because it's fast, second ts won't change.
+	// Because it's fast, second ts may not change.
 	expTime := time.Unix(0, tsc.UnixNano())
-
-	wg := new(sync.WaitGroup)
-	n := runtime.NumCPU()
-	wg.Add(n)
-	for i := 0; i < n; i++ {
-		go func(seed int) {
-			defer wg.Done()
-
-			boxID := uint32(seed + 1)
-			reqid := MakeReqID()
-			reqids.Store(boxID, reqid)
-
-		}(i)
+	reqID := MakeReqID()
+	ts := GetTSFromReqID(reqID)
+	if expTime.Unix() != ts/int64(time.Second) ||
+		expTime.Unix()+1 != ts/int64(time.Second) { // May meet critical point.
+		t.Fatal("mismatch")
 	}
-	wg.Wait()
-
-	wg2 := new(sync.WaitGroup)
-	wg2.Add(n)
-	for i := 0; i < n; i++ {
-		go func(i int) {
-			defer wg2.Done()
-
-			boxID := uint32(i + 1)
-			v, ok := reqids.Load(boxID)
-			assert.True(t, ok)
-			reqID := v.(uint64)
-			actTime := ParseReqID(reqID)
-			assert.Equal(t, expTime.Unix(), actTime.Unix())
-		}(i)
-	}
-	wg2.Wait()
 }
 
 func BenchmarkMakeReqID(b *testing.B) {
@@ -70,33 +40,4 @@ func BenchmarkMakeReqID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = MakeReqID()
 	}
-}
-
-func BenchmarkMakeReqID_Parallel(b *testing.B) {
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			_ = MakeReqID()
-		}
-	})
-}
-
-func BenchmarkParseReqID(b *testing.B) {
-
-	s := MakeReqID()
-
-	for i := 0; i < b.N; i++ {
-		_ = ParseReqID(s)
-	}
-}
-
-func BenchmarkParseReqID_Parallel(b *testing.B) {
-
-	s := MakeReqID()
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			_ = ParseReqID(s)
-		}
-	})
 }
