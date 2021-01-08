@@ -169,10 +169,10 @@ func TestClient_GetObj(t *testing.T) {
 
 	for i := 0; i < 7; i++ {
 
-		size := (1 << i) * 1024
+		size := (1 << i) * uid.GrainSize
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
@@ -242,10 +242,10 @@ func TestClient_DeleteObj(t *testing.T) {
 
 	for i := 0; i < 7; i++ {
 
-		size := (1 << i) * 1024
+		size := (1 << i) * uid.GrainSize
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
@@ -328,17 +328,17 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	c.Start()
 	defer c.Close()
 
-	req := make([]byte, 1024*1024)
+	req := make([]byte, 18*uid.GrainSize)
 	rand.Read(req)
 
 	oids := make([]uint64, 18)
 
-	for i := 0; i < 18; i++ {
+	for i := 1; i < 18; i++ {
 
-		size := (1 << i) * 2
+		size := i * uid.GrainSize
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
@@ -347,7 +347,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for _, oid := range oids {
+	for _, oid := range oids[1:] {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
@@ -405,17 +405,17 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	c.Start()
 	defer c.Close()
 
-	req := make([]byte, 1024*1024)
+	req := make([]byte, 18*uid.GrainSize)
 	rand.Read(req)
 
 	oids := make([]uint64, 18)
 
-	for i := 0; i < 18; i++ {
+	for i := 1; i < 18; i++ {
 
-		size := (1 << i) * 2
+		size := i * 4096
 		objData := req[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
@@ -424,7 +424,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for _, oid := range oids {
+	for _, oid := range oids[1:] {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
