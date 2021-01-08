@@ -77,8 +77,8 @@ func BytesToGrains(bytes uint32) uint32 {
 	return uint32(a) / GrainSize
 }
 
-// GrainToBytes returns bytes the grains takes.
-func GrainToBytes(grains uint32) uint32 {
+// GrainsToBytes returns bytes the grains takes.
+func GrainsToBytes(grains uint32) uint32 {
 	return GrainSize * grains
 }
 
