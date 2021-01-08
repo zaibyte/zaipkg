@@ -52,21 +52,21 @@ func TestBytesToGrains(t *testing.T) {
 func TestOIDMinMax(t *testing.T) {
 
 	min := MakeOID(1, 1, 0, 0, NormalObj)
-	boxID, groupID, size, digest, otype, err := ParseOID(min)
+	boxID, groupID, grains, digest, otype, err := ParseOID(min)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != 1 || groupID != 1 || size != 0 ||
+	if boxID != 1 || groupID != 1 || grains != 0 ||
 		digest != 0 || otype != NormalObj {
-		t.Fatal("min mismatch", boxID, groupID, size, digest, otype)
+		t.Fatal("min mismatch", boxID, groupID, grains, digest, otype)
 	}
 
-	max := MakeOID(MaxBoxID, MaxGroupID, MaxSize, math.MaxUint32, MaxOType)
-	boxID, groupID, size, digest, otype, err = ParseOID(max)
+	max := MakeOID(MaxBoxID, MaxGroupID, MaxGrains, math.MaxUint32, MaxOType)
+	boxID, groupID, grains, digest, otype, err = ParseOID(max)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != MaxBoxID || groupID != MaxGroupID || size != MaxSize ||
+	if boxID != MaxBoxID || groupID != MaxGroupID || grains != MaxGrains ||
 		digest != math.MaxUint32 || otype != MaxOType {
 		t.Fatal("max mismatch")
 	}
@@ -80,7 +80,7 @@ func TestOIDMakeParse(t *testing.T) {
 		boxID := uint32(rand.Intn(MaxBoxID + 1))
 		groupID := uint32(rand.Intn(MaxGroupID + 1))
 		otype := uint8(rand.Intn(MaxOType + 1))
-		size := uint32(rand.Intn(MaxSize + 1))
+		grain := uint32(rand.Intn(MaxGrains + 1))
 		digest := uint32(rand.Intn(math.MaxUint32 + 1))
 
 		if boxID == 0 {
@@ -89,7 +89,7 @@ func TestOIDMakeParse(t *testing.T) {
 		if groupID == 0 {
 			groupID = 2
 		}
-		oid := MakeOID(boxID, groupID, size, digest, otype)
+		oid := MakeOID(boxID, groupID, grain, digest, otype)
 
 		boxIDAct, groupIDAct, sizeAct, digestAct, otypeAct, err := ParseOID(oid)
 		if err != nil {
@@ -98,7 +98,7 @@ func TestOIDMakeParse(t *testing.T) {
 
 		assert.Equal(t, boxID, boxIDAct)
 		assert.Equal(t, groupID, groupIDAct)
-		assert.Equal(t, size, sizeAct)
+		assert.Equal(t, grain, sizeAct)
 		assert.Equal(t, digest, digestAct)
 		assert.Equal(t, otype, otypeAct)
 	}

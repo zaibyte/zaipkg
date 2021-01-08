@@ -24,7 +24,7 @@ import (
 
 // oid struct(uint64):
 // +----------+-------------+----------+----------+------------+
-// | boxID(3) | groupID(17) | size(11) | otype(1) | digest(32) |
+// | boxID(3) | groupID(17) | grains(11) | otype(1) | digest(32) |
 // +----------+-------------+----------+----------+------------+
 // 0                                                          64
 //
@@ -32,7 +32,7 @@ import (
 //
 // boxID: [0, 3), 0 is reserved.
 // groupID: [3, 20), 0 is reserved.
-// size: [20, 31), supports 4MB for 4KB grain.
+// grains: [20, 31), supports 4MB for 4KB grain.
 // otype: [31, 32)
 // digest: [32, 64), object digest.
 
@@ -41,7 +41,7 @@ const (
 
 	MaxBoxID   = (1 << 3) - 1
 	MaxGroupID = (1 << 17) - 1
-	MaxSize    = (1 << 11) - 1
+	MaxGrains  = (1 << 11) - 1
 	MaxOType   = 1
 )
 
@@ -51,7 +51,7 @@ const (
 	LinkObj   uint8 = 1 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
 )
 
-func isOkOID(boxID, groupID, size uint32, otype uint8) bool {
+func isOkOID(boxID, groupID, grains uint32, otype uint8) bool {
 	if boxID == 0 || boxID > MaxBoxID {
 		return false
 	}
@@ -60,7 +60,7 @@ func isOkOID(boxID, groupID, size uint32, otype uint8) bool {
 		return false
 	}
 
-	if size > MaxSize { // Size could be 0, if the object is deleted.
+	if grains > MaxGrains { // Size could be 0, if the object is deleted.
 		return false
 	}
 
@@ -83,32 +83,32 @@ func GrainsToBytes(grains uint32) uint32 {
 }
 
 // MakeOID makes a new oid.
-func MakeOID(boxID, groupID, size, digest uint32, otype uint8) uint64 {
+func MakeOID(boxID, groupID, grains, digest uint32, otype uint8) uint64 {
 
-	if !isOkOID(boxID, groupID, size, otype) {
+	if !isOkOID(boxID, groupID, grains, otype) {
 		panic(fmt.Sprintf("illegal OID elements, "+
-			"boxID: %d, groupID: %d, size: %d, otype: %d",
-			boxID, groupID, size, otype))
+			"boxID: %d, groupID: %d, grains: %d, otype: %d",
+			boxID, groupID, grains, otype))
 	}
 
-	return uint64(digest)<<32 | uint64(otype)<<31 | uint64(size)<<20 | uint64(groupID)<<3 | uint64(boxID)
+	return uint64(digest)<<32 | uint64(otype)<<31 | uint64(grains)<<20 | uint64(groupID)<<3 | uint64(boxID)
 }
 
 // ParseOID parses oid.
-func ParseOID(oid uint64) (boxID, groupID, size, digest uint32, otype uint8, err error) {
+func ParseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8, err error) {
 
 	lowBits := uint32(oid)
 	boxID = lowBits & MaxBoxID
 	groupID = (lowBits >> 3) & MaxGroupID
-	size = (lowBits >> 20) & MaxSize
+	grains = (lowBits >> 20) & MaxGrains
 	otype = uint8(lowBits>>31) & MaxOType
 
 	digest = uint32(oid >> 32)
 
-	if !isOkOID(boxID, groupID, size, otype) {
+	if !isOkOID(boxID, groupID, grains, otype) {
 		err = fmt.Errorf("illegal OID elements, "+
-			"boxID: %d, groupID: %d, otype: %d",
-			boxID, groupID, otype)
+			"boxID: %d, groupID: %d, grains: %d, otype: %d",
+			boxID, groupID, grains, otype)
 		return
 	}
 	return
