@@ -11,7 +11,7 @@ func Round(f float64, n int) float64 {
 	return math.Trunc(f*pow10n+0.5) / pow10n
 }
 
-// AlignTo aligns n to align.
-func AlignTo(n int64, align int64) int64 {
+// AlignSize returns size after n aligns to align.
+func AlignSize(n int64, align int64) int64 {
 	return (n + align - 1) &^ (align - 1)
 }

@@ -26,6 +26,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBytesToGrains(t *testing.T) {
+	var n uint32 = GrainSize
+	var i uint32
+
+	if BytesToGrains(0) != 0 {
+		t.Fatal("mismatch")
+	}
+
+	for i = 1; i <= n; i++ {
+		g := BytesToGrains(i)
+		if g != 1 {
+			t.Fatal("mismatch")
+		}
+	}
+
+	for i = n + 1; i < n*2; i++ {
+		g := BytesToGrains(i)
+		if g != 2 {
+			t.Fatal("mismatch")
+		}
+	}
+}
+
 func TestOIDMinMax(t *testing.T) {
 
 	min := MakeOID(1, 1, 0, 0, NormalObj)

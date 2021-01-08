@@ -18,6 +18,8 @@ package uid
 
 import (
 	"fmt"
+
+	"g.tesamc.com/IT/zaipkg/xmath"
 )
 
 // oid struct(uint64):
@@ -69,15 +71,15 @@ func isOkOID(boxID, groupID, size uint32, otype uint8) bool {
 	return true
 }
 
-// ToGrains counts how many grains should the size taken.
-func ToGrains(size uint32) uint32 {
-	// TODO call a alignTo function in
-
+// BytesToGrains counts how many grains should the bytes taken.
+func BytesToGrains(bytes uint32) uint32 {
+	a := xmath.AlignSize(int64(bytes), GrainSize)
+	return uint32(a) / GrainSize
 }
 
-// ToSize returns size the grains will take.
-func ToSize(grains uint32) uint32 {
-
+// GrainToBytes returns bytes the grains takes.
+func GrainToBytes(grains uint32) uint32 {
+	return GrainSize * grains
 }
 
 // MakeOID makes a new oid.
