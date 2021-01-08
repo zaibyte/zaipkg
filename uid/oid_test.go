@@ -89,6 +89,9 @@ func TestOIDMakeParse(t *testing.T) {
 		if groupID == 0 {
 			groupID = 2
 		}
+		if otype == 0 {
+			otype = 3
+		}
 		oid := MakeOID(boxID, groupID, grain, digest, otype)
 
 		boxIDAct, groupIDAct, sizeAct, digestAct, otypeAct, err := ParseOID(oid)

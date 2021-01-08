@@ -24,31 +24,31 @@ import (
 
 // oid struct(uint64):
 // +----------+-------------+------------+----------+------------+
-// | boxID(3) | groupID(17) | grains(11) | otype(1) | digest(32) |
+// | boxID(3) | groupID(16) | grains(11) | otype(2) | digest(32) |
 // +----------+-------------+------------+----------+------------+
 // 0                                                            64
 //
 // Total length: 8B.
 //
 // boxID: [0, 3), 0 is reserved.
-// groupID: [3, 20), 0 is reserved.
-// grains: [20, 31), supports 4MB for 4KB grain.
-// otype: [31, 32)
+// groupID: [3, 19), 0 is reserved.
+// grains: [19, 30), supports 4MB for 4KB grain.
+// otype: [30, 32), 0 is reserved.
 // digest: [32, 64), object digest.
 
 const (
 	GrainSize = 4096 // 4KiB grain.
 
 	MaxBoxID   = (1 << 3) - 1
-	MaxGroupID = (1 << 17) - 1
+	MaxGroupID = (1 << 16) - 1
 	MaxGrains  = (1 << 11) - 1
-	MaxOType   = 1
+	MaxOType   = 3
 )
 
 // Object types.
 const (
-	NormalObj uint8 = 0 // NormalObj: Normal Object, maximum size is 4MB.
-	LinkObj   uint8 = 1 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
+	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
+	LinkObj   uint8 = 2 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
 )
 
 func isOkOID(boxID, groupID, grains uint32, otype uint8) bool {
@@ -64,7 +64,7 @@ func isOkOID(boxID, groupID, grains uint32, otype uint8) bool {
 		return false
 	}
 
-	if otype > MaxOType {
+	if otype == 0 || otype > MaxOType {
 		return false
 	}
 
@@ -91,7 +91,7 @@ func MakeOID(boxID, groupID, grains, digest uint32, otype uint8) uint64 {
 			boxID, groupID, grains, otype))
 	}
 
-	return uint64(digest)<<32 | uint64(otype)<<31 | uint64(grains)<<20 | uint64(groupID)<<3 | uint64(boxID)
+	return uint64(digest)<<32 | uint64(otype)<<30 | uint64(grains)<<19 | uint64(groupID)<<3 | uint64(boxID)
 }
 
 // ParseOID parses oid.
@@ -100,8 +100,8 @@ func ParseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8, e
 	lowBits := uint32(oid)
 	boxID = lowBits & MaxBoxID
 	groupID = (lowBits >> 3) & MaxGroupID
-	grains = (lowBits >> 20) & MaxGrains
-	otype = uint8(lowBits>>31) & MaxOType
+	grains = (lowBits >> 19) & MaxGrains
+	otype = uint8(lowBits>>30) & MaxOType
 
 	digest = uint32(oid >> 32)
 
