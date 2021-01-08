@@ -35,6 +35,8 @@ import (
 // digest: [32, 64), object digest.
 
 const (
+	GrainSize = 4096 // 4KiB grain.
+
 	MaxBoxID   = (1 << 3) - 1
 	MaxGroupID = (1 << 17) - 1
 	MaxSize    = (1 << 11) - 1
@@ -65,6 +67,17 @@ func isOkOID(boxID, groupID, size uint32, otype uint8) bool {
 	}
 
 	return true
+}
+
+// ToGrains counts how many grains should the size taken.
+func ToGrains(size uint32) uint32 {
+	// TODO call a alignTo function in
+
+}
+
+// ToSize returns size the grains will take.
+func ToSize(grains uint32) uint32 {
+
 }
 
 // MakeOID makes a new oid.

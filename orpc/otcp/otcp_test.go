@@ -119,7 +119,7 @@ func TestRequestTimeout(t *testing.T) {
 	objData := make([]byte, 16)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
-	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
 	for i := 0; i < 10; i++ {
 		err := c.PutObj(0, oid, objData, time.Millisecond)
