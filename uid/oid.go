@@ -94,7 +94,7 @@ func MakeOID(boxID, groupID, size, digest uint32, otype uint8) uint64 {
 	return uint64(digest)<<32 | uint64(otype)<<31 | uint64(size)<<20 | uint64(groupID)<<3 | uint64(boxID)
 }
 
-// ParseReqID parses reqID.
+// ParseOID parses oid.
 func ParseOID(oid uint64) (boxID, groupID, size, digest uint32, otype uint8, err error) {
 
 	lowBits := uint32(oid)
