@@ -22,4 +22,8 @@ type Config struct {
 	// Enable Prometheus time histogram may impact performance.
 	// Deprecated.
 	EnableHandlingTimeHistogram bool `toml:"enable_handling_time_histogram"`
+
+	// GOMAXPROCS sets runtime.GOXMAXPROCS manually.
+	// Sometimes we want more Go Processes for reducing stall.
+	GOMAXPROCS int `toml:"gomaxprocs"`
 }
