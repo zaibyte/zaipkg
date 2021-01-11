@@ -1,6 +1,7 @@
 package app
 
 import (
+	"g.tesamc.com/IT/zaipkg/typeutil"
 	"g.tesamc.com/IT/zaipkg/xlog"
 )
 
@@ -26,4 +27,6 @@ type Config struct {
 	// GOMAXPROCS sets runtime.GOXMAXPROCS manually.
 	// Sometimes we want more Go Processes for reducing stall.
 	GOMAXPROCS int `toml:"gomaxprocs"`
+
+	TimeCalibrateInterval typeutil.Duration `toml:"time_calibrate_interval"`
 }
