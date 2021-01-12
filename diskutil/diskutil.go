@@ -43,7 +43,25 @@ func IsBroken(err error) bool {
 	return false
 }
 
+// UsageState Wraps Syscall Statfs.
+type UsageState struct {
+	Size uint64
+	Free uint64
+	Used uint64
+}
+
+// GetUsageState returns disk basic capacity state (unit: Byte).
+func GetUsageState(path string) (UsageState, error) {
+	return getUsage(path)
+}
+
 // GetFreeSize returns disk free space size (unit: Byte).
 func GetFreeSize(path string) (free uint64, err error) {
-	return getFreeSpace(path)
+	u, err := GetUsageState(path)
+	if err != nil {
+		return 0, err
+	}
+	return u.Free, nil
 }
+
+// TODO get disk type

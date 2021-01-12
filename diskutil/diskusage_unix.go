@@ -16,10 +16,14 @@ package diskutil
 
 import "golang.org/x/sys/unix"
 
-func getFreeSpace(path string) (uint64, error) {
+func getUsage(path string) (UsageState, error) {
 	stat := unix.Statfs_t{}
 	if err := unix.Statfs(path, &stat); err != nil {
-		return 0, err
+		return UsageState{}, err
 	}
-	return uint64(stat.Bsize) * stat.Bfree, nil
+	return UsageState{
+		Size: uint64(stat.Bsize) * stat.Blocks,
+		Free: uint64(stat.Bsize) * stat.Bfree, // Free in filesystem.
+		Used: uint64(stat.Bsize) * (stat.Blocks - stat.Bfree),
+	}, nil
 }
