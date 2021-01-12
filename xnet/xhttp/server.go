@@ -208,6 +208,11 @@ func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int) {
 	}
 }
 
+// GetReqID gets request id from request.
+func GetReqID(req *http.Request) uint64 {
+	return reqIDStrToInt(req.Header.Get(ReqIDHeader))
+}
+
 func makeReplyErrMsg(err error) string {
 	return fmt.Sprintf("write resp failed: %s", err.Error())
 }
