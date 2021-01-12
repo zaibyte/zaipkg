@@ -3,8 +3,10 @@ module g.tesamc.com/IT/zaipkg
 go 1.14
 
 require (
+	g.tesamc.com/IT/zproto v0.0.0-20210112011838-ee54fee786d2
 	github.com/BurntSushi/toml v0.3.1
 	github.com/docker/go-units v0.4.0
+	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a // indirect
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/prometheus/client_golang v1.6.0
@@ -15,5 +17,5 @@ require (
 	github.com/zaibyte/nanozap v0.0.4-0.20201204021759-39660d91a180
 	github.com/zaibyte/pkg v0.0.0-20200816125345-341ffff3269a
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 )

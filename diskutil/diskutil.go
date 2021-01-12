@@ -19,7 +19,12 @@ package diskutil
 
 import (
 	"errors"
+	"strings"
 	"syscall"
+
+	"github.com/gyuho/linux-inspect/df"
+
+	"g.tesamc.com/IT/zproto/pkg/metapb"
 )
 
 // IsBroken returns an error is disk error or not.
@@ -64,4 +69,21 @@ func GetFreeSize(path string) (free uint64, err error) {
 	return u.Free, nil
 }
 
-// TODO get disk type
+// GetDiskType gets disk device interface type by `df`.
+//
+// It regards all non-nvme devices as SATA in present.
+func GetDiskType(path string) metapb.DiskType {
+	rs, err := df.GetDefault(``)
+	if err != nil {
+		return metapb.DiskType_Disk_Unknown
+	}
+
+	for _, r := range rs {
+		if r.MountedOn == path {
+			if strings.HasPrefix(r.FileSystem, "/dev/nvme") {
+				return metapb.DiskType_Disk_NVMe
+			}
+		}
+	}
+	return metapb.DiskType_Disk_SATA
+}
