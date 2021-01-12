@@ -23,6 +23,8 @@ import (
 	"strconv"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/uid"
+
 	"g.tesamc.com/IT/zaipkg/config"
 	"g.tesamc.com/IT/zaipkg/version"
 	"g.tesamc.com/IT/zaipkg/xchecksum"
@@ -210,7 +212,11 @@ func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int) {
 
 // GetReqID gets request id from request.
 func GetReqID(req *http.Request) uint64 {
-	return reqIDStrToInt(req.Header.Get(ReqIDHeader))
+	reqid := reqIDStrToInt(req.Header.Get(ReqIDHeader))
+	if reqid == 0 {
+		return uid.MakeReqID()
+	}
+	return reqid
 }
 
 func makeReplyErrMsg(err error) string {
