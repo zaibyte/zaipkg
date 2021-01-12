@@ -79,6 +79,8 @@ func ParsePath(p httprouter.Params, name string, val interface{}) {
 		}
 	case *uint16:
 		*v = cast.ToUint16(vs)
+	case *uint32:
+		*v = cast.ToUint32(vs)
 	case *uint64:
 		vuint, err := strconv.ParseUint(vs, 10, 64)
 		if err == nil {
