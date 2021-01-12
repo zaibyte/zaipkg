@@ -24,7 +24,13 @@
 // 4. Wrap some basic methods/functions, make it easier to use.
 package xhttp
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/julienschmidt/httprouter"
+	"github.com/spf13/cast"
+)
 
 // These header names will be added in HTTP header in Zai.
 const (
@@ -35,4 +41,51 @@ const (
 func reqIDStrToInt(s string) uint64 {
 	u, _ := strconv.ParseUint(s, 10, 64)
 	return u
+}
+
+// FillPath fills the julienschmidt/httprouter style path.
+func FillPath(path string, kv map[string]interface{}) string {
+	if kv == nil {
+		return path
+	}
+
+	for k, v := range kv {
+		vs := cast.ToString(v)
+		path = strings.Replace(path, ":"+k, vs, 1)
+	}
+	return path
+}
+
+// ParsePath parses the julienschmidt/httprouter style path.
+func ParsePath(p httprouter.Params, name string, val interface{}) {
+
+	vs := p.ByName(name)
+	if vs == "" {
+		return
+	}
+
+	switch v := val.(type) {
+	case *string:
+		*v = vs
+	case *int64:
+		vint, err := strconv.ParseInt(vs, 10, 64)
+		if err == nil {
+			*v = vint
+		}
+	case *float64:
+		vfloat, err := strconv.ParseFloat(vs, 64)
+		if err == nil {
+			*v = vfloat
+		}
+	case *uint64:
+		vuint, err := strconv.ParseUint(vs, 10, 64)
+		if err == nil {
+			*v = vuint
+		}
+	case *bool:
+		vbool, err := strconv.ParseBool(vs)
+		if err == nil {
+			*v = vbool
+		}
+	}
 }

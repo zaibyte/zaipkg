@@ -21,7 +21,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"g.tesamc.com/IT/zaipkg/config"
@@ -211,16 +210,4 @@ func ReplyJson(w http.ResponseWriter, ret interface{}, statusCode int) {
 
 func makeReplyErrMsg(err error) string {
 	return fmt.Sprintf("write resp failed: %s", err.Error())
-}
-
-// FillPath fills the julienschmidt/httprouter style path.
-func FillPath(path string, kv map[string]string) string {
-	if kv == nil {
-		return path
-	}
-
-	for k, v := range kv {
-		path = strings.Replace(path, ":"+k, v, 1)
-	}
-	return path
 }

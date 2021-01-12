@@ -8,6 +8,7 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/prometheus/client_golang v1.6.0
+	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
 	github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415
 	github.com/urfave/negroni/v2 v2.0.2
