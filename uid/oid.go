@@ -45,6 +45,14 @@ const (
 	MaxOType   = 3
 )
 
+// IsValidGroupID returns the groupID is valid or not.
+func IsValidGroupID(groupID uint32) bool {
+	if groupID == 0 || groupID > MaxGroupID {
+		return false
+	}
+	return true
+}
+
 // Object types.
 const (
 	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
