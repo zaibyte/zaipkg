@@ -46,8 +46,8 @@ const (
 )
 
 // IsValidGroupID returns the groupID is valid or not.
-func IsValidGroupID(groupID uint32) bool {
-	if groupID == 0 || groupID > MaxGroupID {
+func IsValidGroupID(groupID uint16) bool {
+	if groupID == 0 {
 		return false
 	}
 	return true
