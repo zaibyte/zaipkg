@@ -132,10 +132,10 @@ func TestServerVersion(t *testing.T) {
 }
 
 func TestFillPath(t *testing.T) {
-	path := "/test/:k0/:k1/:k2"
+	path := "/test/:k0/:k1_1/:k2"
 	kv := make(map[string]string)
 	kv["k0"] = "v0"
-	kv["k1"] = "v1"
+	kv["k1_1"] = "v1"
 	kv["k2"] = "v2"
 
 	act := FillPath(path, kv)
