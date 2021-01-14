@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 g.tesamc.com/IT/zproto v0.0.0-20210112011838-ee54fee786d2/go.mod h1:cOpEEu7RT7ocVlcIh/c4JmLSyIFQoPGbzU+77RVg1NE=
 g.tesamc.com/IT/zproto v0.0.0-20210113091800-2c97afc91798 h1:KA20/6fH5vHH65e5lnb8a0ZIaH98deQYe9GZcxYTl2E=
 g.tesamc.com/IT/zproto v0.0.0-20210113091800-2c97afc91798/go.mod h1:cOpEEu7RT7ocVlcIh/c4JmLSyIFQoPGbzU+77RVg1NE=
+g.tesamc.com/IT/zproto v0.0.0-20210114031511-bb20902bed6f h1:H80dnIjQipVfV9byYWSYSBw3iSqGCfZOEGsthOegFyQ=
+g.tesamc.com/IT/zproto v0.0.0-20210114031511-bb20902bed6f/go.mod h1:cOpEEu7RT7ocVlcIh/c4JmLSyIFQoPGbzU+77RVg1NE=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
