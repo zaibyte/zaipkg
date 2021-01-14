@@ -3,7 +3,7 @@ module g.tesamc.com/IT/zaipkg
 go 1.14
 
 require (
-	g.tesamc.com/IT/zproto v0.0.0-20210114031511-bb20902bed6f
+	g.tesamc.com/IT/zproto v0.0.0-20210114071438-1018be4c55d3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/docker/go-units v0.4.0
 	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a // indirect
