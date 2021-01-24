@@ -70,7 +70,7 @@ func BenchmarkClient_Put(b *testing.B) {
 	c.Start()
 	defer c.Close()
 
-	objData := make([]byte, 3952)
+	objData := make([]byte, 4096)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
