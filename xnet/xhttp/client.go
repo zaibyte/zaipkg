@@ -158,7 +158,7 @@ func (c *Client) Request(ctx context.Context, method, url string, reqID uint64, 
 			}
 			// See ReplyError for more details.
 			errMsg := string(buf[:len(buf)-1]) // drop \n
-			err = orpc.StrError[errMsg]
+			err = orpc.StrError(errMsg)
 		}
 		io.Copy(ioutil.Discard, resp.Body)
 		return

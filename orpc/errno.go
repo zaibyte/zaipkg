@@ -104,13 +104,22 @@ const (
 	invalidMethod        = 10
 	requestQueueOverflow = 11
 	timeBackwards        = 12
-	extentFull           = 13
-	diskWriteStall       = 15
-	extentSealed         = 16
-	diskSealed           = 17
-	instanceSealed       = 18
-	notBootstrapped      = 19
-	instanceTombstone    = 20
+	notBootstrapped      = 13
+
+	instanceDisconnected = 14
+	instanceDown         = 15
+	instanceOffline      = 16
+	instanceTombstone    = 17
+
+	diskFull      = 18
+	diskBroken    = 19
+	diskOffline   = 20
+	diskTombstone = 21
+
+	extentFull      = 22
+	extentBroken    = 23
+	extentOffline   = 24
+	extentTombstone = 25
 )
 
 // Error table.
@@ -128,13 +137,22 @@ var errnoStr = [...]string{
 	invalidMethod:        "invalid method",
 	requestQueueOverflow: "request queue overflow",
 	timeBackwards:        "time gone backwards",
-	extentFull:           "extent is full",
-	diskWriteStall:       "disk write stall",
-	extentSealed:         "extent is sealed",
-	diskSealed:           "disk is sealed",
-	instanceSealed:       "instance is sealed",
 	notBootstrapped:      "not bootstrapped",
+
+	instanceDisconnected: "instance is disconnected",
+	instanceDown:         "instance is down",
+	instanceOffline:      "instance is offline",
 	instanceTombstone:    "instance is tombstone",
+
+	diskFull:      "disk is full",
+	diskBroken:    "disk is broken",
+	diskOffline:   "disk is offline",
+	diskTombstone: "disk is tombstone",
+
+	extentFull:      "extent is full",
+	extentBroken:    "extent is broken",
+	extentOffline:   "extent is offline",
+	extentTombstone: "extent is tombstone",
 }
 
 var (
@@ -150,34 +168,31 @@ var (
 	ErrInvalidMethod        = Errno(invalidMethod)
 	ErrRequestQueueOverflow = Errno(requestQueueOverflow)
 	ErrTimeBackwards        = Errno(timeBackwards)
-	ErrExtentFull           = Errno(extentFull)
-	ErrDiskWriteStall       = Errno(diskWriteStall)
-	ErrExtentSealed         = Errno(extentSealed)
-	ErrDiskSealed           = Errno(diskSealed)
-	ErrInstanceSealed       = Errno(instanceSealed)
 	ErrNotBootstrapped      = Errno(notBootstrapped)
+
+	ErrInstanceDisconnected = Errno(instanceDisconnected)
+	ErrInstanceDown         = Errno(instanceDown)
+	ErrInstanceOffline      = Errno(instanceOffline)
 	ErrInstanceTombstone    = Errno(instanceTombstone)
+
+	ErrDiskFull    = Errno(diskFull)
+	ErrDiskBroken  = Errno(diskBroken)
+	ErrDiskOffline = Errno(diskOffline)
+	ErrTombstone   = Errno(diskTombstone)
+
+	ErrExtentFull      = Errno(extentFull)
+	ErrExtentBroken    = Errno(extentBroken)
+	ErrExtentOffline   = Errno(extentOffline)
+	ErrExtentTombstone = Errno(extentTombstone)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
-var StrError = map[string]error{
-	"bad message":            ErrBadRequest,
-	"not found":              ErrNotFound,
-	"not implemented":        ErrNotImplemented,
-	"timeout":                ErrTimeout,
-	"too many requests":      ErrTooManyRequests,
-	"internal server error":  ErrInternalServer,
-	"connection error":       ErrConnection,
-	"canceled":               ErrCanceled,
-	"checksum mismatch":      ErrChecksumMismatch,
-	"invalid method":         ErrInvalidMethod,
-	"request queue overflow": ErrRequestQueueOverflow,
-	"time gone backwards":    ErrTimeBackwards,
-	"extent is full":         ErrExtentFull,
-	"disk write stall":       ErrDiskWriteStall,
-	"extent is sealed":       ErrExtentFull,
-	"disk is sealed":         ErrDiskSealed,
-	"instance is sealed":     ErrInstanceSealed,
-	"not Bootstrapped":       ErrNotBootstrapped,
-	"instance is tombstone":  ErrInstanceTombstone,
+func StrError(str string) error {
+	var en uint16
+	for i := range errnoStr {
+		if str == errnoStr[i] {
+			en = uint16(i)
+		}
+	}
+	return Errno(en)
 }
