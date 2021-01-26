@@ -59,7 +59,14 @@ const (
 	LinkObj   uint8 = 2 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
 )
 
-func isOkOID(boxID, groupID, grains uint32, otype uint8) bool {
+// IsValidOID returns the oid is valid or not.
+func IsValidOID(oid uint64) bool {
+	boxID, groupID, grains, _, otype := parseOID(oid)
+	return checkOIDElements(boxID, groupID, grains, otype)
+}
+
+// checkOIDElements checks oid elements, return false if not legal.
+func checkOIDElements(boxID, groupID, grains uint32, otype uint8) bool {
 	if boxID == 0 || boxID > MaxBoxID {
 		return false
 	}
@@ -93,7 +100,7 @@ func GrainsToBytes(grains uint32) uint32 {
 // MakeOID makes a new oid.
 func MakeOID(boxID, groupID, grains, digest uint32, otype uint8) uint64 {
 
-	if !isOkOID(boxID, groupID, grains, otype) {
+	if !checkOIDElements(boxID, groupID, grains, otype) {
 		panic(fmt.Sprintf("illegal OID elements, "+
 			"boxID: %d, groupID: %d, grains: %d, otype: %d",
 			boxID, groupID, grains, otype))
@@ -113,12 +120,25 @@ func ParseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8, e
 
 	digest = uint32(oid >> 32)
 
-	if !isOkOID(boxID, groupID, grains, otype) {
+	if !checkOIDElements(boxID, groupID, grains, otype) {
 		err = fmt.Errorf("illegal OID elements, "+
 			"boxID: %d, groupID: %d, grains: %d, otype: %d",
 			boxID, groupID, grains, otype)
 		return
 	}
+	return
+}
+
+func parseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8) {
+
+	lowBits := uint32(oid)
+	boxID = lowBits & MaxBoxID
+	groupID = (lowBits >> 3) & MaxGroupID
+	grains = (lowBits >> 19) & MaxGrains
+	otype = uint8(lowBits>>30) & MaxOType
+
+	digest = uint32(oid >> 32)
+
 	return
 }
 
