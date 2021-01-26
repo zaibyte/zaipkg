@@ -71,4 +71,9 @@ func TestAdjust(t *testing.T) {
 	var strings0 []string
 	Adjust(&strings0, defStrings)
 	assert.Equal(t, defStrings, strings0, "adjust []string mismatch")
+
+	var defByteSize typeutil.ByteSize = 1
+	var byteSize0 typeutil.ByteSize
+	Adjust(&byteSize0, defByteSize)
+	assert.Equal(t, defByteSize, byteSize0, "adjust typeutil.ByteSize mismatch")
 }

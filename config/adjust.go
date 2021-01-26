@@ -59,6 +59,10 @@ func Adjust(val interface{}, defValue interface{}) {
 		if v.Duration <= 0 {
 			v.Duration = defValue.(time.Duration)
 		}
+	case *typeutil.ByteSize:
+		if *v <= 0 {
+			*v = defValue.(typeutil.ByteSize)
+		}
 	case *[]string:
 		if len(*v) == 0 {
 			*v = defValue.([]string)
