@@ -6,7 +6,8 @@ require (
 	g.tesamc.com/IT/zproto v0.0.0-20210114071438-1018be4c55d3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/docker/go-units v0.4.0
-	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/prometheus/client_golang v1.6.0
