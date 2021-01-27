@@ -20,8 +20,6 @@ import (
 	"net"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/directio"
-
 	"g.tesamc.com/IT/zaipkg/xbytes"
 
 	"g.tesamc.com/IT/zaipkg/xdigest"
@@ -89,7 +87,7 @@ func (d *decoder) decode(msg *msgBuf, headerBuf []byte) error {
 		return nil
 	}
 
-	msg.body = directio.GetNBytes(int(n))
+	msg.body = xbytes.GetNBytes(int(n))
 
 	buf := msg.body.Bytes()[:n]
 	_, err = readAtLeast(d.br, buf, int(n), d.hash)

@@ -47,6 +47,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/xtime"
+
 	"g.tesamc.com/IT/zaipkg/uid"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
@@ -475,7 +477,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		}
 
 		if flushChan == nil {
-			flushChan = getFlushChan(t, s.FlushDelay)
+			flushChan = xtime.GetTimerEvent(t, s.FlushDelay)
 		}
 
 		resp := m.resp

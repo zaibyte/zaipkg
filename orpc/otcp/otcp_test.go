@@ -47,8 +47,6 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/directio"
-
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
@@ -150,7 +148,7 @@ func TestClient_GetObj(t *testing.T) {
 	}
 	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
 		size := sizes[oid]
-		objData = directio.GetNBytes(int(size))
+		objData = xbytes.GetNBytes(int(size))
 		o := stor[oid]
 		objData.Write(o)
 		return
@@ -216,7 +214,7 @@ func TestClient_DeleteObj(t *testing.T) {
 			return nil, orpc.ErrNotFound
 		}
 		size := sizes[oid]
-		objData = directio.GetNBytes(int(size))
+		objData = xbytes.GetNBytes(int(size))
 		objData.Write(o)
 		return
 	}
@@ -310,7 +308,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			return nil, orpc.ErrNotFound
 		}
 		size := v.(int)
-		objData = directio.GetNBytes(size)
+		objData = xbytes.GetNBytes(size)
 
 		o, ok := stor.Load(oid)
 		if !ok {

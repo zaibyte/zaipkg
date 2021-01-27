@@ -47,6 +47,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/xtime"
+
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
@@ -481,7 +483,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		}
 
 		if flushChan == nil {
-			flushChan = getFlushChan(t, c.FlushDelay)
+			flushChan = xtime.GetTimerEvent(t, c.FlushDelay)
 		}
 
 		if ar.isCanceled() {
