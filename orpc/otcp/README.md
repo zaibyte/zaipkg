@@ -8,9 +8,9 @@ Based on [goproc](https://github.com/valyala/gorpc) with these modifications:
 
 2. Implement End-to-End checksum.
 
-3. Add read/write deadline on each read/write.
+3. Add read/write a deadline on each read/write.
 
-4. Add header.
+4. Add a header.
 
 5. Import xlog for logging.
 

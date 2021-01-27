@@ -61,8 +61,8 @@ func (p *withCheck) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.
 			return
 		}
 		h := xchecksum.New()
-		h.Write([]byte(r.URL.RequestURI()))
-		h.Write(b)
+		_, _ = h.Write([]byte(r.URL.RequestURI()))
+		_, _ = h.Write(b)
 		act := int(h.Sum32())
 		if incoming != act {
 			ReplyError(w, orpc.ErrChecksumMismatch.Error(), http.StatusBadRequest)

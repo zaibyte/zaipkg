@@ -309,8 +309,8 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 
 	defer func() {
-		if r := recover(); r != nil {
-			xlog.Errorf("panic when reading data from client: %v", r)
+		if re := recover(); re != nil {
+			xlog.Errorf("panic when reading data from client: %v", re)
 		}
 		close(done)
 	}()
@@ -447,7 +447,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 	var flushChan <-chan time.Time
 	enc := newEncoder(w, s.SendBufferSize)
 	msg := new(msgBuf)
-	header := new(respHeader)
+	rh := new(respHeader)
 	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
 	for {
 		var m *serverMessage
@@ -481,14 +481,14 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		resp := m.resp
 		reqid := m.reqid
 
-		header.msgID = m.msgID
+		rh.msgID = m.msgID
 		if resp != nil {
-			header.bodySize = uint32(len(resp.Bytes()))
+			rh.bodySize = uint32(len(resp.Bytes()))
 		} else {
-			header.bodySize = 0
+			rh.bodySize = 0
 		}
-		header.errno = uint16(orpc.ErrToErrno(m.err))
-		msg.header = header
+		rh.errno = uint16(orpc.ErrToErrno(m.err))
+		msg.header = rh
 		msg.body = resp
 
 		m.reset()

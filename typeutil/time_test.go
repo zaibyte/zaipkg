@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func TestParseTimestap(t *testing.T) {
+func TestParseTimestamp(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		t0 := time.Now().Add(time.Second * time.Duration(rand.Int31n(1000)))
 		data := uint64ToBytes(uint64(t0.UnixNano()))
@@ -37,6 +37,7 @@ func TestParseTimestap(t *testing.T) {
 	if err == nil {
 		t.Fatal("should failed")
 	}
+
 	if !nt.Equal(ZeroTime) {
 		t.Fatal("mismatch")
 	}

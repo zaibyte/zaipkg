@@ -129,14 +129,14 @@ func (c *Client) Request(ctx context.Context, method, url string, reqID uint64, 
 
 	ch := resp.Header.Get(ChecksumHeader)
 	if ch != "" {
-		incoming, err := strconv.Atoi(ch)
-		if err != nil {
-			io.Copy(ioutil.Discard, resp.Body)
+		incoming, err2 := strconv.Atoi(ch)
+		if err2 != nil {
+			_, _ = io.Copy(ioutil.Discard, resp.Body)
 			return resp, orpc.ErrBadRequest
 		}
 
-		b, err2 := ioutil.ReadAll(resp.Body)
-		if err2 != nil {
+		b, err3 := ioutil.ReadAll(resp.Body)
+		if err3 != nil {
 			return resp, orpc.ErrInternalServer
 		}
 
@@ -152,15 +152,15 @@ func (c *Client) Request(ctx context.Context, method, url string, reqID uint64, 
 		err = errors.New(http.StatusText(resp.StatusCode))
 
 		if resp.ContentLength > 0 && method != http.MethodHead {
-			buf, err2 := ioutil.ReadAll(resp.Body)
+			buf2, err2 := ioutil.ReadAll(resp.Body)
 			if err2 != nil {
 				return resp, orpc.ErrInternalServer
 			}
 			// See ReplyError for more details.
-			errMsg := string(buf[:len(buf)-1]) // drop \n
+			errMsg := string(buf2[:len(buf2)-1]) // drop \n
 			err = orpc.StrError(errMsg)
 		}
-		io.Copy(ioutil.Discard, resp.Body)
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
 		return
 	}
 

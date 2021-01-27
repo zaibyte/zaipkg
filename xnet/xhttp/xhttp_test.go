@@ -14,7 +14,7 @@ func TestFillPath(t *testing.T) {
 	kv := make(map[string]interface{})
 	kv["k0"] = "v0"
 	kv["k1_1"] = int64(1)
-	kv["k2"] = float64(0.2)
+	kv["k2"] = 0.2
 	kv["k3"] = uint64(3)
 	kv["k4"] = true
 
@@ -61,7 +61,7 @@ func TestFillPath(t *testing.T) {
 	ps = make([]httprouter.Param, len(kv))
 	i := 0
 	for k, v := range kv {
-		ps[i] = httprouter.Param{k, cast.ToString(v)}
+		ps[i] = httprouter.Param{Key: k, Value: cast.ToString(v)}
 	}
 
 }

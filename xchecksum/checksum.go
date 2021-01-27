@@ -40,7 +40,6 @@ var crcTable = crc32.MakeTable(crc32.Castagnoli)
 func New() *Digest {
 
 	return &Digest{h32: crc32.New(crcTable)}
-	//return &Digest{xxhash.New()}
 }
 
 // Write (via the embedded io.Writer interface) adds more data to the running hash.

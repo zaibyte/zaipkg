@@ -97,12 +97,12 @@ func (w *withMessage) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			fmt.Fprintf(s, "%+v\n", w.Unwrap())
-			io.WriteString(s, w.msg)
+			_, _ = fmt.Fprintf(s, "%+v\n", w.Unwrap())
+			_, _ = io.WriteString(s, w.msg)
 			return
 		}
 		fallthrough
 	case 's', 'q':
-		io.WriteString(s, w.Error())
+		_, _ = io.WriteString(s, w.Error())
 	}
 }
