@@ -59,6 +59,24 @@ type msgBuf struct {
 	body   xbytes.Buffer
 }
 
+func (d *decoder) decodeHeader(buf []byte, h header) error {
+
+	_, err := io.ReadFull(d.br, buf)
+	if err != nil {
+		operr, ok := err.(net.Error)
+		if ok && operr.Timeout() {
+			return orpc.ErrTimeout
+		}
+		return err
+	}
+	return h.decode(buf)
+}
+
+func (d *decoder) decodeBody(buf []byte, n int) error {
+	_, err := readAtLeast(d.br, buf, n, d.hash)
+	return err
+}
+
 func (d *decoder) decode(msg *msgBuf, headerBuf []byte) error {
 
 	var hbuf []byte

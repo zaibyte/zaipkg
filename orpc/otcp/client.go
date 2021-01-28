@@ -51,7 +51,6 @@ import (
 
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xerrors"
 	"g.tesamc.com/IT/zaipkg/xlog"
@@ -129,7 +128,7 @@ type asyncResult struct {
 	oid     uint64
 	reqData []byte
 
-	respBody xbytes.Buffer
+	respBody []byte
 	// resp is become available after <-done unblocks.
 	done chan struct{}
 	// The error can be read only after <-Done unblocks.
@@ -221,26 +220,17 @@ func (c *Client) Close() error {
 
 // Put puts object to the ZBuf node which orpc.Client connected.
 func (c *Client) PutObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
-	_, err := c.callTimeout(reqid, objPutMethod, oid, objData, timeout)
-	return err
+	return c.callTimeout(reqid, objPutMethod, oid, objData, timeout)
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
 func (c *Client) GetObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
-	buf, err := c.callTimeout(reqid, objGetMethod, oid, objData, timeout)
-	if err != nil {
-		return err
-	}
-	defer buf.Close()
-
-	copy(objData, buf.Bytes())
-	return nil
+	return c.callTimeout(reqid, objGetMethod, oid, objData, timeout)
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
 func (c *Client) DeleteObj(reqid, oid uint64, timeout time.Duration) error {
-	_, err := c.callTimeout(reqid, objDelMethod, oid, nil, timeout)
-	return err
+	return c.callTimeout(reqid, objDelMethod, oid, nil, timeout)
 }
 
 // callTimeout sends the given request to the server and obtains response
@@ -249,7 +239,7 @@ func (c *Client) DeleteObj(reqid, oid uint64, timeout time.Duration) error {
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte, timeout time.Duration) (resp xbytes.Buffer, err error) {
+func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte, timeout time.Duration) (err error) {
 
 	if timeout == 0 {
 		timeout = c.RequestTimeout
@@ -257,21 +247,14 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte
 
 	var ar *asyncResult
 	if ar, err = c.callAsync(reqid, method, oid, body); err != nil {
-		return nil, err
+		return err
 	}
 
 	t := acquireTimer(timeout)
 
 	select {
 	case <-ar.done:
-		resp, err = ar.respBody, ar.err
-		if err != nil {
-			if resp != nil {
-				_ = resp.Close() // In case of passing resp when there is an error.
-			}
-			resp = nil
-		}
-
+		err = ar.err
 		releaseAsyncResult(ar)
 	case <-t.C:
 		// Cancel will be captured in write preparation, asyncResult will be released there.
@@ -279,7 +262,6 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte
 		//
 		// If write broken, ar may not be put back to the pool.
 		ar.cancel()
-		resp = nil
 		err = orpc.ErrTimeout
 	}
 
@@ -299,17 +281,16 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) 
 
 	ar = acquireAsyncResult()
 
-	ar.reqData = body
 	ar.reqid = reqid
 	ar.method = method
 	ar.oid = oid
 	ar.done = make(chan struct{})
 
-	if method != objPutMethod {
-		ar.reqData = nil
+	if method == objPutMethod {
+		ar.reqData = body
 	}
 	if method == objGetMethod {
-		ar.respBody
+		ar.respBody = body
 	}
 
 	select {
@@ -551,29 +532,20 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	}()
 
 	hash := xdigest.New()
-
 	dec := newDecoder(r, c.RecvBufferSize, hash)
-	msg := &msgBuf{
-		header: new(respHeader),
-	}
-	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
+	rh := new(respHeader)
+	headerBuf := make([]byte, respHeaderSize)
 	for {
-		err = dec.decode(msg, headerBuf)
+		err = dec.decodeHeader(headerBuf, rh)
 		if err != nil {
 			if err == orpc.ErrTimeout {
-				msg.body = nil
 				continue // Keeping trying to read request header.
 			}
-			xlog.Errorf("failed to read request from %s: %s", r.RemoteAddr().String(), err)
-
+			xlog.Errorf("failed to read request header from %s: %s", r.RemoteAddr().String(), err)
 			return
 		}
 
-		body := msg.body
-		h := msg.header.(*respHeader)
-		msgID := h.msgID
-		errno := h.errno
-		n := h.bodySize
+		msgID := rh.msgID
 
 		pendingRequestsLock.Lock()
 		ar, ok := pendingRequests[msgID]
@@ -588,15 +560,34 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 			return
 		}
 
-		// Ignore response if any error. And the response must be nil.
-		digest := uid.GetDigest(ar.oid)
+		errno := rh.errno
+		if errno != 0 { // Ignore response if any error. And the response must be nil.
+			ar.err = orpc.Errno(errno).ToErr()
+			close(ar.done)
+			continue
+		}
+
+		n := rh.bodySize
+		if n == 0 {
+			close(ar.done)
+			continue
+		}
+
 		if n != 0 {
+			err = dec.decodeBody(ar.respBody, int(n))
+			if err != nil {
+				if err == orpc.ErrTimeout {
+					continue // Keeping trying to read request header.
+				}
+				xlog.Errorf("failed to read request body from %s: %s", r.RemoteAddr().String(), err)
+				return
+			}
+
+			digest := uid.GetDigest(ar.oid)
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
 				ar.err = orpc.ErrChecksumMismatch
-				ar.respBody = nil
-				msg.body = nil
 				close(ar.done)
 				hash.Reset()
 				continue
@@ -604,24 +595,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 			hash.Reset()
 		}
 
-		if errno != 0 {
-			ar.err = orpc.Errno(errno).ToErr()
-			ar.respBody = nil
-			msg.body = nil
-			close(ar.done)
-			continue
-		}
-
-		if n == 0 {
-			ar.respBody = nil
-			msg.body = nil
-			close(ar.done)
-			continue
-		}
-
-		ar.respBody = body
 		close(ar.done)
-		msg.body = nil
 	}
 }
 
