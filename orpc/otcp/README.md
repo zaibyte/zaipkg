@@ -26,6 +26,11 @@ Based on [goproc](https://github.com/valyala/gorpc) with these modifications:
 
 11. Remove statistics.
 
+## Limitation
+
+otcp is not designed for big data chunk stream. Each request read/write will wait for the Done chan, then begins to work.
+The max size of object in Zai is 4MB, so it's okay to use this model.
+
 ## Performance Tuning
 
 The origin has tried its best to make things non-blocking.
