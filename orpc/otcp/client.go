@@ -308,6 +308,9 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) 
 	if method != objPutMethod {
 		ar.reqData = nil
 	}
+	if method == objGetMethod {
+		ar.respBody
+	}
 
 	select {
 	case c.requestsChan <- ar:
@@ -539,9 +542,9 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResult, pendingRequestsLock *sync.Mutex, done chan<- error) {
 	var err error
 	defer func() {
-		if r := recover(); r != nil {
+		if re := recover(); re != nil {
 			if err == nil {
-				xlog.Errorf("panic when reading data from server: %s: %v", c.Addr, r)
+				xlog.Errorf("panic when reading data from server: %s: %v", c.Addr, re)
 			}
 		}
 		done <- err
@@ -555,7 +558,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	}
 	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
 	for {
-		err := dec.decode(msg, headerBuf)
+		err = dec.decode(msg, headerBuf)
 		if err != nil {
 			if err == orpc.ErrTimeout {
 				msg.body = nil
