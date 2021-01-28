@@ -87,6 +87,40 @@ func BenchmarkClient_Put(b *testing.B) {
 	})
 }
 
+func BenchmarkClient_Get(b *testing.B) {
+
+	rand.Seed(time.Now().UnixNano())
+
+	addr := getRandomAddr()
+
+	s := NewServer(addr, newTestHandler())
+
+	if err := s.Start(); err != nil {
+		b.Fatalf("cannot start server: %s", err)
+	}
+	defer s.Stop()
+
+	c := NewClient(addr)
+	c.Conns = 4
+
+	c.Start()
+	defer c.Close()
+
+	objData := make([]byte, 4096)
+	oid := uid.MakeOID(1, 1, 1, 1, uid.NormalObj)
+
+	b.SetParallelism(64)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			err := c.GetObj(uid.MakeReqID(), oid, objData, 0)
+			if err != nil {
+				b.Fatalf("Unexpected error: %s", err)
+			}
+		}
+	})
+}
+
 func BenchmarkClient_Delete(b *testing.B) {
 
 	rand.Seed(time.Now().UnixNano())

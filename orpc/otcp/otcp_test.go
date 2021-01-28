@@ -80,6 +80,32 @@ func newTestHandler() *testHandler {
 	}
 }
 
+func init() {
+	rand.Read(immutableObjData)
+}
+
+var immutableObjData = make([]byte, 4*1024*1024)
+
+// newTestGetHandler creates a testHandler which always returns the same objData with grains in oid when get.
+// It could be used in bench testing.
+func newTestGetHandler() *testHandler {
+
+	return &testHandler{
+		putFn: func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+			return nil
+		},
+		getFn: func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+			_, _, grains, _, _, _ := uid.ParseOID(oid)
+			objData = xbytes.GetNBytes(int(grains * uid.GrainSize))
+			objData.Set(immutableObjData[:grains*uid.GrainSize])
+			return
+		},
+		delFn: func(reqid uint64, oid uint64) error {
+			return nil
+		},
+	}
+}
+
 func (h *testHandler) PutObj(reqid uint64, oid uint64, objData xbytes.Buffer) error {
 	return h.putFn(reqid, oid, objData)
 }
