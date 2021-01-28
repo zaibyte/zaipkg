@@ -180,9 +180,10 @@ func TestClient_GetObj(t *testing.T) {
 		}
 	}
 
+	getBuf := make([]byte, xbytes.MaxBytesSizeInPool*2)
 	for oid, objBytes := range stor {
 		size := sizes[oid]
-		act := make([]byte, size)
+		act := getBuf[:size]
 		err := c.GetObj(0, oid, act, 0)
 		if err != nil {
 			t.Fatal(err)
