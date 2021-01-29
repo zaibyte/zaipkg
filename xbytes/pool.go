@@ -15,79 +15,155 @@ import (
 )
 
 var (
-	_defaultPool = NewPool(defaultMaxLeaky, false)
-	_alignPool   = NewPool(defaultMaxLeaky, true)
+	_defaultPool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
+	_alignPool   = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, true)
 
 	GetBytes = func(n int) []byte {
-		if n <= _MaxSmallSize {
-			return _defaultPool.smallPool.Get().([]byte)[:n]
+		if n <= _MaxSyncPoolSize {
+			return _defaultPool.spPool.Get().([]byte)[:n]
 		}
-		return _defaultPool.largePool.Get()[:n]
+		if n <= _MaxTinySize {
+			return _defaultPool.tinyPool.Get()[:n]
+		}
+		if n <= _MaxSmallSize {
+			return _defaultPool.smallPool.Get()[:n]
+		}
+		if n <= _MaxMidSize {
+			return _defaultPool.MidPool.Get()[:n]
+		}
+		return _defaultPool.maxPool.Get()[:n]
 	}
 	PutBytes = func(b []byte) {
 		n := len(b)
+		if n <= _MaxSyncPoolSize {
+			_defaultPool.spPool.Put(b)
+			return
+		}
+		if n <= _MaxTinySize {
+			_defaultPool.tinyPool.Put(b)
+			return
+		}
 		if n <= _MaxSmallSize {
 			_defaultPool.smallPool.Put(b)
 			return
 		}
-		_defaultPool.largePool.Put(b)
+		if n <= _MaxMidSize {
+			_defaultPool.MidPool.Put(b)
+			return
+		}
+		_defaultPool.maxPool.Put(b)
 	}
 
 	GetAlignedBytes = func(n int) []byte {
-		if n <= _MaxSmallSize {
-			return _alignPool.smallPool.Get().([]byte)[:n]
+		if n <= _MaxSyncPoolSize {
+			return _alignPool.spPool.Get().([]byte)[:n]
 		}
-		return _alignPool.largePool.Get()[:n]
+		if n <= _MaxTinySize {
+			return _alignPool.tinyPool.Get()[:n]
+		}
+		if n <= _MaxSmallSize {
+			return _alignPool.smallPool.Get()[:n]
+		}
+		if n <= _MaxMidSize {
+			return _alignPool.MidPool.Get()[:n]
+		}
+		return _alignPool.maxPool.Get()[:n]
 	}
 	PutAlignedBytes = func(b []byte) {
 		n := len(b)
+		if n <= _MaxSyncPoolSize {
+			_alignPool.spPool.Put(b)
+			return
+		}
+		if n <= _MaxTinySize {
+			_alignPool.tinyPool.Put(b)
+			return
+		}
 		if n <= _MaxSmallSize {
 			_alignPool.smallPool.Put(b)
 			return
 		}
-		_alignPool.largePool.Put(b)
+		if n <= _MaxMidSize {
+			_alignPool.MidPool.Put(b)
+			return
+		}
+		_alignPool.maxPool.Put(b)
 	}
 )
 
 const (
-	// _MaxSmallSize is copied from runtime/sizeclasses,
+	// _MaxSyncPoolSize is copied from runtime/sizeclasses,
 	// indicates it's a small object, it'll be malloc from Process's own cache firstly.
-	// We will use sync.Pool to implement bytes pool if size <= _MaxSmallSize
-	_MaxSmallSize   = 32768
-	_MaxSize        = settings.MaxObjectSize
-	defaultMaxLeaky = 256 // Which means it'll reach 1GB memory never being freed.
+	// Beyond this, malloc maybe much slower, it's better to use LeakyPool.
+	// We will use sync.Pool to implement bytes pool if size <= _MaxSyncPoolSize
+	_MaxSyncPoolSize = 32768
+	_MaxTinySize     = _MaxSyncPoolSize * 4   // 128KB.
+	_MaxSmallSize    = _MaxTinySize * 4       // 512KB.
+	_MaxMidSize      = _MaxSmallSize * 4      // 2MB.
+	_MaxSize         = settings.MaxObjectSize // 4MB.
+
+	defaultTinySizeLeaky  = 1024 // 128MB leaky at most for 128KB []byte.
+	defaultSmallSizeLeaky = 256  // 128MB leaky at most for 512KB []byte.
+	defaultMidSizeLeaky   = 256  // 512MB leaky at most for 2MB []byte.
+	// 1GB memory leaky at most for 4MB []byte.
+	// In Tesamc, the number of 4MB objects maybe large.
+	defaultMaxSizeLeaky = 256
 )
 
 // BufferPool is a bytes slice pool helping to reduce GC overhead.
 type BufferPool struct {
-	smallPool *sync.Pool
-	largePool *LeakyBuf
+	spPool    *sync.Pool
+	tinyPool  *LeakyPool
+	smallPool *LeakyPool
+	MidPool   *LeakyPool
+	maxPool   *LeakyPool
 }
 
 // NewPool creates a bytes slice pool.
-func NewPool(maxLarge int, isAligned bool) *BufferPool {
+func NewPool(tiny, small, mid, max int, isAligned bool) *BufferPool {
 
-	var makeSmallFn, makeLargeFn func() []byte
+	var makeSPFn, makeTinyFn, makeSmallFn, makeMidFn, makeMaxFn func() []byte
 	if isAligned {
+		makeSPFn = func() []byte {
+			return directio.AlignedBlock(_MaxSyncPoolSize)
+		}
+		makeTinyFn = func() []byte {
+			return directio.AlignedBlock(_MaxTinySize)
+		}
 		makeSmallFn = func() []byte {
 			return directio.AlignedBlock(_MaxSmallSize)
 		}
-		makeLargeFn = func() []byte {
+		makeMidFn = func() []byte {
+			return directio.AlignedBlock(_MaxMidSize)
+		}
+		makeMaxFn = func() []byte {
 			return directio.AlignedBlock(_MaxSize)
 		}
 	} else {
-		makeSmallFn = func() []byte {
-			return make([]byte, 0, _MaxSmallSize)
+		makeSPFn = func() []byte {
+			return make([]byte, _MaxSyncPoolSize, _MaxSyncPoolSize)
 		}
-		makeLargeFn = func() []byte {
-			return make([]byte, 0, _MaxSize)
+		makeTinyFn = func() []byte {
+			return make([]byte, _MaxTinySize, _MaxTinySize)
+		}
+		makeSmallFn = func() []byte {
+			return make([]byte, _MaxSmallSize, _MaxSmallSize)
+		}
+		makeMidFn = func() []byte {
+			return make([]byte, _MaxMidSize, _MaxMidSize)
+		}
+		makeMaxFn = func() []byte {
+			return make([]byte, _MaxSize, _MaxSize)
 		}
 	}
 
 	return &BufferPool{
-		smallPool: &sync.Pool{New: func() interface{} {
-			return makeSmallFn()
+		spPool: &sync.Pool{New: func() interface{} {
+			return makeSPFn()
 		}},
-		largePool: NewLeakyBuf(maxLarge, makeLargeFn),
+		tinyPool:  NewLeakyBuf(tiny, makeTinyFn),
+		smallPool: NewLeakyBuf(small, makeSmallFn),
+		MidPool:   NewLeakyBuf(mid, makeMidFn),
+		maxPool:   NewLeakyBuf(max, makeMaxFn),
 	}
 }
