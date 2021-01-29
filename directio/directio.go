@@ -36,7 +36,9 @@ func alignment(block []byte, AlignSize int) int {
 // of AlignSize in memory (must be power of two)
 func AlignedBlock(BlockSize int) []byte {
 	block := make([]byte, BlockSize+AlignSize)
-
+	if AlignSize == 0 {
+		return block
+	}
 	a := alignment(block, AlignSize)
 	offset := 0
 	if a != 0 {
