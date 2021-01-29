@@ -28,6 +28,9 @@ type Buffer interface {
 	io.ReadWriteCloser
 	Bytes() []byte
 	Set(b []byte)
+	Len() int
+	Cap() int
+	Reset()
 }
 
 // I don't think this would be common that needing millions objects which > 128KB in second.
@@ -39,6 +42,19 @@ const MaxBytesSizeInPool = 128 * 1024
 type BytesBuffer struct {
 	S []byte
 	i int64 // current reading index
+}
+
+func (r *BytesBuffer) Cap() int {
+	return cap(r.S)
+}
+
+func (r *BytesBuffer) Reset() {
+	r.S = r.S[:0]
+	r.i = 0
+}
+
+func (r *BytesBuffer) Len() int {
+	return len(r.S)
 }
 
 // Read implements the io.Reader interface.
@@ -106,7 +122,7 @@ func newBufferPool() bufferPool {
 // Get retrieves a BytesBufferPool from the pool, creating one if necessary.
 func (p bufferPool) Get() *BytesBufferPool {
 	buf := p.p.Get().(*BytesBufferPool)
-	buf.reset()
+	buf.Reset()
 	buf.pool = p
 	return buf
 }
@@ -121,6 +137,14 @@ type BytesBufferPool struct {
 	S    []byte
 	i    int64
 	pool bufferPool
+}
+
+func (r *BytesBufferPool) Cap() int {
+	return cap(r.S)
+}
+
+func (r *BytesBufferPool) Len() int {
+	return len(r.S)
 }
 
 // Write implements the io.Writer interface.
@@ -161,7 +185,7 @@ func (r *BytesBufferPool) Set(b []byte) {
 
 // reset resets the underlying byte slice. Subsequent writes re-use the slice's
 // backing array.
-func (r *BytesBufferPool) reset() {
+func (r *BytesBufferPool) Reset() {
 	r.S = r.S[:0]
 	r.i = 0
 }
