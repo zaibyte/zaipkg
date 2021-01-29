@@ -192,7 +192,7 @@ func TestClient_GetObj(t *testing.T) {
 	c.Start()
 	defer c.Close()
 
-	req := make([]byte, xbytes.MaxBytesSizeInPool*2)
+	req := make([]byte, 256*1024)
 	rand.Read(req)
 
 	for i := 0; i < 7; i++ {
@@ -208,7 +208,7 @@ func TestClient_GetObj(t *testing.T) {
 		}
 	}
 
-	getBuf := make([]byte, xbytes.MaxBytesSizeInPool*2)
+	getBuf := make([]byte, 256*1024)
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
@@ -266,7 +266,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	c.Start()
 	defer c.Close()
 
-	req := make([]byte, xbytes.MaxBytesSizeInPool*2)
+	req := make([]byte, 256*1024)
 	rand.Read(req)
 
 	for i := 0; i < 7; i++ {
