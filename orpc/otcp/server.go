@@ -110,7 +110,7 @@ type Server struct {
 const (
 	// DefaultConcurrency is the default number of concurrent rpc calls
 	// the server can process.
-	DefaultConcurrency = 8 * 1024
+	DefaultConcurrency = 4 * 1024 // 4096 is enough to hold 256 default clients.
 	// DefaultServerSendBufferSize is the default size for Server send buffers.
 	DefaultServerSendBufferSize = 64 * 1024
 	// DefaultServerRecvBufferSize is the default size for Server receive buffers.
