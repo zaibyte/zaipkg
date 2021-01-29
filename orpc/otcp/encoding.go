@@ -88,8 +88,8 @@ func (d *decoder) decode(msg *msgBuf, headerBuf []byte) error {
 	}
 	_, err := io.ReadFull(d.br, hbuf)
 	if err != nil {
-		operr, ok := err.(net.Error)
-		if ok && operr.Timeout() {
+		operr, ok2 := err.(net.Error)
+		if ok2 && operr.Timeout() {
 			return orpc.ErrTimeout
 		}
 		return err
