@@ -25,3 +25,7 @@ const (
 	// & <DefaultLogRoot>/<appName>/error.log
 	DefaultLogRoot = "/var/log/zai"
 )
+
+const (
+	MaxObjectSize = 4 * 1024 * 1024 // 4MiB.
+)
