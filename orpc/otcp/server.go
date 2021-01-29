@@ -311,8 +311,10 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
 
 	defer func() {
-		if re := recover(); re != nil {
-			xlog.Errorf("panic when reading data from client: %v", re)
+		if x := recover(); x != nil {
+			stackTrace := make([]byte, 1<<20)
+			n := runtime.Stack(stackTrace, false)
+			xlog.Errorf("panic when reading data from client: %v\nStack trace: %s", x, stackTrace[:n])
 		}
 		close(done)
 	}()
