@@ -6,11 +6,11 @@ Based on [goproc](https://github.com/valyala/gorpc) with these modifications:
 
 1. No multi-methods supports, only has three methods: Put Object, Get Object, Delete Object.
 
-2. Implement End-to-End checksum.
+2. Implement End-to-End checksum on header.
 
-3. Add read/write a deadline on each read/write.
+3. Implement End-to-End checksum on body if enabled.
 
-4. Add a header.
+4. Add read/write a deadline on each read/write.
 
 5. Import xlog for logging.
 
@@ -30,6 +30,13 @@ Based on [goproc](https://github.com/valyala/gorpc) with these modifications:
 
 otcp is not designed for big data chunk stream. Each request read/write will wait for the Done chan, then begins to work.
 The max size of object in Zai is 4MB, so it's okay to use this model.
+
+Benefits of no stream supports:
+
+1. Avoiding hang when the consumer of the stream is slow. If the consumer is blocking, the Client reader will be blocked too. 
+   Although we have to do an extra copying and get higher memory usage, otcp is built for the communicating between lock & remote disk I/O,
+   it's not a good idea to handle I/O on the connection reading.
+   
 
 ## Performance Tuning
 
