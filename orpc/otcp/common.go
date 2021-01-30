@@ -55,7 +55,7 @@ const (
 const (
 	// DefaultPendingMessages is the default number of pending messages
 	// handled by Client and Server.
-	DefaultPendingMessages = 1024
+	DefaultPendingMessages = 32 * 1024
 
 	// DefaultFlushDelay is the default delay between message flushes
 	// on Client and Server.
