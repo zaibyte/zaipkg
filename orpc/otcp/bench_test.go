@@ -126,8 +126,7 @@ func BenchmarkClient_Get(b *testing.B) {
 	defer c.Stop()
 
 	objData := make([]byte, 4096)
-	oid := uid.MakeOID(1, 1, 1, 1, uid.NormalObj)
-
+	oid := uid.MakeOID(1, 1, 1, xdigest.Sum32(objData), uid.NormalObj)
 	b.SetParallelism(64)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -161,7 +160,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 	digest := xdigest.Sum32(req)
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
-	b.SetParallelism(256)
+	b.SetParallelism(16)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
