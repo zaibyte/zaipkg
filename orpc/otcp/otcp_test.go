@@ -47,33 +47,43 @@ import (
 	"testing"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/config/settings"
+
 	"g.tesamc.com/IT/zaipkg/directio"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
-	"g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/templexxx/tsc"
 )
 
-func init() {
-	xlogtest.New(true)
-}
-
 type testHandler struct {
-	putFn func(reqid uint64, oid uint64, objData xbytes.Buffer) error
-	getFn func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error)
+	putFn func(reqid uint64, oid uint64, objData []byte) error
+	getFn func(reqid uint64, oid uint64) (objData []byte, err error)
 	delFn func(reqid uint64, oid uint64) error
 }
 
-func newTestHandler() *testHandler {
+func (h *testHandler) PutObj(reqid uint64, oid uint64, objData []byte) error {
+	return h.putFn(reqid, oid, objData)
+}
+
+func (h *testHandler) GetObj(reqid uint64, oid uint64) (objData []byte, err error) {
+	return h.getFn(reqid, oid)
+}
+
+func (h *testHandler) DeleteObj(reqid uint64, oid uint64) error {
+	return h.delFn(reqid, oid)
+}
+
+func nopHandler() *testHandler {
 	return &testHandler{
-		putFn: func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+		putFn: func(reqid uint64, oid uint64, objData []byte) error {
 			return nil
 		},
-		getFn: func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+		getFn: func(reqid uint64, oid uint64) (objData []byte, err error) {
 			return nil, nil
 		},
 		delFn: func(reqid uint64, oid uint64) error {
@@ -83,42 +93,11 @@ func newTestHandler() *testHandler {
 }
 
 func init() {
-	rand.Read(immutableObjData)
+	rand.Seed(tsc.UnixNano())
+	rand.Read(randObjData)
 }
 
-var immutableObjData = make([]byte, 4*1024*1024)
-
-// newTestGetHandler creates a testHandler which always returns the same objData with grains in oid when get.
-// It could be used in bench testing.
-func newTestGetHandler() *testHandler {
-
-	return &testHandler{
-		putFn: func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
-			return nil
-		},
-		getFn: func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
-			_, _, grains, _, _, _ := uid.ParseOID(oid)
-			objData = xbytes.GetNBytes(int(grains * uid.GrainSize))
-			objData.Set(immutableObjData[:grains*uid.GrainSize])
-			return
-		},
-		delFn: func(reqid uint64, oid uint64) error {
-			return nil
-		},
-	}
-}
-
-func (h *testHandler) PutObj(reqid uint64, oid uint64, objData xbytes.Buffer) error {
-	return h.putFn(reqid, oid, objData)
-}
-
-func (h *testHandler) GetObj(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
-	return h.getFn(reqid, oid)
-}
-
-func (h *testHandler) DeleteObj(reqid uint64, oid uint64) error {
-	return h.delFn(reqid, oid)
-}
+var randObjData = directio.AlignedBlock(4 * 1024 * 1024)
 
 func getRandomAddr() string {
 	rand.Seed(tsc.UnixNano())
@@ -129,8 +108,8 @@ func TestRequestTimeout(t *testing.T) {
 
 	addr := getRandomAddr()
 
-	h := newTestHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
 		time.Sleep(10 * time.Millisecond)
 		return nil
 	}
@@ -142,7 +121,7 @@ func TestRequestTimeout(t *testing.T) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
 	objData := make([]byte, 16)
 	rand.Read(objData)
@@ -166,19 +145,19 @@ func TestClient_GetObj(t *testing.T) {
 	stor := make(map[uint64][]byte)
 	sizes := make(map[uint64]uint32)
 
-	h := newTestHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
-		o := make([]byte, len(objData.Bytes()))
-		copy(o, objData.Bytes())
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
+		o := make([]byte, len(objData))
+		copy(o, objData)
 		stor[oid] = o
 		sizes[oid] = uint32(len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
 		size := sizes[oid]
-		objData = directio.GetNBytes(int(size))
+		objData = xbytes.GetAlignedBytes(int(size))
 		o := stor[oid]
-		objData.Write(o)
+		copy(objData, o)
 		return
 	}
 
@@ -190,15 +169,16 @@ func TestClient_GetObj(t *testing.T) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
-	req := make([]byte, 256*1024)
-	rand.Read(req)
+	for i := 0; i < 1024; i++ {
 
-	for i := 0; i < 7; i++ {
-
-		size := (1 << i) * uid.GrainSize
-		objData := req[:size]
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
+		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
@@ -208,7 +188,7 @@ func TestClient_GetObj(t *testing.T) {
 		}
 	}
 
-	getBuf := make([]byte, 256*1024)
+	getBuf := make([]byte, settings.MaxObjectSize)
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
@@ -229,22 +209,22 @@ func TestClient_DeleteObj(t *testing.T) {
 	stor := make(map[uint64][]byte)
 	sizes := make(map[uint64]uint32)
 
-	h := newTestHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
-		o := make([]byte, len(objData.Bytes()))
-		copy(o, objData.Bytes())
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
+		o := make([]byte, len(objData))
+		copy(o, objData)
 		stor[oid] = o
 		sizes[oid] = uint32(len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
 		o, ok := stor[oid]
 		if !ok {
 			return nil, orpc.ErrNotFound
 		}
 		size := sizes[oid]
-		objData = xbytes.GetNBytes(int(size))
-		objData.Write(o)
+		objData = xbytes.GetAlignedBytes(int(size))
+		copy(objData, o)
 		return
 	}
 	h.delFn = func(reqid uint64, oid uint64) error {
@@ -264,15 +244,17 @@ func TestClient_DeleteObj(t *testing.T) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
-	req := make([]byte, 256*1024)
-	rand.Read(req)
+	for i := 0; i < 1024; i++ {
 
-	for i := 0; i < 7; i++ {
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
 
-		size := (1 << i) * uid.GrainSize
-		objData := req[:size]
+		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
@@ -296,9 +278,10 @@ func TestClient_DeleteObj(t *testing.T) {
 		cnt++
 	}
 
+	getBuf := make([]byte, settings.MaxObjectSize)
 	for oid, objBytes := range stor {
 		size := sizes[oid]
-		act := make([]byte, size)
+		act := getBuf[:size]
 		err := c.GetObj(0, oid, act, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -321,29 +304,29 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	stor := new(sync.Map)
 	sizes := new(sync.Map)
 
-	h := newTestHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
 
-		o := make([]byte, len(objData.Bytes()))
-		copy(o, objData.Bytes())
+		o := make([]byte, len(objData))
+		copy(o, objData)
 		stor.Store(oid, o)
 		sizes.Store(oid, len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
 
 		v, ok := sizes.Load(oid)
 		if !ok {
 			return nil, orpc.ErrNotFound
 		}
 		size := v.(int)
-		objData = directio.GetNBytes(size)
+		objData = xbytes.GetAlignedBytes(size)
 
 		o, ok := stor.Load(oid)
 		if !ok {
 			return nil, orpc.ErrNotFound
 		}
-		objData.Write(o.([]byte))
+		copy(objData, o.([]byte))
 		return
 	}
 
@@ -355,17 +338,18 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
-	req := make([]byte, 18*uid.GrainSize)
-	rand.Read(req)
+	testCnt := 1024
+	oids := make([]uint64, testCnt)
+	for i := 0; i < testCnt; i++ {
 
-	oids := make([]uint64, 18)
-
-	for i := 1; i < 18; i++ {
-
-		size := i * uid.GrainSize
-		objData := req[:size]
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
+		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
@@ -376,7 +360,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for _, oid := range oids[1:] {
+	for _, oid := range oids {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
@@ -411,15 +395,15 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	stor := new(sync.Map)
 	sizes := new(sync.Map)
 
-	h := newTestHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData xbytes.Buffer) error {
-		o := make([]byte, len(objData.Bytes()))
-		copy(o, objData.Bytes())
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
+		o := make([]byte, len(objData))
+		copy(o, objData)
 		stor.Store(oid, o)
 		sizes.Store(oid, len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData xbytes.Buffer, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
 		err = orpc.ErrNotFound
 		return
 	}
@@ -432,17 +416,18 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
-	req := make([]byte, 18*uid.GrainSize)
-	rand.Read(req)
+	oids := make([]uint64, 1024)
 
-	oids := make([]uint64, 18)
+	for i := 0; i < 1024; i++ {
 
-	for i := 1; i < 18; i++ {
-
-		size := i * 4096
-		objData := req[:size]
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
+		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, objData, 0)
@@ -453,7 +438,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	for _, oid := range oids[1:] {
+	for _, oid := range oids {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()

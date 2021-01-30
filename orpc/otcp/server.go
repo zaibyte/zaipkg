@@ -101,7 +101,7 @@ type Server struct {
 	// It returns TCP connections accepted from Server.Addr.
 	Listener *defaultListener
 
-	Handler orpc.Handler
+	Handler orpc.ServerHandler
 
 	serverStopChan chan struct{}
 	stopWg         sync.WaitGroup
@@ -121,7 +121,7 @@ const (
 func (s *Server) Start() error {
 
 	if s.serverStopChan != nil {
-		xlog.Panic("server is already running. Close it before starting it again")
+		xlog.Panic("server is already running. Stop it before starting it again")
 	}
 	s.serverStopChan = make(chan struct{})
 
@@ -285,9 +285,9 @@ type serverMessage struct {
 	reqid    uint64
 	oid      uint64
 	bodySize uint32
-	reqbody  xbytes.Buffer
+	reqbody  []byte
 
-	resp xbytes.Buffer
+	resp []byte
 	err  error
 }
 
@@ -320,49 +320,49 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 	}()
 
 	hash := xdigest.New()
-
 	dec := newDecoder(r, s.RecvBufferSize, hash)
-	req := &msgBuf{
-		header: new(reqHeader),
-	}
-	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
+	rh := new(reqHeader)
+	headerBuf := make([]byte, reqHeaderSize)
+
 	for {
-		err := dec.decode(req, headerBuf)
+		err := dec.decodeHeader(headerBuf, rh)
 		if err != nil {
 			if err == orpc.ErrTimeout {
 				continue // Keeping trying to read request header.
 			}
-			xlog.Errorf("failed to read request from %s: %s", r.RemoteAddr().String(), err)
+			xlog.Errorf("failed to read request header from %s: %s", r.RemoteAddr().String(), err)
 			return
 		}
 
-		body := req.body
-		req.body = nil
-
-		h := req.header.(*reqHeader)
 		m := serverMessagePool.Get().(*serverMessage)
-		m.method = h.method
-		m.msgID = h.msgID
-		m.reqid = h.reqid
-		m.oid = h.oid
-		m.bodySize = h.bodySize
+		m.method = rh.method
+		m.msgID = rh.msgID
+		m.reqid = rh.reqid
+		m.oid = rh.oid
+		m.bodySize = rh.bodySize
 
-		digest := uid.GetDigest(m.oid)
+		n := int(m.bodySize)
+		if n != 0 {
+			body := xbytes.GetBytes(n)
+			err = dec.decodeBody(body, n)
+			if err != nil {
+				xlog.ErrorIDf(m.reqid, "failed to read request body from %s: %s", r.RemoteAddr().String(), err.Error())
+				xbytes.PutBytes(body)
+				m.reset()
+				serverMessagePool.Put(m)
+				return
+			}
 
-		if m.bodySize != 0 {
+			digest := uid.GetDigest(m.oid)
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(m.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("request exp: %d, but: %d", digest, actDigest)).Error())
 				m.err = orpc.ErrChecksumMismatch
-				if body != nil {
-					_ = body.Close()
-				}
-				m.reqbody = nil
+				xbytes.PutBytes(body)
+			} else {
+				m.reqbody = body
 			}
 			hash.Reset()
-		}
-		if m.err == nil {
-			m.reqbody = body
 		}
 
 		select {
@@ -383,8 +383,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-chan struct{}, m *serverMessage, workersCh <-chan struct{}) {
 
 	if m.err == nil {
-		reqBody := m.reqbody
-		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, reqBody)
+		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.reqbody)
 		m.resp = resp
 		if err != nil {
 			m.resp = nil
@@ -393,7 +392,7 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	}
 
 	if m.reqbody != nil {
-		_ = m.reqbody.Close()
+		xbytes.PutBytes(m.reqbody)
 	}
 	m.reqbody = nil
 
@@ -411,7 +410,7 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	<-workersCh
 }
 
-func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, reqData xbytes.Buffer) (resp xbytes.Buffer, err error) {
+func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, reqBody []byte) (resp []byte, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			stackTrace := make([]byte, 1<<20)
@@ -423,7 +422,7 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 
 	switch method {
 	case objPutMethod:
-		err = s.Handler.PutObj(reqid, oid, reqData)
+		err = s.Handler.PutObj(reqid, oid, reqBody)
 	case objGetMethod:
 		resp, err = s.Handler.GetObj(reqid, oid)
 	case objDelMethod:
@@ -450,9 +449,10 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 	t := time.NewTimer(s.FlushDelay)
 	var flushChan <-chan time.Time
 	enc := newEncoder(w, s.SendBufferSize)
-	msg := new(msgBuf)
+	msg := new(msgBytes)
 	rh := new(respHeader)
-	headerBuf := make([]byte, reqHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
+	headerBuf := make([]byte, respHeaderSize) // reqHeaderSize is bigger than respHeaderSize.
+
 	for {
 		var m *serverMessage
 
@@ -487,7 +487,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 
 		rh.msgID = m.msgID
 		if resp != nil {
-			rh.bodySize = uint32(len(resp.Bytes()))
+			rh.bodySize = uint32(len(resp))
 		} else {
 			rh.bodySize = 0
 		}
@@ -498,7 +498,8 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		m.reset()
 		serverMessagePool.Put(m)
 
-		if err := enc.encodeBuf(msg, headerBuf); err != nil {
+		if err := enc.encodeBytesPool(msg, headerBuf); err != nil {
+
 			xlog.ErrorIDf(reqid, "failed to send response to: %s: %s", w.RemoteAddr().String(), err)
 			return
 		}

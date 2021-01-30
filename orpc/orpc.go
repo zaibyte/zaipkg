@@ -16,8 +16,6 @@ package orpc
 
 import (
 	"time"
-
-	"g.tesamc.com/IT/zaipkg/xbytes"
 )
 
 // Client is the object RPC client.
@@ -42,9 +40,9 @@ type Server interface {
 	Stop() error
 }
 
-// Handler is the object rpc handler.
-type Handler interface {
-	PutObj(reqid, oid uint64, objData xbytes.Buffer) error
-	GetObj(reqid, oid uint64) (objData xbytes.Buffer, err error)	// Using xbytes.Buffer here for saving potential GC overhead.
+// ServerHandler is the object rpc handler.
+type ServerHandler interface {
+	PutObj(reqid, oid uint64, objData []byte) error
+	GetObj(reqid, oid uint64) (objData []byte, err error) // Using xbytes.Buffer here for saving potential GC overhead.
 	DeleteObj(reqid, oid uint64) error
 }

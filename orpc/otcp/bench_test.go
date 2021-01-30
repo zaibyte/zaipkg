@@ -45,6 +45,8 @@ import (
 	"testing"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/xbytes"
+
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xtest"
@@ -57,7 +59,7 @@ func BenchmarkClient_Put(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, newTestHandler())
+	s := NewServer(addr, nopHandler())
 
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
@@ -68,7 +70,7 @@ func BenchmarkClient_Put(b *testing.B) {
 	c.Conns = 4
 
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
 	objData := make([]byte, 4096)
 	rand.Read(objData)
@@ -87,13 +89,30 @@ func BenchmarkClient_Put(b *testing.B) {
 	})
 }
 
+func newBenchGetHandler() *testHandler {
+
+	return &testHandler{
+		putFn: func(reqid uint64, oid uint64, objData []byte) error {
+			return nil
+		},
+		getFn: func(reqid uint64, oid uint64) (objData []byte, err error) {
+			_, _, grains, _, _, _ := uid.ParseOID(oid)
+			objData = xbytes.GetAlignedBytes(int(grains * uid.GrainSize))
+			return
+		},
+		delFn: func(reqid uint64, oid uint64) error {
+			return nil
+		},
+	}
+}
+
 func BenchmarkClient_Get(b *testing.B) {
 
 	rand.Seed(time.Now().UnixNano())
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, newTestHandler())
+	s := NewServer(addr, newBenchGetHandler())
 
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
@@ -104,7 +123,7 @@ func BenchmarkClient_Get(b *testing.B) {
 	c.Conns = 4
 
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
 	objData := make([]byte, 4096)
 	oid := uid.MakeOID(1, 1, 1, 1, uid.NormalObj)
@@ -127,7 +146,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 
 	addr := getRandomAddr()
 
-	s := NewServer(addr, newTestHandler())
+	s := NewServer(addr, nopHandler())
 	if err := s.Start(); err != nil {
 		b.Fatalf("cannot start server: %s", err)
 	}
@@ -135,7 +154,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 
 	c := NewClient(addr)
 	c.Start()
-	defer c.Close()
+	defer c.Stop()
 
 	req := make([]byte, 4096)
 	rand.Read(req)

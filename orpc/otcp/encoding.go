@@ -54,11 +54,6 @@ type msgBytes struct {
 	body   []byte
 }
 
-type msgBuf struct {
-	header header
-	body   xbytes.Buffer
-}
-
 func (d *decoder) decodeHeader(buf []byte, h header) error {
 
 	_, err := io.ReadFull(d.br, buf)
@@ -75,48 +70,6 @@ func (d *decoder) decodeHeader(buf []byte, h header) error {
 func (d *decoder) decodeBody(buf []byte, n int) error {
 	_, err := readAtLeast(d.br, buf, n, d.hash)
 	return err
-}
-
-func (d *decoder) decode(msg *msgBuf, headerBuf []byte) error {
-
-	var hbuf []byte
-	_, ok := msg.header.(*reqHeader)
-	if ok {
-		hbuf = headerBuf[:reqHeaderSize]
-	} else {
-		hbuf = headerBuf[:respHeaderSize]
-	}
-	_, err := io.ReadFull(d.br, hbuf)
-	if err != nil {
-		operr, ok2 := err.(net.Error)
-		if ok2 && operr.Timeout() {
-			return orpc.ErrTimeout
-		}
-		return err
-	}
-	err = msg.header.decode(hbuf)
-	if err != nil {
-		return err
-	}
-
-	n := msg.header.getBodySize()
-	if n == 0 {
-		msg.body = nil
-		return nil
-	}
-
-	msg.body = xbytes.GetNBytes(int(n))
-
-	buf := msg.body.Bytes()[:n]
-	_, err = readAtLeast(d.br, buf, int(n), d.hash)
-	if err != nil {
-		_ = msg.body.Close()
-		msg.body = nil
-		return err
-	}
-
-	msg.body.Set(buf)
-	return nil
 }
 
 // readAtLeast reads from r into buf until it has read at least min bytes.
@@ -192,7 +145,9 @@ func (e *encoder) encode(msg *msgBytes, headerBuf []byte) error {
 	return err
 }
 
-func (e *encoder) encodeBuf(msg *msgBuf, headerBuf []byte) error {
+// encodeBytesPool encodes msg which body is get from xbytes pool.
+// And the pool must be aligned pool, because ZBuf is using direct I/O.
+func (e *encoder) encodeBytesPool(msg *msgBytes, headerBuf []byte) error {
 	var hbuf []byte
 	_, ok := msg.header.(*reqHeader)
 	if ok {
@@ -211,8 +166,8 @@ func (e *encoder) encodeBuf(msg *msgBuf, headerBuf []byte) error {
 		return nil
 	}
 
-	defer msg.body.Close()
-	_, err = e.bw.Write(msg.body.Bytes())
+	_, err = e.bw.Write(msg.body)
+	xbytes.PutAlignedBytes(msg.body)
 	return err
 }
 

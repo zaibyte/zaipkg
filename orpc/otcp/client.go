@@ -117,10 +117,6 @@ type Client struct {
 	stopWg   sync.WaitGroup
 }
 
-func (c *Client) Stop() error {
-	panic("implement me")
-}
-
 // asyncResult is a result returned from Client.callAsync().
 type asyncResult struct {
 	method  uint8
@@ -131,7 +127,7 @@ type asyncResult struct {
 	respBody []byte
 	// resp is become available after <-done unblocks.
 	done chan struct{}
-	// The error can be read only after <-Done unblocks.
+	// The error can be read only after <-done unblocks.
 	err error
 
 	canceled uint32
@@ -208,7 +204,7 @@ func (c *Client) Start() error {
 }
 
 // Stop stops rpc client. Stopped client can be started again.
-func (c *Client) Close() error {
+func (c *Client) Stop() error {
 	if c.stopChan == nil {
 		xlog.Panic("client must be started before stopping it")
 	}
@@ -380,7 +376,7 @@ func (c *Client) clientHandleConnection(conn net.Conn) {
 
 	stopChan := make(chan struct{})
 
-	pendingRequests := make(map[uint64]*asyncResult)
+	pendingRequests := make(map[uint64]*asyncResult, c.PendingRequests)
 	var pendingRequestsLock sync.Mutex // Only two goroutine here, map with mutex is faster than sync.Map.
 
 	writerDone := make(chan error, 1)
@@ -523,11 +519,14 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResult, pendingRequestsLock *sync.Mutex, done chan<- error) {
 	var err error
 	defer func() {
-		if re := recover(); re != nil {
+		if x := recover(); x != nil {
 			if err == nil {
-				xlog.Errorf("panic when reading data from server: %s: %v", c.Addr, re)
+				stackTrace := make([]byte, 1<<20)
+				n := runtime.Stack(stackTrace, false)
+				xlog.Errorf("panic when reading data from server: %s: %v\nStack trace: %s", r.RemoteAddr().String(), x, stackTrace[:n])
 			}
 		}
+
 		done <- err
 	}()
 
@@ -575,11 +574,10 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if n != 0 {
 			err = dec.decodeBody(ar.respBody, int(n))
-			if err != nil {
-				if err == orpc.ErrTimeout {
-					continue // Keeping trying to read request header.
-				}
-				xlog.Errorf("failed to read request body from %s: %s", r.RemoteAddr().String(), err)
+			if err != nil { // If failed to read body, the next read header will be failed too, so just return.
+				xlog.ErrorIDf(ar.reqid, "failed to read request body from %s: %s", r.RemoteAddr().String(), err)
+				ar.err = err
+				close(ar.done)
 				return
 			}
 

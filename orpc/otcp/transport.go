@@ -46,8 +46,9 @@ import (
 	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
-var (
-	handshake         = [1]byte{0x1}
+var handshake = [1]byte{0x1}
+
+const (
 	dialTimeout       = 2 * time.Second
 	handshakeDuration = 2 * time.Second
 	readDuration      = 2 * time.Second
@@ -62,7 +63,7 @@ var (
 // The returned server must be started after optional settings' adjustment.
 //
 // The corresponding client must be created with NewClient().
-func NewServer(addr string, h orpc.Handler) *Server {
+func NewServer(addr string, h orpc.ServerHandler) *Server {
 	s := &Server{
 		Addr:     addr,
 		Listener: &defaultListener{},
