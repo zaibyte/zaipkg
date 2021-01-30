@@ -124,6 +124,19 @@ type BufferPool struct {
 // NewPool creates a bytes slice pool.
 func NewPool(tiny, small, mid, max int, isAligned bool) *BufferPool {
 
+	if tiny <= 0 {
+		tiny = defaultTinySizeLeaky
+	}
+	if small <= 0 {
+		small = defaultSmallSizeLeaky
+	}
+	if mid <= 0 {
+		mid = defaultMidSizeLeaky
+	}
+	if max <= 0 {
+		max = defaultMaxSizeLeaky
+	}
+
 	var makeSPFn, makeTinyFn, makeSmallFn, makeMidFn, makeMaxFn func() []byte
 	if isAligned {
 		makeSPFn = func() []byte {
