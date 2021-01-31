@@ -28,6 +28,14 @@ import (
 )
 
 // IsBroken returns an error is disk error or not.
+// If the err is EIO or EROFS, the disk should be regard as broken.
+//
+// The logic is copied from Western Digit open source object storage:
+// https://github.com/westerndigitalcorporation/blb/blob/master/internal/tractserver/manager.go
+// func (m *Manager) toBlbError(err error) core.Error
+//
+// Western Digit is a professional disk devices manufacturer,
+// and in my experience, it works well enough to detect disk broken or not.
 func IsBroken(err error) bool {
 	if err == nil {
 		return false
