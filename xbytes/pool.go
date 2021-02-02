@@ -14,6 +14,14 @@ import (
 	"g.tesamc.com/IT/zaipkg/directio"
 )
 
+// ResetLeakyCap resets leaky pools capacities.
+// Warn:
+// Not thread safe.
+func ResetLeakyCap(tiny, small, mid, max int) {
+	_defaultPool = NewPool(tiny, small, mid, max, false)
+	_alignPool = NewPool(tiny, small, mid, max, true)
+}
+
 var (
 	_defaultPool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
 	_alignPool   = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, true)
