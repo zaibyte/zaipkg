@@ -84,7 +84,7 @@ func BenchmarkClient_Put(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
-			err := c.PutObj(uid.MakeReqID(), oid, objData, 0)
+			err := c.PutObj(uid.MakeReqID(), oid, 1, objData, 0)
 			if err != nil {
 				b.Fatalf("Unexpected error: %s", err)
 			}
@@ -134,7 +134,7 @@ func BenchmarkClient_Get(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
-			err := c.GetObj(uid.MakeReqID(), oid, objData, 0)
+			err := c.GetObj(uid.MakeReqID(), oid, 1, objData, 0)
 			if err != nil {
 				b.Fatalf("Unexpected error: %s", err)
 			}
@@ -167,7 +167,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
-			err := c.DeleteObj(uid.MakeReqID(), oid, 0)
+			err := c.DeleteObj(uid.MakeReqID(), oid, 1, 0)
 			if err != nil {
 				b.Fatalf("Unexpected error: %s", err)
 			}

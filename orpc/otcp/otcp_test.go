@@ -71,15 +71,15 @@ type testHandler struct {
 	delFn func(reqid uint64, oid uint64) error
 }
 
-func (h *testHandler) PutObj(reqid uint64, oid uint64, objData []byte) error {
+func (h *testHandler) PutObj(reqid uint64, oid uint64, extID uint32, objData []byte) error {
 	return h.putFn(reqid, oid, objData)
 }
 
-func (h *testHandler) GetObj(reqid uint64, oid uint64) (objData []byte, err error) {
+func (h *testHandler) GetObj(reqid uint64, oid uint64, extID uint32) (objData []byte, err error) {
 	return h.getFn(reqid, oid)
 }
 
-func (h *testHandler) DeleteObj(reqid uint64, oid uint64) error {
+func (h *testHandler) DeleteObj(reqid uint64, oid uint64, extID uint32) error {
 	return h.delFn(reqid, oid)
 }
 
@@ -134,7 +134,7 @@ func TestRequestTimeout(t *testing.T) {
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
 	for i := 0; i < 10; i++ {
-		err := c.PutObj(0, oid, objData, time.Millisecond)
+		err := c.PutObj(0, oid, 1, objData, time.Millisecond)
 		if err == nil {
 			t.Fatalf("Timeout error must be returned")
 		}
@@ -187,7 +187,7 @@ func TestClient_GetObj(t *testing.T) {
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
-		err := c.PutObj(0, oid, objData, 0)
+		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
@@ -197,7 +197,7 @@ func TestClient_GetObj(t *testing.T) {
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
-		err := c.GetObj(0, oid, act, 0)
+		err := c.GetObj(0, oid, 1, act, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -263,7 +263,7 @@ func TestClient_DeleteObj(t *testing.T) {
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
-		err := c.PutObj(0, oid, objData, 0)
+		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
@@ -275,7 +275,7 @@ func TestClient_DeleteObj(t *testing.T) {
 		if cnt >= 3 {
 			break
 		}
-		err := c.DeleteObj(0, oid, 0)
+		err := c.DeleteObj(0, oid, 1, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -287,7 +287,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
-		err := c.GetObj(0, oid, act, 0)
+		err := c.GetObj(0, oid, 1, act, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -298,7 +298,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 
 	for _, oid := range deleted {
-		err := c.GetObj(0, oid, make([]byte, 0), 0)
+		err := c.GetObj(0, oid, 1, make([]byte, 0), 0)
 		assert.Equal(t, orpc.ErrNotFound, err)
 	}
 }
@@ -357,7 +357,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
-		err := c.PutObj(0, oid, objData, 0)
+		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
@@ -375,7 +375,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			}
 			size := v.(int)
 			act := make([]byte, size)
-			err := c.GetObj(0, oid, act, 0)
+			err := c.GetObj(0, oid, 1, act, 0)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -435,7 +435,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
 		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
-		err := c.PutObj(0, oid, objData, 0)
+		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
@@ -447,7 +447,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
-			err := c.GetObj(0, oid, make([]byte, 0), 0)
+			err := c.GetObj(0, oid, 1, make([]byte, 0), 0)
 			if err != orpc.ErrNotFound {
 				t.Fatal("error should be not found")
 			}

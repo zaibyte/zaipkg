@@ -284,6 +284,7 @@ type serverMessage struct {
 	msgID    uint64
 	reqid    uint64
 	oid      uint64
+	extID    uint32
 	bodySize uint32
 	reqbody  []byte
 
@@ -302,6 +303,7 @@ func (s *serverMessage) reset() {
 	s.msgID = 0
 	s.reqid = 0
 	s.reqbody = nil
+	s.extID = 0
 
 	s.resp = nil
 	s.err = nil
@@ -339,6 +341,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 		m.msgID = rh.msgID
 		m.reqid = rh.reqid
 		m.oid = rh.oid
+		m.extID = rh.extID
 		m.bodySize = rh.bodySize
 
 		n := int(m.bodySize)
@@ -383,7 +386,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-chan struct{}, m *serverMessage, workersCh <-chan struct{}) {
 
 	if m.err == nil {
-		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.reqbody)
+		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.extID, m.reqbody)
 		m.resp = resp
 		if err != nil {
 			m.resp = nil
@@ -410,7 +413,7 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	<-workersCh
 }
 
-func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, reqBody []byte) (resp []byte, err error) {
+func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, extID uint32, reqBody []byte) (resp []byte, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			stackTrace := make([]byte, 1<<20)
@@ -422,11 +425,11 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 
 	switch method {
 	case objPutMethod:
-		err = s.Handler.PutObj(reqid, oid, reqBody)
+		err = s.Handler.PutObj(reqid, oid, extID, reqBody)
 	case objGetMethod:
-		resp, err = s.Handler.GetObj(reqid, oid)
+		resp, err = s.Handler.GetObj(reqid, oid, extID)
 	case objDelMethod:
-		err = s.Handler.DeleteObj(reqid, oid)
+		err = s.Handler.DeleteObj(reqid, oid, extID)
 	default:
 		err = orpc.ErrNotImplemented
 	}

@@ -122,6 +122,7 @@ type asyncResult struct {
 	method  uint8
 	reqid   uint64
 	oid     uint64
+	extID   uint32
 	reqData []byte
 
 	respBody []byte
@@ -215,18 +216,18 @@ func (c *Client) Stop() error {
 }
 
 // Put puts object to the ZBuf node which orpc.Client connected.
-func (c *Client) PutObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
-	return c.callTimeout(reqid, objPutMethod, oid, objData, timeout)
+func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
+	return c.callTimeout(reqid, objPutMethod, oid, extID, objData, timeout)
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, objData []byte, timeout time.Duration) error {
-	return c.callTimeout(reqid, objGetMethod, oid, objData, timeout)
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
+	return c.callTimeout(reqid, objGetMethod, oid, extID, objData, timeout)
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
-func (c *Client) DeleteObj(reqid, oid uint64, timeout time.Duration) error {
-	return c.callTimeout(reqid, objDelMethod, oid, nil, timeout)
+func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, timeout time.Duration) error {
+	return c.callTimeout(reqid, objDelMethod, oid, extID, nil, timeout)
 }
 
 // callTimeout sends the given request to the server and obtains response
@@ -235,14 +236,14 @@ func (c *Client) DeleteObj(reqid, oid uint64, timeout time.Duration) error {
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte, timeout time.Duration) (err error) {
+func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, timeout time.Duration) (err error) {
 
 	if timeout == 0 {
 		timeout = c.RequestTimeout
 	}
 
 	var ar *asyncResult
-	if ar, err = c.callAsync(reqid, method, oid, body); err != nil {
+	if ar, err = c.callAsync(reqid, method, oid, extID, body); err != nil {
 		return err
 	}
 
@@ -265,7 +266,7 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, body []byte
 	return
 }
 
-func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) (ar *asyncResult, err error) {
+func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32, body []byte) (ar *asyncResult, err error) {
 
 	if reqid == 0 {
 		reqid = uid.MakeReqID()
@@ -280,6 +281,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, body []byte) 
 	ar.reqid = reqid
 	ar.method = method
 	ar.oid = oid
+	ar.extID = extID
 	ar.done = make(chan struct{})
 
 	if method == objPutMethod {
@@ -429,7 +431,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 
 	enc := newEncoder(w, c.SendBufferSize)
 	msg := new(msgBytes)
-	header := new(reqHeader)
+	rh := new(reqHeader)
 
 	t := time.NewTimer(c.FlushDelay)
 	var flushChan <-chan time.Time
@@ -495,16 +497,17 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 			return
 		}
 
-		header.method = ar.method
-		header.msgID = msgID
-		header.reqid = ar.reqid
+		rh.method = ar.method
+		rh.msgID = msgID
+		rh.reqid = ar.reqid
 		if ar.reqData != nil {
-			header.bodySize = uint32(len(ar.reqData))
+			rh.bodySize = uint32(len(ar.reqData))
 		} else {
-			header.bodySize = 0
+			rh.bodySize = 0
 		}
-		header.oid = ar.oid
-		msg.header = header
+		rh.oid = ar.oid
+		rh.extID = ar.extID
+		msg.header = rh
 		msg.body = ar.reqData
 
 		if err = enc.encode(msg, headerBuf); err != nil {
@@ -611,6 +614,7 @@ func releaseAsyncResult(ar *asyncResult) {
 	ar.method = 0
 	ar.reqid = 0
 	ar.oid = 0
+	ar.extID = 0
 	ar.reqData = nil
 
 	ar.respBody = nil

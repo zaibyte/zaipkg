@@ -45,7 +45,7 @@ type header interface {
 	getBodySize() uint32
 }
 
-const reqHeaderSize = 33
+const reqHeaderSize = 37
 
 // reqHeader is the header for request.
 type reqHeader struct {
@@ -54,7 +54,8 @@ type reqHeader struct {
 	reqid    uint64 // [9, 17)
 	bodySize uint32 // [17, 21)
 	oid      uint64 // [21, 29)
-	crc      uint32 // [29, 33)
+	extID    uint32 // [29, 33)
+	crc      uint32 // [33, 37)
 }
 
 func (h *reqHeader) encode(buf []byte) []byte {
@@ -66,9 +67,10 @@ func (h *reqHeader) encode(buf []byte) []byte {
 	binary.BigEndian.PutUint64(buf[9:17], h.reqid)
 	binary.BigEndian.PutUint32(buf[17:21], h.bodySize)
 	binary.BigEndian.PutUint64(buf[21:29], h.oid)
-	binary.BigEndian.PutUint32(buf[29:33], 0)
+	binary.BigEndian.PutUint32(buf[29:33], h.extID)
+	binary.BigEndian.PutUint32(buf[33:37], 0)
 	crc := xchecksum.Sum32(buf[:reqHeaderSize])
-	binary.BigEndian.PutUint32(buf[29:33], crc)
+	binary.BigEndian.PutUint32(buf[33:37], crc)
 	h.crc = crc
 	return buf[:reqHeaderSize]
 }
@@ -78,19 +80,20 @@ func (h *reqHeader) decode(buf []byte) error {
 		panic("input buf too small")
 	}
 
-	incoming := binary.BigEndian.Uint32(buf[29:33])
-	binary.BigEndian.PutUint32(buf[29:33], 0)
+	incoming := binary.BigEndian.Uint32(buf[33:37])
+	binary.BigEndian.PutUint32(buf[33:37], 0)
 	expected := xchecksum.Sum32(buf[:reqHeaderSize])
 	if incoming != expected {
 		return orpc.ErrChecksumMismatch
 	}
-	binary.BigEndian.PutUint32(buf[29:33], incoming)
+	binary.BigEndian.PutUint32(buf[33:37], incoming)
 
 	h.method = buf[0]
 	h.msgID = binary.BigEndian.Uint64(buf[1:9])
 	h.reqid = binary.BigEndian.Uint64(buf[9:17])
 	h.bodySize = binary.BigEndian.Uint32(buf[17:21])
 	h.oid = binary.BigEndian.Uint64(buf[21:29])
+	h.extID = binary.BigEndian.Uint32(buf[29:33])
 	h.crc = incoming
 
 	return nil
