@@ -343,11 +343,11 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 
 		n := int(m.bodySize)
 		if n != 0 {
-			body := xbytes.GetBytes(n)
+			body := xbytes.GetAlignedBytes(n)
 			err = dec.decodeBody(body, n)
 			if err != nil {
 				xlog.ErrorIDf(m.reqid, "failed to read request body from %s: %s", r.RemoteAddr().String(), err.Error())
-				xbytes.PutBytes(body)
+				xbytes.PutAlignedBytes(body)
 				m.reset()
 				serverMessagePool.Put(m)
 				return
@@ -358,7 +358,7 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 			if actDigest != digest {
 				xlog.ErrorID(m.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("request exp: %d, but: %d", digest, actDigest)).Error())
 				m.err = orpc.ErrChecksumMismatch
-				xbytes.PutBytes(body)
+				xbytes.PutAlignedBytes(body)
 			} else {
 				m.reqbody = body
 			}
@@ -392,7 +392,7 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	}
 
 	if m.reqbody != nil {
-		xbytes.PutBytes(m.reqbody)
+		xbytes.PutAlignedBytes(m.reqbody)
 	}
 	m.reqbody = nil
 
