@@ -60,6 +60,11 @@ import (
 	"github.com/templexxx/tsc"
 )
 
+func init() {
+	// Avoiding too many allocations.
+	xbytes.ResetLeakyCap(32, 32, 32, 4)
+}
+
 type testHandler struct {
 	putFn func(reqid uint64, oid uint64, objData []byte) error
 	getFn func(reqid uint64, oid uint64) (objData []byte, err error)

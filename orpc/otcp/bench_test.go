@@ -53,6 +53,9 @@ import (
 	"github.com/panjf2000/ants/v2"
 )
 
+// TODO if you want to run bench, should raise the xbytes leaky pool capacities.
+// which has been adjusted to smaller numbers.
+
 func BenchmarkClient_Put(b *testing.B) {
 
 	rand.Seed(time.Now().UnixNano())
