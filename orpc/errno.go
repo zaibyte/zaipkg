@@ -120,6 +120,8 @@ const (
 	extentBroken    = 23
 	extentOffline   = 24
 	extentTombstone = 25
+
+	objDigestExisted = 26
 )
 
 // Error table.
@@ -153,6 +155,8 @@ var errnoStr = [...]string{
 	extentBroken:    "extent is broken",
 	extentOffline:   "extent is offline",
 	extentTombstone: "extent is tombstone",
+
+	objDigestExisted: "object digest is existed in this group",
 }
 
 var (
@@ -184,6 +188,8 @@ var (
 	ErrExtentBroken    = Errno(extentBroken)
 	ErrExtentOffline   = Errno(extentOffline)
 	ErrExtentTombstone = Errno(extentTombstone)
+
+	ErrObjDigestExisted = Errno(objDigestExisted)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
