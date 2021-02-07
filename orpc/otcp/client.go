@@ -211,6 +211,16 @@ func (c *Client) Stop() error {
 	}
 	close(c.stopChan)
 	c.stopWg.Wait()
+
+	// No more sender/receiver now.
+	close(c.requestsChan)
+	for ar := range c.requestsChan {
+		if ar.done != nil {
+			ar.err = orpc.ErrServiceClosed
+			close(ar.done)
+		}
+	}
+
 	c.stopChan = nil
 	return nil
 }
@@ -292,6 +302,9 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	}
 
 	select {
+	case <-c.stopChan:
+		releaseAsyncResult(ar)
+		return nil, orpc.ErrServiceClosed
 	case c.requestsChan <- ar:
 		return ar, nil
 	default:
@@ -300,6 +313,9 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 		// This increases the chances for new request to succeed
 		// without timeout.
 		select {
+		case <-c.stopChan:
+			releaseAsyncResult(ar)
+			return nil, orpc.ErrServiceClosed
 		case ar2 := <-c.requestsChan:
 			if ar2.done != nil {
 				ar2.err = orpc.ErrRequestQueueOverflow
@@ -312,6 +328,9 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 
 		// After pop, try to put again.
 		select {
+		case <-c.stopChan:
+			releaseAsyncResult(ar)
+			return nil, orpc.ErrServiceClosed
 		case c.requestsChan <- ar:
 			return ar, nil
 		default:
@@ -471,7 +490,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		if ar.isCanceled() {
 
 			if ar.done != nil {
-				ar.err = orpc.ErrCanceled
+				ar.err = orpc.ErrTimeout
 				close(ar.done)
 			} else {
 				releaseAsyncResult(ar)
