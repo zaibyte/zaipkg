@@ -53,7 +53,7 @@ func (e Errno) Error() string {
 	}
 
 	if int(e) < len(errnoStr) {
-		s := errnoStr[e]
+		s := errnoStr[uint16(e)]
 		if s != "" {
 			return s
 		}
@@ -91,11 +91,18 @@ func ErrToErrno(err error) Errno {
 	return Errno(internalServerError)
 }
 
+// Error which supports retrying will start from 10000.
 const (
+	RetryStart = 10000
+	RetryEnd   = 19999
+)
+
+const (
+	timeout = 10004
+
 	badRequest           = 1
 	notFound             = 2
 	notImplemented       = 3
-	timeout              = 4
 	tooManyRequests      = 5
 	internalServerError  = 6
 	connectionError      = 7
@@ -128,7 +135,7 @@ const (
 
 // Error table.
 // Please add errno in order.
-var errnoStr = [...]string{
+var errnoStr = map[uint16]string{
 	badRequest:           "bad message",
 	notFound:             "not found",
 	notImplemented:       "not implemented",
