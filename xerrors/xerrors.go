@@ -50,6 +50,8 @@ package xerrors
 import (
 	"fmt"
 	"io"
+
+	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
 type withMessage struct {
@@ -105,4 +107,13 @@ func (w *withMessage) Format(s fmt.State, verb rune) {
 	case 's', 'q':
 		_, _ = io.WriteString(s, w.Error())
 	}
+}
+
+// CouldRetry returns true if the error supports retrying.
+// e.g. When meet ErrTimeout, we could retry later.
+func CouldRetry(err error) bool {
+	if uint16(orpc.ErrToErrno(err))/orpc.RetryStart != 1 {
+		return false
+	}
+	return true
 }
