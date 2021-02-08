@@ -1,6 +1,11 @@
 package xtime
 
-import "time"
+import (
+	"sync"
+	"time"
+
+	"g.tesamc.com/IT/zaipkg/xlog"
+)
 
 var nopTime = make(chan time.Time)
 
@@ -48,4 +53,32 @@ func GetTimerEvent(t *time.Timer, duration time.Duration) <-chan time.Time {
 	}
 	t.Reset(duration)
 	return t.C
+}
+
+var timerPool sync.Pool
+
+func AcquireTimer(timeout time.Duration) *time.Timer {
+	tv := timerPool.Get()
+	if tv == nil {
+		return time.NewTimer(timeout)
+	}
+
+	t := tv.(*time.Timer)
+	if t.Reset(timeout) {
+		xlog.Panic("bug: active timer trapped into AcquireTimer()")
+	}
+	return t
+}
+
+func ReleaseTimer(t *time.Timer) {
+	if !t.Stop() {
+		// Collect possibly added time from the channel
+		// if timer has been stopped and nobody collected its' value.
+		select {
+		case <-t.C:
+		default:
+		}
+	}
+
+	timerPool.Put(t)
 }
