@@ -472,7 +472,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 			case <-flushChan:
 				if err := enc.flush(); err != nil {
 					if !isServerStop(stopChan) {
-						xlog.Errorf("cannot flush requests to: %s: %s", w.RemoteAddr().String(), err)
+						xlog.Errorf("server cannot flush requests to: %s: %s", w.RemoteAddr().String(), err)
 					}
 					return
 				}

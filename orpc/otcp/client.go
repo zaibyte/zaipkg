@@ -129,24 +129,6 @@ type asyncResult struct {
 	respBody []byte
 
 	err chan error
-
-	canceled uint32
-}
-
-// cancel cancels async call.
-//
-// Canceled call isn't sent to the server unless it is already sent there.
-// Canceled call may successfully complete if it has been already sent
-// to the server before cancel call.
-//
-// It is safe calling this function multiple times from concurrently
-// running goroutines.
-func (r *asyncResult) cancel() {
-	atomic.StoreUint32(&r.canceled, 1)
-}
-
-func (r *asyncResult) isCanceled() bool {
-	return atomic.LoadUint32(&r.canceled) != 0
 }
 
 const (
@@ -307,9 +289,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 }
 
 func (c *Client) clientHandler() {
-	defer func() {
-		c.stopWg.Done()
-	}()
+	defer c.stopWg.Done()
 
 	var conn net.Conn
 	var err error
@@ -438,7 +418,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 			case ar = <-c.requestsChan:
 			case <-flushChan:
 				if err = enc.flush(); err != nil {
-					err = fmt.Errorf("cannot flush requests to: %s: %s", c.Addr, err)
+					err = fmt.Errorf("client cannot requests to: %s: %s", c.Addr, err)
 					return
 				}
 				flushChan = nil
@@ -448,13 +428,6 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if flushChan == nil {
 			flushChan = xtime.GetTimerEvent(t, c.FlushDelay)
-		}
-
-		if ar.isCanceled() {
-
-			ar.err <- xerrors.WithMessage(orpc.ErrCanceled, "timeout")
-
-			continue
 		}
 
 		pendingRequestsLock.Lock()
@@ -509,11 +482,6 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	rh := new(respHeader)
 	headerBuf := make([]byte, respHeaderSize)
 	for {
-		select {
-		case <-c.stopChan:
-			return
-		default:
-		}
 
 		err = dec.decodeHeader(headerBuf, rh)
 		if err != nil {
@@ -593,8 +561,6 @@ func releaseAsyncResult(ar *asyncResult) {
 
 	ar.respBody = nil
 	ar.err = nil
-
-	atomic.CompareAndSwapUint32(&ar.canceled, 1, 0)
 
 	asyncResultPool.Put(ar)
 }
