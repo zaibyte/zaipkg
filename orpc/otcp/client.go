@@ -306,9 +306,6 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	}
 
 	select {
-	case <-c.stopChan:
-		releaseAsyncResult(ar)
-		return nil, orpc.ErrServiceClosed
 	case c.requestsChan <- ar:
 		return ar, nil
 	default:
@@ -317,9 +314,6 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 		// This increases the chances for new request to succeed
 		// without timeout.
 		select {
-		case <-c.stopChan:
-			releaseAsyncResult(ar)
-			return nil, orpc.ErrServiceClosed
 		case ar2 := <-c.requestsChan:
 			ar2.err <- orpc.ErrRequestQueueOverflow
 		default:
@@ -327,9 +321,6 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 
 		// After pop, try to put again.
 		select {
-		case <-c.stopChan:
-			releaseAsyncResult(ar)
-			return nil, orpc.ErrServiceClosed
 		case c.requestsChan <- ar:
 			return ar, nil
 		default:
@@ -543,6 +534,12 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 	rh := new(respHeader)
 	headerBuf := make([]byte, respHeaderSize)
 	for {
+		select {
+		case <-c.stopChan:
+			return
+		default:
+		}
+
 		err = dec.decodeHeader(headerBuf, rh)
 		if err != nil {
 			if err == orpc.ErrTimeout {
