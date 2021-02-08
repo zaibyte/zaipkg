@@ -109,6 +109,12 @@ func getRandomAddr() string {
 	return fmt.Sprintf("127.0.0.1:%d", rand.Intn(20000)+10000)
 }
 
+func newTestClient(addr string) *Client {
+	c := NewClient(addr)
+	c.CloseWait = time.Microsecond
+	return c
+}
+
 func TestRequestTimeout(t *testing.T) {
 
 	addr := getRandomAddr()
@@ -124,7 +130,7 @@ func TestRequestTimeout(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr)
+	c := newTestClient(addr)
 	c.Start()
 	defer c.Stop()
 
@@ -172,7 +178,7 @@ func TestClient_GetObj(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr)
+	c := newTestClient(addr)
 	c.Start()
 	defer c.Stop()
 
@@ -247,7 +253,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr)
+	c := newTestClient(addr)
 	c.Start()
 	defer c.Stop()
 
@@ -341,7 +347,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr)
+	c := newTestClient(addr)
 	c.Start()
 	defer c.Stop()
 
@@ -419,7 +425,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	}
 	defer s.Stop()
 
-	c := NewClient(addr)
+	c := newTestClient(addr)
 	c.Start()
 	defer c.Stop()
 

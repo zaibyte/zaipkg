@@ -47,6 +47,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/config"
+
 	"g.tesamc.com/IT/zaipkg/xtime"
 
 	"g.tesamc.com/IT/zaipkg/orpc"
@@ -111,6 +113,9 @@ type Client struct {
 	// By default it returns TCP connections established to the Client.Addr.
 	Dial DialFunc
 
+	// CloseWait is the wait duration for Stop.
+	CloseWait time.Duration
+
 	requestsChan chan *asyncResult
 
 	stopChan chan struct{}
@@ -126,10 +131,8 @@ type asyncResult struct {
 	reqData []byte
 
 	respBody []byte
-	// resp is become available after <-done unblocks.
-	done chan struct{}
-	// The error can be read only after <-done unblocks.
-	err error
+
+	err chan error
 
 	canceled uint32
 }
@@ -162,6 +165,8 @@ const (
 
 	// DefaultClientConns is the default connection numbers for Client.
 	DefaultClientConns = 16
+
+	DefaultCloseWait = 3 * time.Second
 )
 
 // Start starts rpc client. Establishes connection to the server on Client.Addr.
@@ -171,28 +176,17 @@ func (c *Client) Start() error {
 		xlog.Panic("already started")
 	}
 
-	if c.PendingRequests <= 0 {
-		c.PendingRequests = DefaultPendingMessages
-	}
-	if c.RequestTimeout <= 0 {
-		c.RequestTimeout = DefaultRequestTimeout
-	}
-	if c.SendBufferSize <= 0 {
-		c.SendBufferSize = DefaultClientSendBufferSize
-	}
-	if c.RecvBufferSize <= 0 {
-		c.RecvBufferSize = DefaultClientRecvBufferSize
-	}
-	if c.FlushDelay == 0 {
-		c.FlushDelay = DefaultFlushDelay
-	}
+	config.Adjust(&c.PendingRequests, DefaultPendingMessages)
+	config.Adjust(&c.RequestTimeout, DefaultRequestTimeout)
+	config.Adjust(&c.SendBufferSize, DefaultClientSendBufferSize)
+	config.Adjust(&c.RecvBufferSize, DefaultClientRecvBufferSize)
+	config.Adjust(&c.FlushDelay, DefaultFlushDelay)
+	config.Adjust(&c.Conns, DefaultClientConns)
+	config.Adjust(&c.CloseWait, DefaultCloseWait)
 
 	c.requestsChan = make(chan *asyncResult, c.PendingRequests)
 	c.stopChan = make(chan struct{})
 
-	if c.Conns <= 0 {
-		c.Conns = DefaultClientConns
-	}
 	if c.Dial == nil {
 		c.Dial = defaultDial
 	}
@@ -206,23 +200,34 @@ func (c *Client) Start() error {
 
 // Stop stops rpc client. Stopped client can be started again.
 func (c *Client) Stop() error {
+
 	if c.stopChan == nil {
 		xlog.Panic("client must be started before stopping it")
 	}
 	close(c.stopChan)
+
 	c.stopWg.Wait()
 
-	// No more sender/receiver now.
-	close(c.requestsChan)
-	for ar := range c.requestsChan {
-		if ar.done != nil {
-			ar.err = orpc.ErrServiceClosed
-			close(ar.done)
+	t := xtime.AcquireTimer(c.CloseWait)
+
+	for {
+		select {
+		case r := <-c.requestsChan:
+			r.err <- orpc.ErrServiceClosed
+			continue
+		case <-t.C:
+			goto reset
+		default:
+			continue
 		}
 	}
 
+reset:
+	xtime.ReleaseTimer(t)
+
 	c.stopChan = nil
 	return nil
+
 }
 
 // Put puts object to the ZBuf node which orpc.Client connected.
@@ -257,11 +262,10 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, extID uint3
 		return err
 	}
 
-	t := acquireTimer(timeout)
+	t := xtime.AcquireTimer(timeout)
 
 	select {
-	case <-ar.done:
-		err = ar.err
+	case err = <-ar.err:
 		releaseAsyncResult(ar)
 	case <-t.C:
 		// Cancel will be captured in write preparation, asyncResult will be released there.
@@ -272,7 +276,7 @@ func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, extID uint3
 		err = orpc.ErrTimeout
 	}
 
-	releaseTimer(t)
+	xtime.ReleaseTimer(t)
 	return
 }
 
@@ -292,7 +296,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	ar.method = method
 	ar.oid = oid
 	ar.extID = extID
-	ar.done = make(chan struct{})
+	ar.err = make(chan error)
 
 	if method == objPutMethod {
 		ar.reqData = body
@@ -317,12 +321,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 			releaseAsyncResult(ar)
 			return nil, orpc.ErrServiceClosed
 		case ar2 := <-c.requestsChan:
-			if ar2.done != nil {
-				ar2.err = orpc.ErrRequestQueueOverflow
-				close(ar2.done)
-			} else {
-				releaseAsyncResult(ar2)
-			}
+			ar2.err <- orpc.ErrRequestQueueOverflow
 		default:
 		}
 
@@ -342,7 +341,9 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 }
 
 func (c *Client) clientHandler() {
-	defer c.stopWg.Done()
+	defer func() {
+		c.stopWg.Done()
+	}()
 
 	var conn net.Conn
 	var err error
@@ -375,7 +376,6 @@ func (c *Client) clientHandler() {
 			}
 			continue
 		}
-
 		c.clientHandleConnection(conn)
 
 		select {
@@ -423,10 +423,7 @@ func (c *Client) clientHandleConnection(conn net.Conn) {
 	}
 
 	for _, ar := range pendingRequests {
-		ar.err = err
-		if ar.done != nil {
-			close(ar.done)
-		}
+		ar.err <- err
 	}
 }
 
@@ -489,19 +486,8 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 
 		if ar.isCanceled() {
 
-			if ar.done != nil {
-				ar.err = orpc.ErrTimeout
-				close(ar.done)
-			} else {
-				releaseAsyncResult(ar)
-			}
+			ar.err <- xerrors.WithMessage(orpc.ErrCanceled, "timeout")
 
-			continue
-		}
-
-		if ar.done == nil {
-
-			releaseAsyncResult(ar)
 			continue
 		}
 
@@ -583,14 +569,13 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 
 		errno := rh.errno
 		if errno != 0 { // Ignore response if any error. And the response must be nil.
-			ar.err = orpc.Errno(errno).ToErr()
-			close(ar.done)
+			ar.err <- orpc.Errno(errno).ToErr()
 			continue
 		}
 
 		n := rh.bodySize
 		if n == 0 {
-			close(ar.done)
+			ar.err <- nil
 			continue
 		}
 
@@ -598,8 +583,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 			err = dec.decodeBody(ar.respBody, int(n))
 			if err != nil { // If failed to read body, the next read header will be failed too, so just return.
 				xlog.ErrorIDf(ar.reqid, "failed to read request body from %s: %s", r.RemoteAddr().String(), err)
-				ar.err = err
-				close(ar.done)
+				ar.err <- err
 				return
 			}
 
@@ -607,15 +591,14 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
-				ar.err = orpc.ErrChecksumMismatch
-				close(ar.done)
+				ar.err <- orpc.ErrChecksumMismatch
 				hash.Reset()
 				continue
 			}
 			hash.Reset()
 		}
 
-		close(ar.done)
+		ar.err <- nil
 	}
 }
 
@@ -637,7 +620,6 @@ func releaseAsyncResult(ar *asyncResult) {
 	ar.reqData = nil
 
 	ar.respBody = nil
-	ar.done = nil
 	ar.err = nil
 
 	atomic.CompareAndSwapUint32(&ar.canceled, 1, 0)
