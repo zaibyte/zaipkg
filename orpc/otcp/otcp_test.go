@@ -147,7 +147,7 @@ func TestClient_GetObj(t *testing.T) {
 	c.Start()
 	defer c.Stop()
 
-	for i := 0; i < 1024; i++ {
+	for i := 0; i < 128; i++ {
 
 		size := rand.Intn(1025)
 		if size == 0 {
@@ -222,7 +222,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	c.Start()
 	defer c.Stop()
 
-	for i := 0; i < 1024; i++ {
+	for i := 0; i < 128; i++ {
 
 		size := rand.Intn(1025)
 		if size == 0 {
@@ -316,7 +316,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	c.Start()
 	defer c.Stop()
 
-	testCnt := 1024
+	testCnt := 128
 	oids := make([]uint64, testCnt)
 	for i := 0; i < testCnt; i++ {
 
@@ -396,7 +396,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 
 	oids := make([]uint64, 1024)
 
-	for i := 0; i < 1024; i++ {
+	for i := 0; i < 128; i++ {
 
 		size := rand.Intn(1025)
 		if size == 0 {
