@@ -85,10 +85,6 @@ type Client struct {
 	// Default is DefaultPendingMessages.
 	PendingRequests int
 
-	// Maximum request time.
-	// Default value is DefaultRequestTimeout.
-	RequestTimeout time.Duration
-
 	// Size of send buffer per each underlying connection in bytes.
 	// Default value is DefaultClientSendBufferSize.
 	SendBufferSize int
@@ -154,9 +150,6 @@ func (r *asyncResult) isCanceled() bool {
 }
 
 const (
-	// DefaultRequestTimeout is the default timeout for client request.
-	DefaultRequestTimeout = 5 * time.Second
-
 	// DefaultClientSendBufferSize is the default size for Client send buffers.
 	DefaultClientSendBufferSize = 64 * 1024
 
@@ -177,7 +170,6 @@ func (c *Client) Start() error {
 	}
 
 	config.Adjust(&c.PendingRequests, DefaultPendingMessages)
-	config.Adjust(&c.RequestTimeout, DefaultRequestTimeout)
 	config.Adjust(&c.SendBufferSize, DefaultClientSendBufferSize)
 	config.Adjust(&c.RecvBufferSize, DefaultClientRecvBufferSize)
 	config.Adjust(&c.FlushDelay, DefaultFlushDelay)
@@ -231,52 +223,35 @@ reset:
 }
 
 // Put puts object to the ZBuf node which orpc.Client connected.
-func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
-	return c.callTimeout(reqid, objPutMethod, oid, extID, objData, timeout)
+func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, _timeout time.Duration) error {
+	return c.call(reqid, objPutMethod, oid, extID, objData)
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
-	return c.callTimeout(reqid, objGetMethod, oid, extID, objData, timeout)
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, _timeout time.Duration) error {
+	return c.call(reqid, objGetMethod, oid, extID, objData)
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
-func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, timeout time.Duration) error {
-	return c.callTimeout(reqid, objDelMethod, oid, extID, nil, timeout)
+func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, _timeout time.Duration) error {
+	return c.call(reqid, objDelMethod, oid, extID, nil)
 }
 
-// callTimeout sends the given request to the server and obtains response
+// call sends the given request to the server and obtains response
 // from the server.
 //
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) callTimeout(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, timeout time.Duration) (err error) {
-
-	if timeout == 0 {
-		timeout = c.RequestTimeout
-	}
+func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte) (err error) {
 
 	var ar *asyncResult
 	if ar, err = c.callAsync(reqid, method, oid, extID, body); err != nil {
 		return err
 	}
 
-	t := xtime.AcquireTimer(timeout)
-
-	select {
-	case err = <-ar.err:
-		releaseAsyncResult(ar)
-	case <-t.C:
-		// Cancel will be captured in write preparation, asyncResult will be released there.
-		// Or it has been sent, just waiting for the response.
-		//
-		// If write broken, ar may not be put back to the pool.
-		ar.cancel()
-		err = orpc.ErrTimeout
-	}
-
-	xtime.ReleaseTimer(t)
+	err = <-ar.err
+	releaseAsyncResult(ar)
 	return
 }
 

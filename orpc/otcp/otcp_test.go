@@ -115,41 +115,6 @@ func newTestClient(addr string) *Client {
 	return c
 }
 
-func TestRequestTimeout(t *testing.T) {
-
-	addr := getRandomAddr()
-
-	h := nopHandler()
-	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
-		time.Sleep(10 * time.Millisecond)
-		return nil
-	}
-	s := NewServer(addr, h)
-	if err := s.Start(); err != nil {
-		t.Fatalf("cannot start server: %s", err)
-	}
-	defer s.Stop()
-
-	c := newTestClient(addr)
-	c.Start()
-	defer c.Stop()
-
-	objData := make([]byte, 16)
-	rand.Read(objData)
-	digest := xdigest.Sum32(objData)
-	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
-
-	for i := 0; i < 10; i++ {
-		err := c.PutObj(0, oid, 1, objData, time.Millisecond)
-		if err == nil {
-			t.Fatalf("Timeout error must be returned")
-		}
-		if err != orpc.ErrTimeout {
-			t.Fatalf("Unexpected error returned: [%s]", err)
-		}
-	}
-}
-
 func TestClient_GetObj(t *testing.T) {
 	addr := getRandomAddr()
 
