@@ -302,8 +302,10 @@ func (s *serverMessage) reset() {
 	s.method = 0
 	s.msgID = 0
 	s.reqid = 0
-	s.reqbody = nil
+	s.oid = 0
 	s.extID = 0
+	s.bodySize = 0
+	s.reqbody = nil
 
 	s.resp = nil
 	s.err = nil
