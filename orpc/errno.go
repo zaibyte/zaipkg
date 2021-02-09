@@ -190,10 +190,10 @@ var (
 	ErrInstanceOffline      = Errno(instanceOffline)
 	ErrInstanceTombstone    = Errno(instanceTombstone)
 
-	ErrDiskFull    = Errno(diskFull)
-	ErrDiskBroken  = Errno(diskBroken)
-	ErrDiskOffline = Errno(diskOffline)
-	ErrTombstone   = Errno(diskTombstone)
+	ErrDiskFull      = Errno(diskFull)
+	ErrDiskBroken    = Errno(diskBroken)
+	ErrDiskOffline   = Errno(diskOffline)
+	ErrDiskTombstone = Errno(diskTombstone)
 
 	ErrExtentFull      = Errno(extentFull)
 	ErrExtentBroken    = Errno(extentBroken)
