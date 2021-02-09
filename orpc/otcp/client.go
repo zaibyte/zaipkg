@@ -387,7 +387,10 @@ func (c *Client) clientHandleConnection(conn net.Conn) {
 	}
 
 	for _, ar := range pendingRequests {
-		ar.err <- err
+		select {
+		case ar.err <- err:
+		default: // Avoiding blocking.
+		}
 	}
 }
 
