@@ -127,8 +127,9 @@ const (
 	extentBroken    = 23
 	extentOffline   = 24
 	extentTombstone = 25
+	extentGhost     = 26
 
-	objDigestExisted = 26
+	objDigestExisted = 27
 
 	closed = 29
 )
@@ -199,6 +200,7 @@ var (
 	ErrExtentBroken    = Errno(extentBroken)
 	ErrExtentOffline   = Errno(extentOffline)
 	ErrExtentTombstone = Errno(extentTombstone)
+	ErrExtentGhost     = Errno(extentGhost)
 
 	ErrObjDigestExisted = Errno(objDigestExisted)
 
