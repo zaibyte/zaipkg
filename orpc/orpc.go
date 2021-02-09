@@ -20,10 +20,12 @@ import (
 
 // Client is the object RPC client.
 type Client interface {
-	// Start Client.
+	// Start starts Client.
 	Start() error
-	// Stop Client, release resource.
-	Stop() error
+	// Stop stops Client, release resource.
+	Stop()
+	// Close closes Client with an error which will be passed to the pending requests.
+	Close(err error)
 	// Put puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error
 	// Get gets object from the ZBuf node which Client connected.

@@ -68,6 +68,8 @@ import (
 // Default client settings are optimized for high load, so don't override
 // them without valid reason.
 type Client struct {
+	isRunning int64
+
 	// Server address to connect to.
 	Addr string
 
@@ -169,11 +171,21 @@ func (c *Client) Start() error {
 		c.stopWg.Add(1)
 		go c.clientHandler()
 	}
+
+	atomic.StoreInt64(&c.isRunning, 1)
 	return nil
 }
 
 // Stop stops rpc client. Stopped client can be started again.
-func (c *Client) Stop() error {
+func (c *Client) Stop() {
+
+	c.Close(nil)
+}
+
+func (c *Client) Close(err error) {
+	if !atomic.CompareAndSwapInt64(&c.isRunning, 1, 0) {
+		return
+	}
 
 	if c.stopChan == nil {
 		xlog.Panic("client must be started before stopping it")
@@ -182,12 +194,16 @@ func (c *Client) Stop() error {
 
 	c.stopWg.Wait()
 
+	if err == nil {
+		err = orpc.ErrServiceClosed
+	}
+
 	t := xtime.AcquireTimer(c.CloseWait)
 
 	for {
 		select {
 		case r := <-c.requestsChan:
-			r.err <- orpc.ErrServiceClosed
+			r.err <- err
 			continue
 		case <-t.C:
 			goto reset
@@ -200,8 +216,6 @@ reset:
 	xtime.ReleaseTimer(t)
 
 	c.stopChan = nil
-	return nil
-
 }
 
 // Put puts object to the ZBuf node which orpc.Client connected.
@@ -226,6 +240,10 @@ func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, _timeout time.Durati
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
 func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte) (err error) {
+
+	if atomic.LoadInt64(&c.isRunning) != 1 {
+		return orpc.ErrServiceClosed
+	}
 
 	var ar *asyncResult
 	if ar, err = c.callAsync(reqid, method, oid, extID, body); err != nil {
