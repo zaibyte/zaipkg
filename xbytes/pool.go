@@ -114,10 +114,10 @@ const (
 
 	defaultTinySizeLeaky  = 1024 // 128MB leaky at most for 128KB []byte.
 	defaultSmallSizeLeaky = 256  // 128MB leaky at most for 512KB []byte.
-	defaultMidSizeLeaky   = 256  // 512MB leaky at most for 2MB []byte.
-	// 1GB memory leaky at most for 4MB []byte.
+	defaultMidSizeLeaky   = 64   // 128MB leaky at most for 2MB []byte.
+	// 512MB memory leaky at most for 4MB []byte.
 	// In Tesamc, the number of 4MB objects maybe large.
-	defaultMaxSizeLeaky = 256
+	defaultMaxSizeLeaky = 128
 )
 
 // BufferPool is a bytes slice pool helping to reduce GC overhead.
