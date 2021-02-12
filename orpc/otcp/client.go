@@ -176,7 +176,7 @@ func (c *Client) Start() error {
 	return nil
 }
 
-// Stop stops rpc client. Stopped client can be started again.
+// Stop stops rpc client.
 func (c *Client) Stop() {
 
 	c.Close(nil)
