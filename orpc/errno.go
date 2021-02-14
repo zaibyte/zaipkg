@@ -123,13 +123,11 @@ const (
 	diskOffline   = 20
 	diskTombstone = 21
 
-	extentFull      = 22
-	extentBroken    = 23
-	extentOffline   = 24
-	extentTombstone = 25
-	extentGhost     = 26
-	extentClone     = 27
-	extentSealed    = 28
+	extentFull   = 22
+	extentBroken = 23
+	extentGhost  = 26
+	extentClone  = 27
+	extentSealed = 28
 
 	objDigestExisted = 30
 
@@ -163,12 +161,10 @@ var errnoStr = map[uint16]string{
 	diskOffline:   "disk is offline",
 	diskTombstone: "disk is tombstone",
 
-	extentFull:      "extent is full",
-	extentBroken:    "extent is broken",
-	extentOffline:   "extent is offline",
-	extentTombstone: "extent is tombstone",
-	extentClone:     "extent is in clone",
-	extentSealed:    "extent is sealed",
+	extentFull:   "extent is full",
+	extentBroken: "extent is broken",
+	extentClone:  "extent is in clone",
+	extentSealed: "extent is sealed",
 
 	objDigestExisted: "object digest is existed in this group",
 
@@ -200,13 +196,11 @@ var (
 	ErrDiskOffline   = Errno(diskOffline)
 	ErrDiskTombstone = Errno(diskTombstone)
 
-	ErrExtentFull      = Errno(extentFull)
-	ErrExtentBroken    = Errno(extentBroken)
-	ErrExtentOffline   = Errno(extentOffline)
-	ErrExtentTombstone = Errno(extentTombstone)
-	ErrExtentGhost     = Errno(extentGhost)
-	ErrExtentClone     = Errno(extentClone)
-	ErrExtentSealed    = Errno(extentSealed)
+	ErrExtentFull   = Errno(extentFull)
+	ErrExtentBroken = Errno(extentBroken)
+	ErrExtentGhost  = Errno(extentGhost)
+	ErrExtentClone  = Errno(extentClone)
+	ErrExtentSealed = Errno(extentSealed)
 
 	ErrObjDigestExisted = Errno(objDigestExisted)
 
