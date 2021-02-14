@@ -128,10 +128,12 @@ const (
 	extentOffline   = 24
 	extentTombstone = 25
 	extentGhost     = 26
+	extentClone     = 27
+	extentSealed    = 28
 
-	objDigestExisted = 27
+	objDigestExisted = 30
 
-	closed = 29
+	closed = 31
 )
 
 // Error table.
@@ -165,6 +167,8 @@ var errnoStr = map[uint16]string{
 	extentBroken:    "extent is broken",
 	extentOffline:   "extent is offline",
 	extentTombstone: "extent is tombstone",
+	extentClone:     "extent is in clone",
+	extentSealed:    "extent is sealed",
 
 	objDigestExisted: "object digest is existed in this group",
 
@@ -201,6 +205,8 @@ var (
 	ErrExtentOffline   = Errno(extentOffline)
 	ErrExtentTombstone = Errno(extentTombstone)
 	ErrExtentGhost     = Errno(extentGhost)
+	ErrExtentClone     = Errno(extentClone)
+	ErrExtentSealed    = Errno(extentSealed)
 
 	ErrObjDigestExisted = Errno(objDigestExisted)
 
