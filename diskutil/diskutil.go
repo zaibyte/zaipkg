@@ -29,22 +29,23 @@ import (
 
 // IsBroken returns an error is disk error or not.
 // If the err is EIO or EROFS, the disk should be regard as broken.
+// But EIO is more likely read bad sector, the driver firmware will remap the bad sector in the next writing,
+// what's more, we have other monitor to detect disk broken, so EIO won't be signal of disk broken.
 //
-// The logic is copied from Western Digit open source object storage:
+// The logic of EIO & EROFS is copied from Western Digital open source object storage:
 // https://github.com/westerndigitalcorporation/blb/blob/master/internal/tractserver/manager.go
 // func (m *Manager) toBlbError(err error) core.Error
 //
-// Western Digit is a professional disk devices manufacturer,
-// and in my experience, it works well enough to detect disk broken or not.
+// And further discussion: https://github.com/westerndigitalcorporation/blb/issues/8.
 func IsBroken(err error) bool {
 	if err == nil {
 		return false
 	}
 
 	// EIO: I/O error
-	if errors.Is(err, syscall.EIO) {
-		return true
-	}
+	// if errors.Is(err, syscall.EIO) {
+	// 	return true
+	// }
 
 	// EROFS: Read-only file system, caused by
 	// 1. VFS error,
