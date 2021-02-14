@@ -224,8 +224,12 @@ func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, _timeou
 }
 
 // Get gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, _timeout time.Duration) error {
-	return c.call(reqid, objGetMethod, oid, extID, objData)
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone bool, _timeout time.Duration) error {
+	method := objGetMethod
+	if isClone {
+		method = objGetCloneMethod
+	}
+	return c.call(reqid, method, oid, extID, objData)
 }
 
 // Delete deletes object in the ZBuf node which orpc.Client connected.
@@ -261,7 +265,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 		reqid = uid.MakeReqID()
 	}
 
-	if method == 0 || method > 3 {
+	if method == 0 || method > 255 {
 		return nil, orpc.ErrNotImplemented
 	}
 

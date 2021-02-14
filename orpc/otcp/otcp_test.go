@@ -75,7 +75,7 @@ func (h *testHandler) PutObj(reqid uint64, oid uint64, extID uint32, objData []b
 	return h.putFn(reqid, oid, objData)
 }
 
-func (h *testHandler) GetObj(reqid uint64, oid uint64, extID uint32) (objData []byte, err error) {
+func (h *testHandler) GetObj(reqid uint64, oid uint64, extID uint32, isClone bool) (objData []byte, err error) {
 	return h.getFn(reqid, oid)
 }
 
@@ -168,7 +168,7 @@ func TestClient_GetObj(t *testing.T) {
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
-		err := c.GetObj(0, oid, 1, act, 0)
+		err := c.GetObj(0, oid, 1, act, false, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -258,7 +258,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
-		err := c.GetObj(0, oid, 1, act, 0)
+		err := c.GetObj(0, oid, 1, act, false, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -269,7 +269,7 @@ func TestClient_DeleteObj(t *testing.T) {
 	}
 
 	for _, oid := range deleted {
-		err := c.GetObj(0, oid, 1, make([]byte, 0), 0)
+		err := c.GetObj(0, oid, 1, make([]byte, 0), false, 0)
 		assert.Equal(t, orpc.ErrNotFound, err)
 	}
 }
@@ -346,7 +346,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			}
 			size := v.(int)
 			act := make([]byte, size)
-			err := c.GetObj(0, oid, 1, act, 0)
+			err := c.GetObj(0, oid, 1, act, false, 0)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -418,7 +418,7 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
-			err := c.GetObj(0, oid, 1, make([]byte, 0), 0)
+			err := c.GetObj(0, oid, 1, make([]byte, 0), false, 0)
 			if err != orpc.ErrNotFound {
 				t.Fatal("error should be not found")
 			}

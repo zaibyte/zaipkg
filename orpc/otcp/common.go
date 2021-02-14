@@ -44,9 +44,10 @@ import (
 )
 
 const (
-	objPutMethod uint8 = 1
-	objGetMethod uint8 = 2
-	objDelMethod uint8 = 3
+	objPutMethod      uint8 = 1
+	objGetMethod      uint8 = 2
+	objGetCloneMethod uint8 = 3
+	objDelMethod      uint8 = 4
 )
 
 const (

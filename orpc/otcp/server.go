@@ -429,7 +429,9 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 	case objPutMethod:
 		err = s.Handler.PutObj(reqid, oid, extID, reqBody)
 	case objGetMethod:
-		resp, err = s.Handler.GetObj(reqid, oid, extID)
+		resp, err = s.Handler.GetObj(reqid, oid, extID, false)
+	case objGetCloneMethod:
+		resp, err = s.Handler.GetObj(reqid, oid, extID, true)
 	case objDelMethod:
 		err = s.Handler.DeleteObj(reqid, oid, extID)
 	default:

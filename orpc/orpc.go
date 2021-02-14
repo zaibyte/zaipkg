@@ -29,7 +29,7 @@ type Client interface {
 	// Put puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error
 	// Get gets object from the ZBuf node which Client connected.
-	GetObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error
+	GetObj(reqid uint64, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error
 	// Delete deletes object in the ZBuf node which Client connected.
 	DeleteObj(reqid uint64, oid uint64, extID uint32, timeout time.Duration) error
 }
@@ -45,6 +45,6 @@ type Server interface {
 // ServerHandler is the object rpc handler.
 type ServerHandler interface {
 	PutObj(reqid, oid uint64, extID uint32, objData []byte) error
-	GetObj(reqid, oid uint64, extID uint32) (objData []byte, err error) // Using xbytes.Buffer here for saving potential GC overhead.
+	GetObj(reqid, oid uint64, extID uint32, isClone bool) (objData []byte, err error) // Using xbytes.Buffer here for saving potential GC overhead.
 	DeleteObj(reqid, oid uint64, extID uint32) error
 }
