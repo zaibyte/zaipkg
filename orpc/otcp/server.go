@@ -434,6 +434,8 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 		resp, err = s.Handler.GetObj(reqid, oid, extID, true)
 	case objDelMethod:
 		err = s.Handler.DeleteObj(reqid, oid, extID)
+	case objDelBatchMethod:
+		err = s.Handler.DeleteBatch(reqid, extID, reqBody)
 	default:
 		err = orpc.ErrNotImplemented
 	}

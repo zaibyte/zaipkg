@@ -48,6 +48,7 @@ const (
 	objGetMethod      uint8 = 2
 	objGetCloneMethod uint8 = 3
 	objDelMethod      uint8 = 4
+	objDelBatchMethod uint8 = 5
 )
 
 const (

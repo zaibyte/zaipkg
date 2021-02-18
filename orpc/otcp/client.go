@@ -40,6 +40,7 @@
 package otcp
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"runtime"
@@ -119,6 +120,8 @@ type Client struct {
 	stopChan chan struct{}
 	stopWg   sync.WaitGroup
 }
+
+var _client orpc.Client = new(Client)
 
 // asyncResult is a result returned from Client.callAsync().
 type asyncResult struct {
@@ -237,6 +240,17 @@ func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, _timeout time.Durati
 	return c.call(reqid, objDelMethod, oid, extID, nil)
 }
 
+func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout time.Duration) error {
+
+	body := make([]byte, 8*len(oids))
+	for i, oid := range oids {
+		binary.LittleEndian.PutUint64(body[i*8:i*8+8], oid)
+	}
+	digest := xdigest.Sum32(body)
+	fakeOID := uint64(digest) << 32 // It's a fake oid, just for passing E2E checksum.
+	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body)
+}
+
 // call sends the given request to the server and obtains response
 // from the server.
 //
@@ -277,7 +291,7 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	ar.extID = extID
 	ar.err = make(chan error)
 
-	if method == objPutMethod {
+	if method == objPutMethod || method == objDelBatchMethod {
 		ar.reqData = body
 	}
 	if method == objGetMethod {

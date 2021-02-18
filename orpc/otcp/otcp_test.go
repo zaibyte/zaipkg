@@ -66,9 +66,10 @@ func init() {
 }
 
 type testHandler struct {
-	putFn func(reqid uint64, oid uint64, objData []byte) error
-	getFn func(reqid uint64, oid uint64) (objData []byte, err error)
-	delFn func(reqid uint64, oid uint64) error
+	putFn      func(reqid uint64, oid uint64, objData []byte) error
+	getFn      func(reqid uint64, oid uint64) (objData []byte, err error)
+	delFn      func(reqid uint64, oid uint64) error
+	delBatchFn func(reqid uint64, oids []byte) error
 }
 
 func (h *testHandler) PutObj(reqid uint64, oid uint64, extID uint32, objData []byte) error {
@@ -83,6 +84,10 @@ func (h *testHandler) DeleteObj(reqid uint64, oid uint64, extID uint32) error {
 	return h.delFn(reqid, oid)
 }
 
+func (h *testHandler) DeleteBatch(reqid uint64, extID uint32, oids []byte) error {
+	return h.delBatchFn(reqid, oids)
+}
+
 func nopHandler() *testHandler {
 	return &testHandler{
 		putFn: func(reqid uint64, oid uint64, objData []byte) error {
@@ -92,6 +97,9 @@ func nopHandler() *testHandler {
 			return nil, nil
 		},
 		delFn: func(reqid uint64, oid uint64) error {
+			return nil
+		},
+		delBatchFn: func(reqid uint64, oids []byte) error {
 			return nil
 		},
 	}

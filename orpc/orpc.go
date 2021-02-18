@@ -32,6 +32,8 @@ type Client interface {
 	GetObj(reqid uint64, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error
 	// Delete deletes object in the ZBuf node which Client connected.
 	DeleteObj(reqid uint64, oid uint64, extID uint32, timeout time.Duration) error
+	// DeleteBatch deletes multi objects in a single RPC call.
+	DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout time.Duration) error
 }
 
 // Server is the object RPC server.
@@ -45,6 +47,7 @@ type Server interface {
 // ServerHandler is the object rpc handler.
 type ServerHandler interface {
 	PutObj(reqid, oid uint64, extID uint32, objData []byte) error
-	GetObj(reqid, oid uint64, extID uint32, isClone bool) (objData []byte, err error) // Using xbytes.Buffer here for saving potential GC overhead.
+	GetObj(reqid, oid uint64, extID uint32, isClone bool) (objData []byte, err error)
 	DeleteObj(reqid, oid uint64, extID uint32) error
+	DeleteBatch(reqid uint64, extID uint32, oids []byte) error
 }
