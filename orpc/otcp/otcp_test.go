@@ -41,6 +41,7 @@ package otcp
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -260,6 +261,105 @@ func TestClient_DeleteObj(t *testing.T) {
 		}
 		deleted[cnt] = oid
 		cnt++
+	}
+
+	getBuf := make([]byte, settings.MaxObjectSize)
+	for oid, objBytes := range stor {
+		size := sizes[oid]
+		act := getBuf[:size]
+		err := c.GetObj(0, oid, 1, act, false, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(act, objBytes) {
+			t.Fatal("obj data mismatch")
+		}
+	}
+
+	for _, oid := range deleted {
+		err := c.GetObj(0, oid, 1, make([]byte, 0), false, 0)
+		assert.Equal(t, orpc.ErrNotFound, err)
+	}
+}
+
+func TestClient_DeleteBatch(t *testing.T) {
+	addr := getRandomAddr()
+
+	stor := make(map[uint64][]byte)
+	sizes := make(map[uint64]uint32)
+
+	h := nopHandler()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
+		o := make([]byte, len(objData))
+		copy(o, objData)
+		stor[oid] = o
+		sizes[oid] = uint32(len(o))
+		return nil
+	}
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+		o, ok := stor[oid]
+		if !ok {
+			return nil, orpc.ErrNotFound
+		}
+		size := sizes[oid]
+		objData = xbytes.GetAlignedBytes(int(size))
+		copy(objData, o)
+		return
+	}
+	h.delBatchFn = func(reqid uint64, oids []byte) error {
+		os := make([]uint64, len(oids)/8)
+		for i := range os {
+			os[i] = binary.LittleEndian.Uint64(oids[i*8 : i*8+8])
+		}
+
+		for _, oid := range os {
+			delete(stor, oid)
+		}
+		return nil
+	}
+
+	s := NewServer(addr, h)
+	if err := s.Start(); err != nil {
+		t.Fatalf("cannot start server: %s", err)
+	}
+	defer s.Stop()
+
+	c := newTestClient(addr)
+	c.Start()
+	defer c.Stop()
+
+	for i := 0; i < 128; i++ {
+
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
+
+		objData := randObjData[:size]
+		digest := xdigest.Sum32(objData)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+
+		err := c.PutObj(0, oid, 1, objData, 0)
+		if err != nil {
+			t.Fatal(err, size)
+		}
+	}
+
+	deleted := make([]uint64, 3)
+	cnt := 0
+	for oid := range stor {
+		if cnt >= 3 {
+			break
+		}
+		deleted[cnt] = oid
+		cnt++
+	}
+
+	err := c.DeleteBatch(0, deleted, 1, 0)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	getBuf := make([]byte, settings.MaxObjectSize)
