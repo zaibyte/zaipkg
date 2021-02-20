@@ -49,11 +49,11 @@ const (
 	tryExpCoeff = 0.618 // tryExpCoeff controls the backoff speed.
 )
 
-// coeff = e^(tryExpCoeff * waiting_time)
+// coeff = e^(tryExpCoeff * tried)
 func calcTriedCoeff(tried int64) float64 {
 	return math.Pow(math.E, tryExpCoeff*float64(tried))
 }
 
 func calcSizeCoeff(n int64) float64 {
-	return 1 + (math.Pow(float64(n/128/1024), 0.618) * 0.25)
+	return 1 + (math.Pow(float64(n/128/1024), 0.618) * 0.25) // Using 128KB as size unit.
 }
