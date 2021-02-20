@@ -1,10 +1,10 @@
 package xbytes
 
-// AlignSize calculates size after align n to align.
+// AlignSize calculates size after align.
 // The return will be the multiple of align.
 func AlignSize(n int64, align int64) int64 {
 	if n <= 0 {
-		return align
+		return 0
 	}
 	return (n + align - 1) &^ (align - 1)
 }
