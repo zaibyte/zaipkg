@@ -98,20 +98,21 @@ const (
 )
 
 const (
-	timeout = 10004
+	timeout              = 10004
+	tooManyRequests      = 10005
+	internalServerError  = 10006
+	canceled             = 10008
+	requestQueueOverflow = 10011
 
-	badRequest           = 1
-	notFound             = 2
-	notImplemented       = 3
-	tooManyRequests      = 5
-	internalServerError  = 6
-	connectionError      = 7
-	canceled             = 8
-	checksumMismatch     = 9
-	invalidMethod        = 10
-	requestQueueOverflow = 11
-	timeBackwards        = 12
-	notBootstrapped      = 13
+	badRequest     = 1
+	notFound       = 2
+	notImplemented = 3
+
+	connectionError  = 7
+	checksumMismatch = 9
+	invalidMethod    = 10
+	timeBackwards    = 12
+	notBootstrapped  = 13
 
 	instanceDisconnected = 14
 	instanceDown         = 15
