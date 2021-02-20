@@ -44,10 +44,7 @@ package xerrors
 import (
 	"errors"
 	"io"
-	"math"
 	"testing"
-
-	"g.tesamc.com/IT/zaipkg/orpc"
 )
 
 func TestWithMessageNil(t *testing.T) {
@@ -118,25 +115,6 @@ func TestWithMessageIs(t *testing.T) {
 		errWithMsg := WithMessagef(tt.err, tt.message)
 		if !errors.Is(errWithMsg, target) {
 			t.Errorf("WithMessage(%v, %q): is not target", tt.err, tt.message)
-		}
-	}
-}
-
-func TestCouldRetry(t *testing.T) {
-	for i := 0; i <= math.MaxUint16; i++ {
-		ret := CouldRetry(orpc.Errno(i))
-		if i < orpc.RetryStart {
-			if ret == true {
-				t.Fatal("should not retry")
-			}
-		} else if i >= orpc.RetryStart && i <= orpc.RetryEnd {
-			if ret == false {
-				t.Fatal("should retry")
-			}
-		} else {
-			if ret == true {
-				t.Fatal("should not retry")
-			}
 		}
 	}
 }

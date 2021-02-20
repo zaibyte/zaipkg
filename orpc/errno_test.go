@@ -16,6 +16,7 @@ package orpc
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"g.tesamc.com/IT/zaipkg/xerrors"
@@ -61,6 +62,25 @@ func TestUnitErrno(t *testing.T) {
 
 		err2 := Errno(ii)
 		assert.Equal(t, err, err2)
+	}
+}
+
+func TestCouldRetry(t *testing.T) {
+	for i := 0; i <= math.MaxUint16; i++ {
+		ret := CouldRetry(Errno(i))
+		if i < RetryStart {
+			if ret == true {
+				t.Fatal("should not retry")
+			}
+		} else if i >= RetryStart && i <= RetryEnd {
+			if ret == false {
+				t.Fatal("should retry")
+			}
+		} else {
+			if ret == true {
+				t.Fatal("should not retry")
+			}
+		}
 	}
 }
 

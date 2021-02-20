@@ -91,6 +91,15 @@ func ErrToErrno(err error) Errno {
 	return Errno(internalServerError)
 }
 
+// CouldRetry returns true if the error supports retrying.
+// e.g. When meet ErrTimeout, we could retry later.
+func CouldRetry(err error) bool {
+	if uint16(ErrToErrno(err))/RetryStart != 1 {
+		return false
+	}
+	return true
+}
+
 // Error which supports retrying will start from 10000.
 const (
 	RetryStart = 10000
