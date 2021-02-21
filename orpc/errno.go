@@ -110,6 +110,7 @@ const (
 	timeout              = 10004
 	tooManyRequests      = 10005
 	internalServerError  = 10006
+	connectionError      = 10007
 	canceled             = 10008
 	requestQueueOverflow = 10011
 
@@ -117,7 +118,6 @@ const (
 	notFound       = 2
 	notImplemented = 3
 
-	connectionError  = 7
 	checksumMismatch = 9
 	invalidMethod    = 10
 	timeBackwards    = 12
