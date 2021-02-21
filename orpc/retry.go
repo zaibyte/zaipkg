@@ -10,6 +10,7 @@ import (
 // The major idea is exponential backoff algorithms with jitter (randomized delay):
 // 1. Exponential backoff: Use progressively longer waits between retries for consecutive error responses
 // 2. Jitter: Prevent successive collisions (we may have concurrent clients to use the Retryer)
+// 3. Sublinear function of req/resp size: The size bigger, the delay is higher.
 type Retryer struct {
 	MinSleep time.Duration
 
