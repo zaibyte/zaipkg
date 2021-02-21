@@ -139,6 +139,8 @@ const (
 	extentClone  = 27
 	extentSealed = 28
 
+	replicasCollapse = 29
+
 	objDigestExisted = 30
 
 	closed = 31
@@ -175,6 +177,8 @@ var errnoStr = map[uint16]string{
 	extentBroken: "extent is broken",
 	extentClone:  "extent is in clone",
 	extentSealed: "extent is sealed",
+
+	replicasCollapse: "replicas collapse, all replicas broken",
 
 	objDigestExisted: "object digest is existed in this group",
 
@@ -213,6 +217,8 @@ var (
 	ErrExtentSealed = Errno(extentSealed)
 
 	ErrObjDigestExisted = Errno(objDigestExisted)
+
+	ErrReplicasCollapse = Errno(replicasCollapse)
 
 	ErrServiceClosed = Errno(closed)
 )
