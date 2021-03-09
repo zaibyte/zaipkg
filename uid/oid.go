@@ -146,3 +146,9 @@ func parseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8) {
 func GetDigest(oid uint64) uint32 {
 	return uint32(oid >> 32)
 }
+
+// GetGrains gets grains from an oid.
+func GetGrains(oid uint64) uint32 {
+	_, _, grains, _, _ := parseOID(oid)
+	return grains
+}
