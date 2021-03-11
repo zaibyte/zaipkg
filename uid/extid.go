@@ -13,3 +13,8 @@ func ParseExtID(extID uint32) (groupID, groupSeq uint16) {
 	groupSeq = uint16((extID >> 16) & MaxGroupSeq)
 	return
 }
+
+// GetGroupID gets groupID from extID.
+func GetGroupID(extID uint32) uint16 {
+	return uint16(extID) & MaxGroupID
+}
