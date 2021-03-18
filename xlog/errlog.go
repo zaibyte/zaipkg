@@ -163,6 +163,10 @@ func (l *ErrorLogger) Panicf(reqid uint64, format string, args ...interface{}) {
 	l.Logger.Panic(reqid, fmt.Sprintf(format, args...))
 }
 
+func (l *ErrorLogger) Printf(format string, args ...interface{}) {
+	l.Logger.Errorf(0, fmt.Sprintf(format, args...))
+}
+
 // Sync syncs ErrorLogger.
 func (l *ErrorLogger) Sync() error {
 	return l.Logger.Sync()
