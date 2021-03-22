@@ -14,6 +14,7 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
 	github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415
+	github.com/templexxx/xorsimd v0.4.1
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/zaibyte/nanozap v0.0.4-0.20201204021759-39660d91a180
 	github.com/zaibyte/pkg v0.0.0-20200816125345-341ffff3269a

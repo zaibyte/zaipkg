@@ -51,6 +51,7 @@ import (
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xtest"
 	"github.com/panjf2000/ants/v2"
+	"github.com/templexxx/xorsimd"
 )
 
 // TODO if you want to run bench, should raise the xbytes leaky pool capacities.
@@ -101,6 +102,7 @@ func newBenchGetHandler() *testHandler {
 		getFn: func(reqid uint64, oid uint64) (objData []byte, err error) {
 			_, _, grains, _, _, _ := uid.ParseOID(oid)
 			objData = xbytes.GetAlignedBytes(int(grains * uid.GrainSize))
+			xorsimd.Bytes(objData, objData, objData) // Return empty data block.
 			return
 		},
 		delFn: func(reqid uint64, oid uint64) error {
@@ -130,11 +132,6 @@ func BenchmarkClient_Get(b *testing.B) {
 
 	objData := make([]byte, 4096)
 	oid := uid.MakeOID(1, 1, 1, xdigest.Sum32(objData), uid.NormalObj)
-
-	err := c.PutObj(1, oid, 1, objData, 0)
-	if err != nil {
-		b.Fatal(err)
-	}
 
 	b.SetParallelism(64)
 	b.ResetTimer()
