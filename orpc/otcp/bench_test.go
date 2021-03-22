@@ -130,6 +130,12 @@ func BenchmarkClient_Get(b *testing.B) {
 
 	objData := make([]byte, 4096)
 	oid := uid.MakeOID(1, 1, 1, xdigest.Sum32(objData), uid.NormalObj)
+
+	err := c.PutObj(1, oid, 1, objData, 0)
+	if err != nil {
+		b.Fatal(err)
+	}
+
 	b.SetParallelism(64)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
