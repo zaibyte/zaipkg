@@ -176,6 +176,7 @@ var errnoStr = map[uint16]string{
 	extentBroken: "extent is broken",
 	extentClone:  "extent is in clone",
 	extentSealed: "extent is sealed",
+	extentGhost:  "extent is ghost",
 
 	replicasCollapse: "replicas collapse, all replicas broken",
 
