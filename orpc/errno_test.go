@@ -26,7 +26,7 @@ import (
 
 func TestErrno_Error(t *testing.T) {
 	assert.Equal(t, "", Errno(0).Error())
-	for i := 1; i < len(errnoStr); i++ {
+	for i := range errnoStr {
 		err := Errno(i)
 		if errnoStr[uint16(i)] == "" {
 			assert.Equal(t, "unknown error", err.Error())
@@ -38,7 +38,7 @@ func TestErrno_Error(t *testing.T) {
 
 func TestErrToErrno(t *testing.T) {
 
-	for i := 0; i < len(errnoStr); i++ {
+	for i := range errnoStr {
 		exp := Errno(i)
 		var err error
 		err = exp

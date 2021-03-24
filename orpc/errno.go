@@ -52,12 +52,11 @@ func (e Errno) Error() string {
 		return ""
 	}
 
-	if int(e) < len(errnoStr) {
-		s := errnoStr[uint16(e)]
-		if s != "" {
-			return s
-		}
+	s := errnoStr[uint16(e)]
+	if s != "" {
+		return s
 	}
+
 	return "unknown error"
 }
 
