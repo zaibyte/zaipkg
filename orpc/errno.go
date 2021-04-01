@@ -143,6 +143,9 @@ const (
 	objDigestExisted = 30
 
 	closed = 31
+
+	misdirectedWrite = 32
+	lostWrite        = 33
 )
 
 // Error table.
@@ -183,6 +186,9 @@ var errnoStr = map[uint16]string{
 	objDigestExisted: "object digest is existed in this group",
 
 	closed: "service is closed",
+
+	misdirectedWrite: "misdirected write",
+	lostWrite:        "lost write",
 }
 
 var (
@@ -221,6 +227,9 @@ var (
 	ErrReplicasCollapse = Errno(replicasCollapse)
 
 	ErrServiceClosed = Errno(closed)
+
+	ErrMisdirectedWrite = Errno(misdirectedWrite)
+	ErrLostWrite        = Errno(lostWrite)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
