@@ -1,34 +1,38 @@
-// Package lhlc(local hybrid logical clock), that combines the best of logical clocks and physical clocks.
+// Package lhlc(local hybrid logical clock) implements HLC interface, that combines the best of logical clocks and physical clocks.
 // It's a clock which never goes backwards in one instance.
 //
 // Warn:
-// After instance's HLC persistPath broken, it has chance going backwards because we have no reference time.
+// After instance's HLC rootPath broken, it has chance going backwards because we have no reference time.
 // But it's rare to happen because we cannot making a new device that fast(in dozens ms, which is NTP jitter).
 package lhlc
 
 type HLC struct {
 	// There will be some states persist into local file system.
-	persistPath string
+	rootPath string
 
 	physic int64
 	logic  int64
 }
 
-const defaultHLCPersistPath = ""
+const (
+	defaultRootPath = "/usr/local/zai"
+	lhlcFileName    = "lhlc"
+)
 
-var _globalHLC = NewHLC(defaultHLCPersistPath)
+var _globalHLC = NewHLC(defaultRootPath)
 
 // NewHLC creates an HLC for application.
 // Each instance should have one.
-func NewHLC(persistPath string) *HLC {
-	return &HLC{persistPath: persistPath}
+func NewHLC(rootPath string) *HLC {
+	h := &HLC{rootPath: rootPath}
+
 }
 
 // ResetGlobalHLC changes globalHLC's path.
 // It's important that we could use a path belongs to a NVMe device,
 // it'll improving performance in
-func ResetGlobalHLC(persistPath string) {
-	_globalHLC = NewHLC(persistPath)
+func ResetGlobalHLC(rootPath string) {
+	_globalHLC = NewHLC(rootPath)
 }
 
 // Next returns a timestamp.

@@ -1,6 +1,8 @@
 package xmath
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestRound(t *testing.T) {
 	f := 1.1
