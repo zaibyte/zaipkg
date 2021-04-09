@@ -13,8 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/xtime/hlc/hlcutil"
+
 	"g.tesamc.com/IT/zaipkg/xtest"
-	"g.tesamc.com/IT/zaipkg/xtime/hlc"
 	"github.com/templexxx/tsc"
 )
 
@@ -27,7 +28,7 @@ type MHLC struct {
 func New() *MHLC {
 
 	c := &MHLC{
-		lastTS: hlc.MakeTS(nowInMill(), 0),
+		lastTS: hlcutil.MakeTS(nowInMill(), 0),
 	}
 	return c
 }
@@ -41,7 +42,7 @@ func (c *MHLC) Next() (ts uint64) {
 			continue
 		}
 
-		ts = hlc.MakeTS(p, l)
+		ts = hlcutil.MakeTS(p, l)
 		if atomic.CompareAndSwapUint64(&c.lastTS, last, ts) {
 			return
 		}
@@ -51,11 +52,11 @@ func (c *MHLC) Next() (ts uint64) {
 
 func (c *MHLC) next() (last, phy, logic uint64, ok bool) {
 	last = atomic.LoadUint64(&c.lastTS)
-	lp, ll := hlc.ParseTS(last)
+	lp, ll := hlcutil.ParseTS(last)
 
 	phy = lp
 
-	logic = (ll + 1) & hlc.LogicalMask
+	logic = (ll + 1) & hlcutil.LogicalMask
 	if logic == 0 { // Logical overflow, need new physical.
 		now := nowInMill()
 		if lp >= now {

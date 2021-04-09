@@ -4,7 +4,8 @@ import (
 	"runtime"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xtime/hlc"
+	"g.tesamc.com/IT/zaipkg/xtime/hlc/hlcutil"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,9 +33,9 @@ func TestLHLC_Next(t *testing.T) {
 	l := New()
 
 	m := make(map[uint64]bool)
-	for i := 0; i < hlc.LogicalMask+1024; i++ {
+	for i := 0; i < hlcutil.LogicalMask+1024; i++ {
 		ts := l.Next()
-		p, _ := hlc.ParseTS(ts)
+		p, _ := hlcutil.ParseTS(ts)
 		m[p] = true
 	}
 	assert.Equal(t, 2, len(m))
