@@ -19,15 +19,13 @@ package xlog
 import (
 	"fmt"
 	"runtime"
-
-	"github.com/zaibyte/pkg/xlog"
 )
 
 var (
 	_global *ErrorLogger
 )
 
-// Init Global var.
+// InitGlobalLogger inits Global var.
 // warn: It's unsafe for concurrent use.
 func InitGlobalLogger(logger *ErrorLogger) {
 	_global = logger
@@ -167,6 +165,6 @@ func LogPanic() {
 		stackTrace := make([]byte, 1<<20)
 		n := runtime.Stack(stackTrace, false)
 		msg := fmt.Sprintf("panic occured: %v\nStack trace: %s", e, stackTrace[:n])
-		xlog.Fatal(msg)
+		Fatal(msg)
 	}
 }
