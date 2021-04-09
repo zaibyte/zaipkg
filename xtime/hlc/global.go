@@ -9,3 +9,8 @@ var (
 func InitGlobalHLC(h HLC) {
 	_global = h
 }
+
+// Next returns timestamp by global HLC.
+func Next() uint64 {
+	return _global.Next()
+}

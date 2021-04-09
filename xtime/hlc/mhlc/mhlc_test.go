@@ -1,0 +1,41 @@
+package mhlc
+
+import (
+	"runtime"
+	"testing"
+
+	"g.tesamc.com/IT/zaipkg/xtime/hlc"
+	"github.com/stretchr/testify/assert"
+)
+
+func BenchmarkLHLC_Next(b *testing.B) {
+	l := NewMHLC()
+
+	for i := 0; i < b.N; i++ {
+		_ = l.Next()
+	}
+}
+
+func BenchmarkLHLC_NextConcurrency(b *testing.B) {
+
+	l := NewMHLC()
+
+	b.SetParallelism(runtime.NumCPU())
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			_ = l.Next()
+		}
+	})
+}
+
+func TestLHLC_Next(t *testing.T) {
+	l := NewMHLC()
+
+	m := make(map[uint64]bool)
+	for i := 0; i < hlc.LogicalMask+1024; i++ {
+		ts := l.Next()
+		p, _ := hlc.ParseTS(ts)
+		m[p] = true
+	}
+	assert.Equal(t, 2, len(m))
+}
