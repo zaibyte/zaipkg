@@ -22,9 +22,9 @@ type MHLC struct {
 	lastTS uint64
 }
 
-// NewMHLC creates an MHLC for application.
+// New creates an MHLC for application.
 // Each instance should have one.
-func NewMHLC() *MHLC {
+func New() *MHLC {
 
 	c := &MHLC{
 		lastTS: hlc.MakeTS(nowInMill(), 0),
