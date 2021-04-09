@@ -25,7 +25,7 @@ var _globalHLC = NewHLC(defaultRootPath)
 // Each instance should have one.
 func NewHLC(rootPath string) *HLC {
 	h := &HLC{rootPath: rootPath}
-
+	return h
 }
 
 // ResetGlobalHLC changes globalHLC's path.
@@ -37,7 +37,7 @@ func ResetGlobalHLC(rootPath string) {
 
 // Next returns a timestamp.
 func (h *HLC) Next() int64 {
-
+	return 0
 }
 
 func HLCNext() {
