@@ -1,7 +1,9 @@
 package hlc
 
+import "g.tesamc.com/IT/zaipkg/xtime/hlc/mhlc"
+
 var (
-	_global HLC
+	_global HLC = mhlc.New()
 )
 
 // InitGlobalHLC Inits Global var.

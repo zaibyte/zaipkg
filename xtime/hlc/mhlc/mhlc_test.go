@@ -4,12 +4,13 @@ import (
 	"runtime"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xtime/hlc"
+	"g.tesamc.com/IT/zaipkg/xtime/hlc/hlcutil"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func BenchmarkLHLC_Next(b *testing.B) {
-	l := NewMHLC()
+	l := New()
 
 	for i := 0; i < b.N; i++ {
 		_ = l.Next()
@@ -18,7 +19,7 @@ func BenchmarkLHLC_Next(b *testing.B) {
 
 func BenchmarkLHLC_NextConcurrency(b *testing.B) {
 
-	l := NewMHLC()
+	l := New()
 
 	b.SetParallelism(runtime.NumCPU())
 	b.RunParallel(func(pb *testing.PB) {
@@ -29,12 +30,12 @@ func BenchmarkLHLC_NextConcurrency(b *testing.B) {
 }
 
 func TestLHLC_Next(t *testing.T) {
-	l := NewMHLC()
+	l := New()
 
 	m := make(map[uint64]bool)
-	for i := 0; i < hlc.LogicalMask+1024; i++ {
+	for i := 0; i < hlcutil.LogicalMask+1024; i++ {
 		ts := l.Next()
-		p, _ := hlc.ParseTS(ts)
+		p, _ := hlcutil.ParseTS(ts)
 		m[p] = true
 	}
 	assert.Equal(t, 2, len(m))
