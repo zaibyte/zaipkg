@@ -18,6 +18,24 @@
 
 package vfs
 
+import "io"
+
 func FAlloc(f File, length int64) error {
-	return nil
+	df := f.(*DirectFile)
+
+	curOff, err := df.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return err
+	}
+	size, err := df.Seek(length, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+	if _, err = df.Seek(curOff, io.SeekStart); err != nil {
+		return err
+	}
+	if length > size {
+		return nil
+	}
+	return f.Truncate(length)
 }
