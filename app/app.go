@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/templexxx/tsc"
@@ -10,9 +9,7 @@ import (
 
 const DefaultTimeCalibrateInterval = 15 * time.Minute
 
-func TimeCalibrateLoop(ctx context.Context, wg *sync.WaitGroup, interval time.Duration) {
-
-	defer wg.Done()
+func TimeCalibrateLoop(ctx context.Context, interval time.Duration) {
 
 	cancelLoopCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
