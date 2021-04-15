@@ -17,6 +17,8 @@
 // Package version provides Codes Version information
 package version
 
+import "fmt"
+
 // Assigned by ldflags in build process, details see Makefile.
 var (
 	ReleaseVersion = "None"
@@ -24,9 +26,15 @@ var (
 	GitBranch      = "None"
 )
 
-// Version information.
+// Info is version information.
 type Info struct {
 	Version   string `json:"version"`
 	GitHash   string `json:"git_hash"`
 	GitBranch string `json:"git_branch"`
+}
+
+// Version returns version in format - `<release_version>-<git_hash>-<git_branch>`
+// It could be used for cli.
+func Version() string {
+	return fmt.Sprintf("%s-%s-%s", ReleaseVersion, GitHash, GitBranch)
 }
