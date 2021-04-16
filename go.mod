@@ -1,6 +1,6 @@
 module g.tesamc.com/IT/zaipkg
 
-go 1.14
+go 1.16
 
 require (
 	g.tesamc.com/IT/zproto v0.0.0-20210114071438-1018be4c55d3
@@ -18,7 +18,7 @@ require (
 	github.com/templexxx/tsc v0.0.2-0.20201016082558-86c1143c3415
 	github.com/templexxx/xorsimd v0.4.1
 	github.com/urfave/negroni/v2 v2.0.2
-	github.com/zaibyte/nanozap v0.0.4
+	github.com/zaibyte/nanozap v0.0.5
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 )
