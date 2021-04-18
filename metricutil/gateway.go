@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-// Package metricutil provides functions to push metrics to Prometheus Pushgateway.
+// gateway provides functions to push metrics to Prometheus Pushgateway.
 package metricutil
 
 import (

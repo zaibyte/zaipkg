@@ -168,6 +168,8 @@ github.com/zaibyte/nanozap v0.0.4-0.20201204021759-39660d91a180 h1:6D7hwHLrH+JrG
 github.com/zaibyte/nanozap v0.0.4-0.20201204021759-39660d91a180/go.mod h1:rYd2I25F2+Yfr6e1W14SwUFCVl9safIbuG4mW9Qvofk=
 github.com/zaibyte/nanozap v0.0.4 h1:PKNXJAvh4FWayVuECB7rwTVOACZZu5SK6dUxIl7YRfA=
 github.com/zaibyte/nanozap v0.0.4/go.mod h1:rYd2I25F2+Yfr6e1W14SwUFCVl9safIbuG4mW9Qvofk=
+github.com/zaibyte/nanozap v0.0.5 h1:uDh1OckxVSfFB1U5c0Q3M70peEpOekQ1E25UDK4VUKA=
+github.com/zaibyte/nanozap v0.0.5/go.mod h1:RUYhvq4lxFYjWxdM0l72NVtjDxa2lmGFd+oHPUvaRSE=
 github.com/zaibyte/pkg v0.0.0-20200816125345-341ffff3269a h1:oiCZsqnr/6oyvgEiZjRWIcbnamlkPig2hEr/6i5rysk=
 github.com/zaibyte/pkg v0.0.0-20200816125345-341ffff3269a/go.mod h1:9h4X8F3/VB7yX2n/JT5HbAXu2cF5/TS14pmuVFzRRLg=
 go.uber.org/atomic v1.6.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=
