@@ -6,11 +6,15 @@ import (
 	"strings"
 )
 
+func CombNameLabel(name, label string) string {
+	return fmt.Sprintf(`%s{%s}`, name, label)
+}
+
 // MakeMetricName makes github.com/VictoriaMetrics/metrics style metric name.
 // e.g. `queue_size{queue="foobar",topic="baz"}`
 func MakeMetricName(name string, labels map[string]string) string {
 	l := MakeLabel(labels)
-	return fmt.Sprintf(`%s{%s}`, name, l)
+	return CombNameLabel(name, l)
 }
 
 func MakeLabel(labels map[string]string) string {
