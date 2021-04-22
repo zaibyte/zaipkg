@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/xlog"
+
 	"github.com/templexxx/tsc"
 )
 
@@ -13,6 +15,11 @@ func TimeCalibrateLoop(ctx context.Context, interval time.Duration) {
 
 	cancelLoopCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	if !tsc.Enabled {
+		xlog.Warn("tsc is not enabled, using system clock")
+		return
+	}
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
