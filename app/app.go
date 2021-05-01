@@ -16,8 +16,8 @@ func TimeCalibrateLoop(ctx context.Context, interval time.Duration) {
 	cancelLoopCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	if !tsc.Enabled {
-		xlog.Warn("tsc is not enabled, using system clock")
+	if !tsc.Enabled() {
+		xlog.Info("tsc is not enabled, using system clock")
 		return
 	}
 
