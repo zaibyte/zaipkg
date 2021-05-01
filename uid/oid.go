@@ -56,7 +56,7 @@ func IsValidGroupID(groupID uint16) bool {
 // Object types.
 const (
 	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
-	LinkObj   uint8 = 2 // LinkObj: Link Object, it links 262144 objects together (at most 1TB).
+	LinkObj   uint8 = 2 // LinkObj: Link Object, linking objects together(we could have multi-level links).
 )
 
 // IsValidOID returns the oid is valid or not.
