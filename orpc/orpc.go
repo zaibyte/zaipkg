@@ -32,11 +32,11 @@ type Client interface {
 	// 2. In test env, we may deploy extents in the same group in the same device(or don't care the geo disaster).
 	// If we don't pass extID in this situation, we may cannot find the right extent.
 	//
-	// Put puts object to the ZBuf node which Client connected.
+	// PutObj puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error
-	// Get gets object from the ZBuf node which Client connected.
+	// GetObj gets object from the ZBuf node which Client connected.
 	GetObj(reqid uint64, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error
-	// Delete deletes object in the ZBuf node which Client connected.
+	// DeleteObj deletes object in the ZBuf node which Client connected.
 	DeleteObj(reqid uint64, oid uint64, extID uint32, timeout time.Duration) error
 	// DeleteBatch deletes multi objects in a single RPC call.
 	DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout time.Duration) error
