@@ -2,7 +2,7 @@ package orpc
 
 import (
 	"math"
-	"math/rand"
+	"sync/atomic"
 	"time"
 )
 
@@ -42,8 +42,15 @@ const (
 	jitterMax = 1.3
 )
 
+var (
+	jitterC     = []float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9}
+	nextJitterC int64
+)
+
 func getJitter() float64 {
-	return jitterMin + rand.Float64()*(jitterMax-jitterMin)
+
+	c := jitterC[atomic.AddInt64(&nextJitterC, 1)%10]
+	return jitterMin + c*(jitterMax-jitterMin)
 }
 
 const (
