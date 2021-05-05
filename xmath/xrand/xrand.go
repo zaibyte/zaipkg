@@ -8,10 +8,16 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"github.com/templexxx/cpu"
+
 	"g.tesamc.com/IT/zaipkg/xmath"
 )
 
-var State unsafe.Pointer
+var (
+	_padding0 [cpu.X86FalseSharingRange]byte
+	State     unsafe.Pointer
+	_padding1 [cpu.X86FalseSharingRange]byte
+)
 
 func init() {
 	s := unsafe.Pointer(new(xmath.Uint128))

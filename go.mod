@@ -14,6 +14,7 @@ require (
 	github.com/prometheus/client_golang v1.6.0
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
+	github.com/templexxx/cpu v0.0.8-0.20210423085042-1c810926b5dd
 	github.com/templexxx/fnc v1.0.1
 	github.com/templexxx/tsc v0.0.3
 	github.com/templexxx/xorsimd v0.4.1
