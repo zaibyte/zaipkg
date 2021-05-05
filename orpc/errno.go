@@ -146,6 +146,8 @@ const (
 
 	misdirectedWrite = 32
 	lostWrite        = 33
+
+	boxFull = 34
 )
 
 // Error table.
@@ -189,6 +191,8 @@ var errnoStr = map[uint16]string{
 
 	misdirectedWrite: "misdirected write",
 	lostWrite:        "lost write",
+
+	boxFull: "box is full",
 }
 
 var (
@@ -230,6 +234,8 @@ var (
 
 	ErrMisdirectedWrite = Errno(misdirectedWrite)
 	ErrLostWrite        = Errno(lostWrite)
+
+	ErrBoxFull = Errno(boxFull)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
