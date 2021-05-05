@@ -29,3 +29,11 @@ const (
 const (
 	MaxObjectSize = 4 * 1024 * 1024 // 4MiB.
 )
+
+const (
+	ExtV1    uint16 = 1
+	ExtV2    uint16 = 2
+	ExtVtest uint16 = 666
+)
+
+var ExtAvailVersion = []uint16{ExtV1, ExtV2, ExtVtest}
