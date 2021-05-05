@@ -43,9 +43,7 @@ func Int63n(n int64) int64 {
 //
 // State = (((__uint128_t)splitmix64_stateless(seed)) << 64) +
 //                     splitmix64_stateless(seed + 1);
-//
-// Warn:
-// It's not safe for concurrent use.
+// It's safe for concurrent use.
 func Seed(s int64) {
 	a := xmath.Uint128{L: splitMix64Stateless(uint64(s))}.ShiftLeft(64)
 	newS := a.Add(xmath.Uint128{L: splitMix64Stateless(uint64(s) + 1)})
