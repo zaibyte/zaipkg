@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// Int63n is a bit slower than math/rand. about 10ns.
 func BenchmarkInt63(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Int63()
@@ -18,7 +19,7 @@ func BenchmarkInt63MathRand(b *testing.B) {
 	}
 }
 
-// Int63n is much faster.
+// Int63n is much faster. 3x faster.
 func BenchmarkInt63Parallel(b *testing.B) {
 
 	b.SetParallelism(runtime.NumCPU())
