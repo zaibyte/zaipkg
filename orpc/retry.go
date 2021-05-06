@@ -2,8 +2,9 @@ package orpc
 
 import (
 	"math"
-	"sync/atomic"
 	"time"
+
+	"g.tesamc.com/IT/zaipkg/xmath/xrand"
 )
 
 // Retryer provides methods to give the sleep duration which indicating when to start the next retrying.
@@ -43,13 +44,12 @@ const (
 )
 
 var (
-	jitterC     = []float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9}
-	nextJitterC int64
+	jitterC = []float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9}
 )
 
 func getJitter() float64 {
 
-	c := jitterC[atomic.AddInt64(&nextJitterC, 1)%10]
+	c := jitterC[xrand.Int63n(10)]
 	return jitterMin + c*(jitterMax-jitterMin)
 }
 
