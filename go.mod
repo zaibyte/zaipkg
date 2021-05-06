@@ -3,7 +3,7 @@ module g.tesamc.com/IT/zaipkg
 go 1.16
 
 require (
-	g.tesamc.com/IT/zproto v0.0.0-20210223015400-40e6b2bc1b38
+	g.tesamc.com/IT/zproto v0.0.0-20210114071438-1018be4c55d3
 	github.com/BurntSushi/toml v0.3.1
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0 // indirect
@@ -26,5 +26,5 @@ require (
 
 // TODO GitLAB proxy issues
 replace (
-	g.tesamc.com/IT/zproto v0.0.0-20210223015400-40e6b2bc1b38 => ../zproto
+	g.tesamc.com/IT/zproto v0.0.0-20210114071438-1018be4c55d3 => ../zproto
 )
