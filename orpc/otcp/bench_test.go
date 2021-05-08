@@ -166,7 +166,7 @@ func BenchmarkClient_Delete(b *testing.B) {
 	digest := xdigest.Sum32(req)
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
-	b.SetParallelism(16)
+	b.SetParallelism(64)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {

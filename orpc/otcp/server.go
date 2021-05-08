@@ -47,6 +47,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/panjf2000/ants/v2"
+
 	"g.tesamc.com/IT/zaipkg/xtime"
 
 	"g.tesamc.com/IT/zaipkg/uid"
@@ -103,6 +105,8 @@ type Server struct {
 
 	Handler orpc.ServerHandler
 
+	handlerPool *ants.Pool
+
 	serverStopChan chan struct{}
 	stopWg         sync.WaitGroup
 }
@@ -153,9 +157,14 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	workersCh := make(chan struct{}, s.Concurrency)
+	var err error
+	s.handlerPool, err = ants.NewPool(s.Concurrency, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(true))
+	if err != nil {
+		return err
+	}
+
 	s.stopWg.Add(1)
-	go s.serverHandler(workersCh)
+	go s.serverHandler()
 	return nil
 }
 
@@ -167,6 +176,7 @@ func (s *Server) Stop() {
 	close(s.serverStopChan)
 	s.stopWg.Wait()
 	s.serverStopChan = nil
+	s.handlerPool.Release()
 }
 
 // Serve starts rpc server and blocks until it is stopped.
@@ -178,7 +188,7 @@ func (s *Server) Serve() error {
 	return nil
 }
 
-func (s *Server) serverHandler(workersCh chan struct{}) {
+func (s *Server) serverHandler() {
 	defer s.stopWg.Done()
 
 	var conn net.Conn
@@ -216,11 +226,11 @@ func (s *Server) serverHandler(workersCh chan struct{}) {
 		}
 
 		s.stopWg.Add(1)
-		go s.serverHandleConnection(conn, workersCh)
+		go s.serverHandleConnection(conn)
 	}
 }
 
-func (s *Server) serverHandleConnection(conn net.Conn, workersCh chan struct{}) {
+func (s *Server) serverHandleConnection(conn net.Conn) {
 	defer s.stopWg.Done()
 
 	var stopping atomic.Value
@@ -257,7 +267,7 @@ func (s *Server) serverHandleConnection(conn net.Conn, workersCh chan struct{}) 
 	stopChan := make(chan struct{})
 
 	readerDone := make(chan struct{})
-	go s.serverReader(conn, responsesChan, stopChan, readerDone, workersCh)
+	go s.serverReader(conn, responsesChan, stopChan, readerDone)
 
 	writerDone := make(chan struct{})
 	go s.serverWriter(conn, responsesChan, stopChan, writerDone)
@@ -312,7 +322,7 @@ func (s *serverMessage) reset() {
 }
 
 func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
-	stopChan <-chan struct{}, done chan<- struct{}, workersCh chan struct{}) {
+	stopChan <-chan struct{}, done chan<- struct{}) {
 
 	defer func() {
 		if x := recover(); x != nil {
@@ -370,22 +380,21 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 			hash.Reset()
 		}
 
-		select {
-		case workersCh <- struct{}{}:
-		default:
-			select {
-			case workersCh <- struct{}{}:
-			case <-stopChan:
-				return
-			}
-		}
-
 		// Haven read the request, handle request async, free the conn for the next request reading.
-		go s.serveRequest(responsesChan, stopChan, m, workersCh)
+		err = s.handlerPool.Submit(func() {
+			s.serveRequest(responsesChan, stopChan, m)
+		})
+		if err != nil {
+			xlog.ErrorID(m.reqid, err.Error())
+			xbytes.PutAlignedBytes(m.reqbody)
+			m.reset()
+			serverMessagePool.Put(m)
+			return
+		}
 	}
 }
 
-func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-chan struct{}, m *serverMessage, workersCh <-chan struct{}) {
+func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-chan struct{}, m *serverMessage) {
 
 	if m.err == nil {
 		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.extID, m.reqbody)
@@ -411,8 +420,6 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 		case <-stopChan:
 		}
 	}
-
-	<-workersCh
 }
 
 func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, extID uint32, reqBody []byte) (resp []byte, err error) {
