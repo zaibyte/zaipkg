@@ -1,6 +1,9 @@
 package xbytes
 
-import "testing"
+import (
+	"testing"
+	"unsafe"
+)
 
 func TestAlignSize(t *testing.T) {
 	var align int64 = 1 << 12
@@ -15,6 +18,15 @@ func TestAlignSize(t *testing.T) {
 		n := AlignSize(i, align)
 		if n != align*2 {
 			t.Fatal("align mismatch")
+		}
+	}
+}
+
+func TestAlignedBlock(t *testing.T) {
+	for i := 1; i < 33; i++ {
+		b := MakeAlignedBlock(i, 16)
+		if uintptr(unsafe.Pointer(&b[0]))&15 != 0 {
+			t.Fatal("aligned mismatch")
 		}
 	}
 }
