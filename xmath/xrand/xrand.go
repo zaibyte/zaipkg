@@ -5,24 +5,27 @@
 package xrand
 
 import (
-	"sync/atomic"
-	"unsafe"
+	"sync"
+	"time"
+
+	"g.tesamc.com/IT/zaipkg/xatomic"
+	"g.tesamc.com/IT/zaipkg/xbytes"
+	"g.tesamc.com/IT/zaipkg/xmath"
 
 	"github.com/templexxx/cpu"
-
-	"g.tesamc.com/IT/zaipkg/xmath"
 )
 
 var (
-	_padding0 [cpu.X86FalseSharingRange]byte
-	State     unsafe.Pointer
-	_padding1 [cpu.X86FalseSharingRange]byte
+	State = xbytes.MakeAlignedBlock(16, 16)
 )
 
 func init() {
-	s := unsafe.Pointer(new(xmath.Uint128))
-	atomic.StorePointer(&State, s)
-	Seed(1)
+
+	if !cpu.X86.HasCMPXCHG16B {
+		panic("art need CMPXCHG16B feature, but not supported in this machine")
+	}
+
+	Seed(time.Now().UnixNano())
 }
 
 // Int63n returns, as an int64, a non-negative pseudo-random number in [0,n)
@@ -45,7 +48,7 @@ func Int63n(n int64) int64 {
 
 // Seed uses the provided seed value to initialize the default Source to a
 // deterministic state. If Seed is not called, the generator behaves as
-// if seeded by Seed(1).
+// if seeded by Seed(time.Now().UnixNano()).
 //
 // State = (((__uint128_t)splitmix64_stateless(seed)) << 64) +
 //                     splitmix64_stateless(seed + 1);
@@ -53,19 +56,37 @@ func Int63n(n int64) int64 {
 func Seed(s int64) {
 	a := xmath.Uint128{L: splitMix64Stateless(uint64(s))}.ShiftLeft(64)
 	newS := a.Add(xmath.Uint128{L: splitMix64Stateless(uint64(s) + 1)})
-	atomic.StorePointer(&State, unsafe.Pointer(&newS))
+	xatomic.AvxStore16B(&State[0], &newS.ToArr()[0])
 }
+
+var _blockPool = sync.Pool{New: func() interface{} {
+	b := xbytes.MakeAlignedBlock(16, 16)
+	return &b
+}}
 
 // Int63 returns a non-negative pseudo-random 63-bit integer as an int64
 // from the default Source.
 // g_lehmer64_state *= UINT64_C(0xda942042e4dd58b5);
 // return g_lehmer64_state >> 64;
 func Int63() int64 {
-	sp := (*xmath.Uint128)(atomic.LoadPointer(&State))
-	s := *sp
+
+	p := _blockPool.Get().(*[]byte)
+	old := *p
+	xatomic.AvxLoad16B(&State[0], &old[0])
+	s := xmath.FromArrToUint128(old)
 	s = s.Mult(xmath.Uint128{L: 0xda942042e4dd58b5})
-	atomic.StorePointer(&State, unsafe.Pointer(&s))
-	return int64(s.ShiftRight(64).L)
+	s.ToArrDst(old)
+	// It's okay to use store directly here, although it may cause dirty.
+	// It's rare, enough strong for non-strict cases.
+	xatomic.AvxStore16B(&State[0], &old[0])
+	_blockPool.Put(p)
+	return int64(s.H)
+}
+
+// TwoChoice gets two elements which belong to [0, n).
+func TwoChoice(n int64) (a, b int64) {
+	// rand.Shuffle()
+	return 1, 2
 }
 
 // returns random number,

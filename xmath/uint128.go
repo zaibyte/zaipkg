@@ -4,8 +4,33 @@
 
 package xmath
 
+import (
+	"encoding/binary"
+
+	"g.tesamc.com/IT/zaipkg/xbytes"
+)
+
 type Uint128 struct {
 	H, L uint64
+}
+
+func (u Uint128) ToArr() []byte {
+	ret := xbytes.MakeAlignedBlock(16, 16)
+	binary.LittleEndian.PutUint64(ret[:8], u.L)
+	binary.LittleEndian.PutUint64(ret[8:16], u.H)
+	return ret
+}
+
+func (u Uint128) ToArrDst(dst []byte) {
+	binary.LittleEndian.PutUint64(dst[:8], u.L)
+	binary.LittleEndian.PutUint64(dst[8:16], u.H)
+}
+
+func FromArrToUint128(a []byte) Uint128 {
+	var u Uint128
+	u.L = binary.LittleEndian.Uint64(a[:8])
+	u.H = binary.LittleEndian.Uint64(a[8:16])
+	return u
 }
 
 func (u Uint128) ShiftLeft(bits uint) Uint128 {

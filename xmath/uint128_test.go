@@ -9,7 +9,20 @@ import (
 	"math/big"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestFromToArr(t *testing.T) {
+	for i := 0; i < 1024; i++ {
+		a := []uint32{rand.Uint32(), rand.Uint32(), rand.Uint32(), rand.Uint32()}
+		au := makeUint128(a)
+		ar := au.ToArr()
+		bu := FromArrToUint128(ar)
+		assert.Equal(t, au.L, bu.L)
+		assert.Equal(t, au.H, bu.H)
+	}
+}
 
 func makeUint128(a []uint32) Uint128 {
 	return Uint128{uint64(a[0])<<32 | uint64(a[1]),
