@@ -152,3 +152,9 @@ func GetGrains(oid uint64) uint32 {
 	_, _, grains, _, _ := parseOID(oid)
 	return grains
 }
+
+// GetGroupIDFromOID gets group_id from an oid.
+func GetGroupIDFromOID(oid uint64) uint32 {
+	_, groupID, _, _, _ := parseOID(oid)
+	return groupID
+}
