@@ -32,9 +32,9 @@ func Int63n(n int64) int64 {
 	if n&(n-1) == 0 { // n is power of two, can mask
 		return Int63() & (n - 1)
 	}
-	max := int64((1 << 63) - 1 - (1<<63)%uint64(n))
+	m := int64((1 << 63) - 1 - (1<<63)%uint64(n))
 	v := Int63()
-	for v > max {
+	for v > m {
 		v = Int63()
 	}
 	return v % n
@@ -58,12 +58,22 @@ var _blockPool = sync.Pool{New: func() interface{} {
 	return &b
 }}
 
+const (
+	max  = 1 << 63
+	mask = max - 1
+)
+
 // Int63 returns a non-negative pseudo-random 63-bit integer as an int64
 // from the default Source.
+func Int63() int64 {
+	return int64(Uint64() & mask)
+}
+
+// Uint64 returns a non-negative pseudo-random 64-bit integer as an uint64.
+//
 // g_lehmer64_state *= UINT64_C(0xda942042e4dd58b5);
 // return g_lehmer64_state >> 64;
-func Int63() int64 {
-
+func Uint64() uint64 {
 	p := _blockPool.Get().(*[]byte)
 	old := *p
 	xatomic.AvxLoad16B(&State[0], &old[0])
@@ -74,11 +84,13 @@ func Int63() int64 {
 	// It's rare, enough strong for non-strict cases.
 	xatomic.AvxStore16B(&State[0], &old[0])
 	_blockPool.Put(p)
-	return int64(s.H)
+	return s.H
 }
 
-// TwoChoice gets two elements which belong to [0, n).
-func TwoChoice(n int64) (a, b int64) {
+// PickTwo picks up two different elements which belong to [0, n).
+// Useful for implementing Two Randomly Choices algorithm.
+func PickTwo(n int64) (a, b int64) {
+
 	// rand.Shuffle()
 	return 1, 2
 }
