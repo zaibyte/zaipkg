@@ -11,8 +11,6 @@ import (
 	"g.tesamc.com/IT/zaipkg/xatomic"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xmath"
-
-	"github.com/templexxx/cpu"
 )
 
 var (
@@ -20,10 +18,6 @@ var (
 )
 
 func init() {
-
-	if !cpu.X86.HasCMPXCHG16B {
-		panic("art need CMPXCHG16B feature, but not supported in this machine")
-	}
 
 	Seed(time.Now().UnixNano())
 }
