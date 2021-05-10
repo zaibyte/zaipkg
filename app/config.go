@@ -18,7 +18,8 @@ type Config struct {
 
 	Log xlog.Config `toml:"log"`
 
-	HTTPServerAddr string `toml:"http_server_addr"`
+	// ServerAddr is the server address.
+	ServerAddr string `toml:"server_addr"`
 
 	// Enable Prometheus time histogram may impact performance.
 	// Deprecated.
