@@ -158,6 +158,67 @@ func GetLogger() *ErrorLogger {
 	return _global
 }
 
+type GRPCLogV2 struct {
+	logger *ErrorLogger
+}
+
+func (g *GRPCLogV2) Info(args ...interface{}) {
+	
+	g.logger.Info(0, fmt.Sprint(args))
+}
+
+func (g *GRPCLogV2) Infoln(args ...interface{}) {
+	g.logger.Info(0, fmt.Sprintln(args))
+}
+
+func (g *GRPCLogV2) Infof(format string, args ...interface{}) {
+	g.logger.Info(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) Warning(args ...interface{}) {
+	g.logger.Warn(0, fmt.Sprint(args))
+}
+
+func (g *GRPCLogV2) Warningln(args ...interface{}) {
+	g.logger.Warn(0, fmt.Sprintln(args))
+}
+
+func (g *GRPCLogV2) Warningf(format string, args ...interface{}) {
+	g.logger.Warn(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) Error(args ...interface{}) {
+	g.logger.Error(0, fmt.Sprint(args))
+}
+
+func (g *GRPCLogV2) Errorln(args ...interface{}) {
+	g.logger.Error(0, fmt.Sprintln(args))
+}
+
+func (g *GRPCLogV2) Errorf(format string, args ...interface{}) {
+	g.logger.Error(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) Fatal(args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprint(args))
+}
+
+func (g *GRPCLogV2) Fatalln(args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprintln(args))
+}
+
+func (g *GRPCLogV2) Fatalf(format string, args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) V(l int) bool {
+	return true
+}
+
+func GetGRPCLoggerV2() *GRPCLogV2 {
+	return &GRPCLogV2{GetLogger()}
+}
+
 // LogPanic logs the panic reason and stack, then exit the process.
 // Commonly used with a `defer`.
 func LogPanic() {
