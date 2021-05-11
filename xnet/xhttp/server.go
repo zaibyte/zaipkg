@@ -51,7 +51,7 @@ const (
 type Server struct {
 	cfg    *ServerConfig
 	router *httprouter.Router
-	svr    *http.Server
+	SVR    *http.Server
 
 	middle *negroni.Negroni
 }
@@ -75,7 +75,7 @@ func NewServer(cfg *ServerConfig) (s *Server) {
 
 	s.addDefaultHandler()
 
-	s.svr = &http.Server{
+	s.SVR = &http.Server{
 		Addr:     cfg.Address,
 		ErrorLog: log.New(xlog.GetLogger(), "", 0),
 		Handler:  s.router,
@@ -83,6 +83,8 @@ func NewServer(cfg *ServerConfig) (s *Server) {
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
 	}
+
+	s.RegisterDefaultMiddleware()
 
 	return
 }
@@ -97,19 +99,19 @@ func (s *Server) AddHandler(method, path string, handler httprouter.Handle) {
 func (s *Server) RegisterDefaultMiddleware() {
 	s.middle = negroni.New(new(withRecovery), new(withCheck), new(withReqid))
 	s.middle.UseHandler(s.router)
-	s.svr.Handler = s.middle
+	s.SVR.Handler = s.middle
 }
 
 // GetHandler gets Server's http.Handler.
 func (s *Server) GetHandler() http.Handler {
-	return s.svr.Handler
+	return s.SVR.Handler
 }
 
 // Start starts the Server.
 func (s *Server) Start() {
 
 	go func() {
-		_ = s.svr.ListenAndServe()
+		_ = s.SVR.ListenAndServe()
 	}()
 }
 
@@ -117,7 +119,7 @@ func (s *Server) Start() {
 func (s *Server) Close() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	_ = s.svr.Shutdown(ctx)
+	_ = s.SVR.Shutdown(ctx)
 }
 
 // --- Default Handler ---- //

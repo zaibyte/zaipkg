@@ -97,7 +97,7 @@ func addScheme(url string, scheme string) string {
 	return url
 }
 
-// Do sends an HTTP request and returns an HTTP response.
+// Request sends an HTTP request and returns an HTTP response.
 //
 // A >= 400 status code DO cause an error.
 // All >= 400 response will be closed.

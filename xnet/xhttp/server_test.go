@@ -41,8 +41,7 @@ func init() {
 		IdleTimeout:       0,
 		ReadHeaderTimeout: 0,
 	})
-	svr.RegisterDefaultMiddleware()
-	testServer = httptest.NewServer(svr.svr.Handler)
+	testServer = httptest.NewServer(svr.SVR.Handler)
 	testSrvAddr = testServer.URL
 	testClient, _ = NewDefaultClient()
 }

@@ -55,8 +55,8 @@ func (p *withCheck) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.
 	}
 
 	if enableCheck {
-		incoming, err := strconv.Atoi(clientSumStr)
-		if err != nil {
+		incoming, err2 := strconv.Atoi(clientSumStr)
+		if err2 != nil {
 			ReplyError(w, orpc.ErrBadRequest.Error(), http.StatusBadRequest)
 			return
 		}
