@@ -15,13 +15,13 @@ func (p *Info) GetState() metapb.DiskState {
 }
 
 func (p *Info) SetState(state metapb.DiskState, isKeeper bool) bool {
-	oldSate := metapb.DiskState(atomic.LoadInt32((*int32)(&p.PbDisk.State)))
+	oldState := metapb.DiskState(atomic.LoadInt32((*int32)(&p.PbDisk.State)))
 
-	if oldSate == state {
+	if oldState == state {
 		return true
 	}
 
-	switch oldSate {
+	switch oldState {
 	case metapb.DiskState_Disk_Broken:
 		return false
 	case metapb.DiskState_Disk_Tombstone:
@@ -34,7 +34,7 @@ func (p *Info) SetState(state metapb.DiskState, isKeeper bool) bool {
 
 	}
 
-	return atomic.CompareAndSwapInt32((*int32)(&p.PbDisk.State), int32(oldSate), int32(state))
+	return atomic.CompareAndSwapInt32((*int32)(&p.PbDisk.State), int32(oldState), int32(state))
 }
 
 // AddUsed adds delta to used. delta could be negative means delta space have been freed.
