@@ -27,9 +27,8 @@ func (p *Info) SetState(state metapb.DiskState, isKeeper bool) bool {
 	case metapb.DiskState_Disk_Tombstone:
 		return false
 	case metapb.DiskState_Disk_Offline:
-		if !isKeeper {
-			return false
-		}
+		return false
+
 	default:
 
 	}
