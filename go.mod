@@ -22,6 +22,7 @@ require (
 	github.com/zaibyte/nanozap v0.0.6
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20210304124612-50617c2ba197
+	github.com/gogo/protobuf v1.3.2
 )
 
 // TODO GitLAB proxy issues

@@ -4,6 +4,8 @@ import (
 	"sync/atomic"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
+	
+	"github.com/gogo/protobuf/proto"
 )
 
 type Info struct {
@@ -12,15 +14,7 @@ type Info struct {
 
 // Clone clones Info's metapb.Extent for heartbeat or other users.
 func (p *Info) Clone() *metapb.Extent {
-	return &metapb.Extent{
-		State:      metapb.ExtentState(atomic.LoadInt32((*int32)(&p.PbExt.State))),
-		Id:         p.PbExt.Id,
-		Size_:      p.PbExt.Size_,
-		Avail:      atomic.LoadUint64(&p.PbExt.Avail),
-		Version:    p.PbExt.Version,
-		DiskId:     p.PbExt.DiskId,
-		InstanceId: p.PbExt.InstanceId,
-	}
+	return proto.Clone(p.PbExt).(*metapb.Extent)
 }
 
 func (p *Info) GetState() metapb.ExtentState {
