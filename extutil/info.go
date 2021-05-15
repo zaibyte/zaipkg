@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
-	
+
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -36,9 +36,9 @@ func (p *Info) SetState(state metapb.ExtentState, isKeeper bool) bool {
 
 	switch oldSate {
 	case metapb.ExtentState_Extent_Broken:
-		return false
-	case metapb.ExtentState_Extent_Ghost:
-		return false
+		if state != metapb.ExtentState_Extent_Tombstone {
+			return false
+		}
 	default:
 
 	}
