@@ -84,7 +84,7 @@ func GetFreeSize(path string) (free uint64, err error) {
 func GetDiskType(path string) metapb.DiskType {
 	rs, err := df.GetDefault(``)
 	if err != nil {
-		return metapb.DiskType_Disk_Unknown
+		return metapb.DiskType_Disk_SATA
 	}
 
 	for _, r := range rs {
