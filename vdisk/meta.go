@@ -70,6 +70,15 @@ func (d *SyncMeta) GetUsed() uint64 {
 	return atomic.LoadUint64(&d.Used)
 }
 
+// IsAvailForExt checks if the disk has enough space for making a new extent.
+func (d *SyncMeta) IsAvailForExt(minSpace uint64) bool {
+	avail := d.GetSize_() - d.GetUsed()
+	if avail < minSpace {
+		return false
+	}
+	return true
+}
+
 // IsLowSpace checks if the disk is lack of space.
 func (d *SyncMeta) IsLowSpace(lowSpaceRatio float64) bool {
 	return d.AvailRatio() < 1-lowSpaceRatio
@@ -112,7 +121,7 @@ func (d *SyncMeta) GetIsolationValue(key string) uint32 {
 
 const (
 	mb = 1 << 20 // megabyte
-	// Because in Tesamc, most of the objects' sizes are large, the on-disk index snapshot won't that big,
+	// Because in Tesamc, most of the objects' sizes are large (1/n*100), the on-disk index snapshot won't that big,
 	// and the write operations won't be frequent, so the storage overhead is low, compare to the size taken
 	// by extent, that could be ignored.
 	defaultAmplification = 1
