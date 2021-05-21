@@ -9,10 +9,8 @@ import (
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 )
 
-// SyncMeta provides thread-safe methods to access *metapb.Disk.
-type SyncMeta struct {
-	*metapb.Disk
-}
+// SyncMeta provides thread-safe methods to access metapb.Disk.
+type SyncMeta metapb.Disk
 
 // Clone clones SyncMeta.
 // Heartbeat needs it.
@@ -72,7 +70,7 @@ func (d *SyncMeta) GetUsed() uint64 {
 
 // IsAvailForExt checks if the disk has enough space for making a new extent.
 func (d *SyncMeta) IsAvailForExt(minSpace uint64) bool {
-	avail := d.GetSize_() - d.GetUsed()
+	avail := d.Size_ - d.GetUsed()
 	if avail < minSpace {
 		return false
 	}
@@ -85,11 +83,11 @@ func (d *SyncMeta) IsLowSpace(lowSpaceRatio float64) bool {
 }
 
 func (d *SyncMeta) AvailRatio() float64 {
-	if d.GetSize_() == 0 {
+	if d.Size_ == 0 {
 		return 0
 	}
-	avail := d.GetSize_() - d.GetUsed()
-	return float64(avail) / float64(d.GetSize_())
+	avail := d.Size_ - d.GetUsed()
+	return float64(avail) / float64(d.Size_)
 }
 
 func (d *SyncMeta) IsTombstone() bool {
@@ -113,9 +111,9 @@ func (d *SyncMeta) IsOffline() bool {
 func (d *SyncMeta) GetIsolationValue(key string) uint32 {
 	switch key {
 	case settings.IsolationDisk:
-		return d.GetId()
+		return d.Id
 	default:
-		return d.GetInstanceId()
+		return d.InstanceId
 	}
 }
 
@@ -133,9 +131,9 @@ const (
 func (d *SyncMeta) SpaceScore(highSpaceRatio, lowSpaceRatio float64, delta int64) float64 {
 	var score float64
 	var amplification float64 = defaultAmplification
-	available := float64(d.GetSize_()-d.GetUsed()) / mb
+	available := float64(d.Size_-d.GetUsed()) / mb
 	used := float64(d.GetUsed()) / mb
-	capacity := float64(d.GetSize_()) / mb
+	capacity := float64(d.Size_) / mb
 
 	// highSpaceBound is the lower bound of the high space stage.
 	highSpaceBound := (1 - highSpaceRatio) * capacity
@@ -165,5 +163,5 @@ func (d *SyncMeta) SpaceScore(highSpaceRatio, lowSpaceRatio float64, delta int64
 		score = k*(float64(delta)+used) + b
 	}
 
-	return score / math.Max(d.GetWeight(), minWeight)
+	return score / math.Max(d.Weight, minWeight)
 }
