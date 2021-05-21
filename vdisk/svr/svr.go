@@ -40,7 +40,7 @@ type ZBufDisks struct {
 // ZBufDisk
 type ZBufDisk struct {
 	DiskID       uint32
-	Info         *vdisk.Info
+	Info         *vdisk.SyncMeta
 	Sched        xio.Scheduler
 	SchedStarted int64
 }
@@ -109,16 +109,16 @@ func (d *ZBufDisks) AddDisk(diskID uint32, weight float64) {
 
 	v := new(ZBufDisk)
 
-	info := &vdisk.Info{PbDisk: new(metapb.Disk)}
-	info.PbDisk.Id = diskID
+	meta := &vdisk.SyncMeta{Disk: new(metapb.Disk)}
+	meta.Id = diskID
 	path := MakeDiskDir(diskID, d.DataRoot)
-	info.PbDisk.Type = d.VDisk.GetType(path)
-	_ = d.VDisk.InitUsage(path, info)
+	meta.Type = d.VDisk.GetType(path)
+	_ = d.VDisk.InitUsage(path, meta)
 	if weight != 0 {
-		info.PbDisk.Weight = weight
+		meta.Weight = weight
 	}
 
-	v.Info = info
+	v.Info = meta
 	v.DiskID = diskID
 	if d.schedCfg != nil {
 		v.Sched = sched.New(d.ctx, d.schedCfg, v.Info)
@@ -193,7 +193,7 @@ func MakeDiskDir(diskID uint32, root string) string {
 }
 
 // GetInfo gets disk info by diskID.
-func (d *ZBufDisks) GetInfo(diskID uint32) *vdisk.Info {
+func (d *ZBufDisks) GetInfo(diskID uint32) *vdisk.SyncMeta {
 	di, ok := d.Disks.Load(diskID)
 	if !ok {
 		return nil

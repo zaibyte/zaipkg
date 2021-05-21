@@ -114,7 +114,7 @@ func testSchedulerIsFairWithPriority(vfsSpeed, threads, reqSize int, reqCnts []r
 	s := New(context.Background(), &Config{
 		Threads:     threads,
 		QueueConfig: &QueueConfig{},
-	}, &vdisk.Info{PbDisk: &metapb.Disk{
+	}, &vdisk.SyncMeta{Disk: &metapb.Disk{
 		State: metapb.DiskState_Disk_ReadWrite,
 	}})
 	s.Start()
@@ -205,7 +205,7 @@ func TestSchedulerCostNopFileQueue(t *testing.T) {
 	s := New(context.Background(), &Config{
 		Threads:     DefaultThreads,
 		QueueConfig: &QueueConfig{},
-	}, &vdisk.Info{PbDisk: &metapb.Disk{
+	}, &vdisk.SyncMeta{Disk: &metapb.Disk{
 		State: metapb.DiskState_Disk_ReadWrite,
 	}})
 	testSchedulerCostNopFile(t, s)

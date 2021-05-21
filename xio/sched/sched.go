@@ -45,7 +45,7 @@ type Scheduler struct {
 
 	cfg *Config
 
-	diskInfo *vdisk.Info
+	diskMeta *vdisk.SyncMeta
 
 	queue *Queue
 
@@ -73,7 +73,7 @@ func (s *Scheduler) DoSync(reqType uint64, f xio.File, offset int64, d []byte) (
 }
 
 // New creates a scheduler instance.
-func New(ctx context.Context, cfg *Config, di *vdisk.Info) *Scheduler {
+func New(ctx context.Context, cfg *Config, dm *vdisk.SyncMeta) *Scheduler {
 
 	cfg.adjust()
 
@@ -82,7 +82,7 @@ func New(ctx context.Context, cfg *Config, di *vdisk.Info) *Scheduler {
 	return &Scheduler{
 		cfg: cfg,
 
-		diskInfo: di,
+		diskMeta: dm,
 		queue:    NewQueue(cfg.QueueConfig),
 
 		worker: make(chan struct{}, cfg.Threads),
@@ -101,7 +101,7 @@ func (s *Scheduler) Start() {
 	s.stopWg.Add(1)
 
 	go s.FindRunnableLoop()
-	xlog.Info(fmt.Sprintf("disk: %d scheduler is running", s.diskInfo.PbDisk.Id))
+	xlog.Info(fmt.Sprintf("disk: %d scheduler is running", s.diskMeta.Id))
 }
 
 func (s *Scheduler) Close() {
@@ -112,7 +112,7 @@ func (s *Scheduler) Close() {
 	s.cancel()
 	s.stopWg.Wait()
 
-	xlog.Info(fmt.Sprintf("disk: %d scheduler is closed", s.diskInfo.PbDisk.Id))
+	xlog.Info(fmt.Sprintf("disk: %d scheduler is closed", s.diskMeta.Id))
 }
 
 func (c *Config) adjust() {
@@ -201,7 +201,7 @@ func (s *Scheduler) FindRunnableLoop() {
 // preproc preprocess the request.
 // Returns error if this request cannot be executed in present.
 func (s *Scheduler) preproc(reqType uint64) error {
-	state := s.diskInfo.GetState()
+	state := s.diskMeta.GetState()
 	isRead := xio.IsReqRead(reqType)
 	if state == metapb.DiskState_Disk_Broken {
 		return orpc.ErrDiskBroken
