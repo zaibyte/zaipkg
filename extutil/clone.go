@@ -28,6 +28,31 @@ func (p *SyncCloneJob) GetState() metapb.CloneJobState {
 	return metapb.CloneJobState(atomic.LoadInt32((*int32)(&p.State)))
 }
 
+func (p *SyncCloneJob) SetState(state metapb.CloneJobState) bool {
+	oldSate := metapb.CloneJobState(atomic.LoadInt32((*int32)(&p.State)))
+
+	if oldSate == state {
+		return true
+	}
+
+	if oldSate == metapb.CloneJobState_CloneJob_Doing && state == metapb.CloneJobState_CloneJob_Init {
+		return false
+	}
+
+	switch oldSate {
+	case metapb.CloneJobState_CloneJob_Failed:
+		return false
+	case metapb.CloneJobState_CloneJob_Collapse:
+		return false
+	case metapb.CloneJobState_CloneJob_Done:
+		return false
+	default:
+
+	}
+
+	return atomic.CompareAndSwapInt32((*int32)(&p.State), int32(oldSate), int32(state))
+}
+
 func (p *SyncCloneJob) SetObjCnt(cnt uint64) {
 	atomic.StoreUint64(&p.ObjCnt, cnt)
 }
