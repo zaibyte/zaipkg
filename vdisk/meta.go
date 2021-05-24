@@ -1,7 +1,6 @@
 package vdisk
 
 import (
-	"math"
 	"sync/atomic"
 
 	"g.tesamc.com/IT/zaipkg/config/settings"
@@ -20,7 +19,6 @@ func (d *SyncMeta) Clone() *metapb.Disk {
 		Id:         d.Id,
 		Size_:      d.Size_,
 		Used:       d.GetUsed(),
-		Weight:     d.Weight,
 		Type:       d.Type,
 		InstanceId: d.InstanceId,
 	}
@@ -117,51 +115,18 @@ func (d *SyncMeta) GetIsolationValue(key string) uint32 {
 	}
 }
 
-const (
-	mb = 1 << 20 // megabyte
-	// Because in Tesamc, most of the objects' sizes are large (1/n*100), the on-disk index snapshot won't that big,
-	// and the write operations won't be frequent, so the storage overhead is low, compare to the size taken
-	// by extent, that could be ignored.
-	defaultAmplification = 1
-	maxScore             = 1024 * 1024 * 1024
-	minWeight            = 1e-6
-)
-
 // SpaceScore returns the disk's space score.
-func (d *SyncMeta) SpaceScore(highSpaceRatio, lowSpaceRatio float64, delta int64) float64 {
-	var score float64
-	var amplification float64 = defaultAmplification
-	available := float64(d.Size_-d.GetUsed()) / mb
-	used := float64(d.GetUsed()) / mb
-	capacity := float64(d.Size_) / mb
+// The principle is quite simple:
+// The more avail_ratio, the higher score.
+//
+// We'll only pick up the highest one in disk picking process,
+// the mid-state is meaningless.
+// And with the help of I/O scheduler (see xio for details), there is no need to
+// implement a complex algorithm to get a score.
+//
+// And not like the OLTP database, we care the cost more but not latency, if the disk device has more capacity,
+// we should use it more for saving TCO although it may increase the loading for this device.
+func (d *SyncMeta) SpaceScore() float64 {
 
-	// highSpaceBound is the lower bound of the high space stage.
-	highSpaceBound := (1 - highSpaceRatio) * capacity
-	// lowSpaceBound is the upper bound of the low space stage.
-	lowSpaceBound := (1 - lowSpaceRatio) * capacity
-	if available-float64(delta)/amplification >= highSpaceBound {
-		score = float64(delta) + used
-	} else if available-float64(delta)/amplification <= lowSpaceBound {
-		score = maxScore - (available - float64(delta)/amplification)
-	} else {
-		// to make the score function continuous, we use linear function y = k * x + b as transition period
-		// from above we know that there are two points must on the function image
-		// note that it is possible that other irrelative files occupy a lot of storage, so capacity == available + used + irrelative
-		// and we regarded irrelative as a fixed value.
-		// Then amp = size / used = size / (capacity - irrelative - available)
-		//
-		// When available == highSpaceBound,
-		// we can conclude that size = (capacity - irrelative - highSpaceBound) * amp = (used + available - highSpaceBound) * amp
-		// Similarly, when available == lowSpaceBound,
-		// we can conclude that size = (capacity - irrelative - lowSpaceBound) * amp = (used + available - lowSpaceBound) * amp
-		// These are the two fixed points' x-coordinates, and y-coordinates which can be easily obtained from the above two functions.
-		x1, y1 := (used+available-highSpaceBound)*amplification, (used+available-highSpaceBound)*amplification
-		x2, y2 := (used+available-lowSpaceBound)*amplification, maxScore-lowSpaceBound
-
-		k := (y2 - y1) / (x2 - x1)
-		b := y1 - k*x1
-		score = k*(float64(delta)+used) + b
-	}
-
-	return score / math.Max(d.Weight, minWeight)
+	return d.AvailRatio()
 }
