@@ -148,6 +148,11 @@ const (
 	lostWrite        = 33
 
 	boxFull = 34
+
+	// Actually we could retry propose when meets rejected error,
+	// but we don't need it in most cases. I think it's better to handle could retry or not case by case.
+	stmRejected       = 35
+	stmNotImplemented = 36
 )
 
 // Error table.
@@ -193,6 +198,9 @@ var errnoStr = map[uint16]string{
 	lostWrite:        "lost write",
 
 	boxFull: "box is full",
+
+	stmRejected:       "propose to state machine is rejected",
+	stmNotImplemented: "method not implemented in state machine",
 }
 
 var (
@@ -236,6 +244,9 @@ var (
 	ErrLostWrite        = Errno(lostWrite)
 
 	ErrBoxFull = Errno(boxFull)
+
+	ErrSTMRejected       = Errno(stmRejected)
+	ErrSTMNotImplemented = Errno(stmNotImplemented)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
