@@ -12,13 +12,12 @@ type SyncCloneJob metapb.CloneJob
 // Clone clones SyncCloneJob's metapb.CloneJob for heartbeat or other users.
 func (p *SyncCloneJob) Clone() *metapb.CloneJob {
 	return &metapb.CloneJob{
-		Version:  p.Version,
 		IsSource: p.IsSource,
 		State:    p.GetState(),
 		Id:       p.Id,
 		ParentId: p.ParentId,
-		ObjCnt:   p.GetObjCnt(),
-		DoneCnt:  p.GetDoneCnt(),
+		Total:    p.GetTotal(),
+		Done:     p.GetDone(),
 		OidsOid:  p.GetOidsOid(),
 	}
 }
@@ -53,20 +52,20 @@ func (p *SyncCloneJob) SetState(state metapb.CloneJobState) bool {
 	return atomic.CompareAndSwapInt32((*int32)(&p.State), int32(oldSate), int32(state))
 }
 
-func (p *SyncCloneJob) SetObjCnt(cnt uint64) {
-	atomic.StoreUint64(&p.ObjCnt, cnt)
+func (p *SyncCloneJob) SetTotal(cnt uint64) {
+	atomic.StoreUint64(&p.Total, cnt)
 }
 
-func (p *SyncCloneJob) GetObjCnt() uint64 {
-	return atomic.LoadUint64(&p.ObjCnt)
+func (p *SyncCloneJob) GetTotal() uint64 {
+	return atomic.LoadUint64(&p.Total)
 }
 
-func (p *SyncCloneJob) AddDoneCnt(d uint64) {
-	atomic.AddUint64(&p.DoneCnt, d)
+func (p *SyncCloneJob) AddDone(d uint64) {
+	atomic.AddUint64(&p.Done, d)
 }
 
-func (p *SyncCloneJob) GetDoneCnt() uint64 {
-	return atomic.LoadUint64(&p.DoneCnt)
+func (p *SyncCloneJob) GetDone() uint64 {
+	return atomic.LoadUint64(&p.Done)
 }
 
 func (p *SyncCloneJob) SetOidsOid(oid uint64) {
