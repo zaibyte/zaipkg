@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 
+	"g.tesamc.com/IT/zaipkg/config"
+
 	"g.tesamc.com/IT/zaipkg/xruntime"
 
 	"g.tesamc.com/IT/zaipkg/uid"
@@ -27,8 +29,8 @@ type Config struct {
 	// and other servers will use mux to share the same port with HTTP/1.1.
 	ServerAddr string `toml:"server_addr"`
 
-	// GOMAXPROCS sets runtime.GOXMAXPROCS manually.
 	// Sometimes we want more Go Processes for reducing stall.
+	// GOMAXPROCS sets runtime.GOXMAXPROCS manually.
 	GOMAXPROCS int `toml:"gomaxprocs"`
 
 	TimeCalibrateInterval typeutil.Duration `toml:"time_calibrate_interval"`
@@ -49,4 +51,6 @@ func (c *Config) Adjust() {
 	if c.GOMAXPROCS <= 0 {
 		xruntime.AutoGOMAXPROCS()
 	}
+
+	config.Adjust(&c.TimeCalibrateInterval, DefaultTimeCalibrateInterval)
 }
