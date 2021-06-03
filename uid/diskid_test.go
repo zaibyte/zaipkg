@@ -50,7 +50,9 @@ func TestGetSerial(t *testing.T) {
 	for _, d := range blk.Disks {
 		fmt.Printf("%#v\n", d)
 		if len(d.Partitions) != 0 {
-			fmt.Println(d.Partitions[0].UUID)
+			for _, p := range d.Partitions {
+				fmt.Printf("%#v\n", p)
+			}
 		}
 	}
 }
