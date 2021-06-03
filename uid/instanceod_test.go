@@ -1,6 +1,7 @@
 package uid
 
 import (
+	"strings"
 	"testing"
 
 	"g.tesamc.com/IT/zaipkg/xmath/xrand"
@@ -16,4 +17,13 @@ func TestGetIDCFromInstanceID(t *testing.T) {
 	for i := 0; i < 1024; i++ {
 		assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID(GenRandInstanceID()))
 	}
+}
+
+func TestIsValidInstanceID(t *testing.T) {
+
+	xrand.Seed(tsc.UnixNano())
+	assert.True(t, IsValidInstanceID(GenRandInstanceID()))
+
+	assert.False(t, IsValidInstanceID(strings.ToUpper(GenRandInstanceID())))
+	assert.False(t, IsValidInstanceID(GenRandInstanceID()+"0"))
 }

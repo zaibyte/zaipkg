@@ -2,6 +2,7 @@ package uid
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"g.tesamc.com/IT/zaipkg/xmath/xrand"
@@ -23,4 +24,11 @@ func GetIDCFromInstanceID(instanceID string) string {
 // GenRandInstanceID generates an instance_id for testing only.
 func GenRandInstanceID() string {
 	return fmt.Sprintf("cn-sz-001-%02d", xrand.Int63n(9999999))
+}
+
+var InstanceIDRegexp = regexp.MustCompile(`^[a-z]{2}-[a-z]{2}-\d{3}-\d{7}`)
+
+// IsValidInstanceID returns the instanceID is valid in Zai or not.
+func IsValidInstanceID(instanceID string) bool {
+	return InstanceIDRegexp.FindString(instanceID) == instanceID
 }
