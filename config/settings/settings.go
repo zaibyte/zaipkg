@@ -37,13 +37,15 @@ const (
 
 var ValidExtVersions = []uint16{ExtV1, ExtVtest}
 
-// Zai has three different isolation levels.
+// Zai has five different isolation levels.
 const (
+	IsolationIDC      = "idc" // It's the instance_id's location label.
+	IsolationRack     = "rack"
 	IsolationInstance = "instance"
 	IsolationDisk     = "disk"
 	IsolationNone     = "none"
 )
 
-var ValidIsolationLevels = []string{IsolationInstance, IsolationDisk, IsolationNone}
+var ValidIsolationLevels = []string{IsolationIDC, IsolationRack, IsolationInstance, IsolationDisk, IsolationNone}
 
 var DefaultIsolationLevel = IsolationInstance

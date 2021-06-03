@@ -9,12 +9,11 @@ type Config struct {
 	// Every instance belongs to a certain box.
 	// boxID: [1, 255)
 	BoxID uint32 `toml:"box_id"`
+	IDC   string `toml:"idc"`
 	// Every instance has its own unique instanceID
 	InstanceID string `toml:"instance_id"`
 	// Every instance belongs to a certain rack.
-	// RackID: [1, ?)
-	// 0 is reserved, it's default rack, means ignore rack location.
-	RackID uint64 `toml:"rack_id"`
+	RackID string `toml:"rack_id"`
 
 	Log xlog.Config `toml:"log"`
 
