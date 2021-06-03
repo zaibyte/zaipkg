@@ -101,7 +101,7 @@ func (s *Scheduler) Start() {
 	s.stopWg.Add(1)
 
 	go s.FindRunnableLoop()
-	xlog.Info(fmt.Sprintf("disk: %d scheduler is running", s.diskMeta.Id))
+	xlog.Info(fmt.Sprintf("disk: %s scheduler is running", s.diskMeta.Id))
 }
 
 func (s *Scheduler) Close() {
@@ -112,7 +112,7 @@ func (s *Scheduler) Close() {
 	s.cancel()
 	s.stopWg.Wait()
 
-	xlog.Info(fmt.Sprintf("disk: %d scheduler is closed", s.diskMeta.Id))
+	xlog.Info(fmt.Sprintf("disk: %s scheduler is closed", s.diskMeta.Id))
 }
 
 func (c *Config) adjust() {

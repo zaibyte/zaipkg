@@ -23,6 +23,8 @@ func (d *SyncMeta) Clone() *metapb.Disk {
 		Used:       d.GetUsed(),
 		Type:       d.Type,
 		InstanceId: d.InstanceId,
+		SN:         d.SN,
+		RackId:     d.RackId,
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/spf13/cast"
 
 	"g.tesamc.com/IT/zaipkg/vfs"
@@ -16,9 +18,9 @@ import (
 
 func TestMakeDiskPath(t *testing.T) {
 	root := "/root"
-	var diskID uint32 = 1024
+	diskID := uuid.NewString()
 	p := MakeDiskDir(diskID, root)
-	exp := filepath.Join(root, "disk_1024")
+	exp := filepath.Join(root, "disk_"+diskID)
 	assert.Equal(t, exp, p)
 }
 
@@ -29,9 +31,9 @@ func TestListDiskIDs(t *testing.T) {
 	}
 	defer os.RemoveAll(root)
 
-	ids := make([]int, 1024)
+	ids := make([]string, 1024)
 	for i := range ids {
-		ids[i] = i
+		ids[i] = uuid.NewString()
 	}
 
 	fs := vfs.GetFS()
@@ -49,13 +51,8 @@ func TestListDiskIDs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	actIDsInt := make([]int, len(actIDs))
-	for i := range actIDs {
-		actIDsInt[i] = int(actIDs[i])
-	}
+	sort.Strings(ids)
+	sort.Strings(actIDs)
 
-	sort.Ints(ids)
-	sort.Ints(actIDsInt)
-
-	assert.Equal(t, ids, actIDsInt)
+	assert.Equal(t, ids, actIDs)
 }

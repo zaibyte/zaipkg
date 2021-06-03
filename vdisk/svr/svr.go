@@ -8,13 +8,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"g.tesamc.com/IT/zaipkg/uid"
+
 	"g.tesamc.com/IT/zaipkg/vdisk"
 	"g.tesamc.com/IT/zaipkg/vfs"
 	"g.tesamc.com/IT/zaipkg/xio"
 	"g.tesamc.com/IT/zaipkg/xio/sched"
 	"g.tesamc.com/IT/zproto/pkg/metapb"
-
-	"github.com/spf13/cast"
 )
 
 // .
@@ -39,7 +39,7 @@ type ZBufDisks struct {
 
 // ZBufDisk
 type ZBufDisk struct {
-	DiskID       uint32
+	DiskID       string
 	Info         *vdisk.SyncMeta
 	Sched        xio.Scheduler
 	SchedStarted int64
@@ -58,32 +58,33 @@ func NewZBufDisks(ctx context.Context, vdisk vdisk.Disk, dataRoot string, schedC
 }
 
 // Init inits ZBufDisks at starting.
-func (d *ZBufDisks) Init(fs vfs.FS, weights map[uint32]float64) {
+func (d *ZBufDisks) Init(fs vfs.FS) {
 	if d.Disks == nil {
 		d.Disks = new(sync.Map)
 	}
 
 	diskIDs, _ := ListDiskIDs(fs, d.DataRoot)
-	d.AddDisks(diskIDs, weights)
+	d.AddDisks(diskIDs)
 }
 
 var ErrNoDisk = errors.New("no disk for ZBuf in this instance")
 
 // ListDiskIDs lists all disk ids according to the disk path.
-func ListDiskIDs(fs vfs.FS, root string) (diskIDs []uint32, err error) {
+func ListDiskIDs(fs vfs.FS, root string) (diskIDs []string, err error) {
 	diskFns, err := fs.List(root)
 	if err != nil {
 		return
 	}
 
-	diskIDs = make([]uint32, 0, len(diskFns))
+	diskIDs = make([]string, 0, len(diskFns))
 	cnt := 0
 	for _, fn := range diskFns {
 		if strings.HasPrefix(fn, diskNamePrefix) {
 			cnt++
-			idStr := strings.TrimPrefix(fn, diskNamePrefix)
-			id := cast.ToUint32(idStr)
-			diskIDs = append(diskIDs, id)
+			id := strings.TrimPrefix(fn, diskNamePrefix)
+			if uid.IsValidDiskID(id) {
+				diskIDs = append(diskIDs, id)
+			}
 		}
 	}
 	if cnt == 0 {
@@ -93,30 +94,23 @@ func ListDiskIDs(fs vfs.FS, root string) (diskIDs []uint32, err error) {
 }
 
 // AddDisks adds zbuf disk one by one.
-func (d *ZBufDisks) AddDisks(diskIDs []uint32, weights map[uint32]float64) {
+func (d *ZBufDisks) AddDisks(diskIDs []string) {
 
-	weight := float64(0)
 	for _, diskID := range diskIDs {
-		if weights != nil {
-			weight = weights[diskID]
-		}
-		d.AddDisk(diskID, weight)
+		d.AddDisk(diskID)
 	}
 }
 
 // AddDisk adds single disk.
-func (d *ZBufDisks) AddDisk(diskID uint32, weight float64) {
+func (d *ZBufDisks) AddDisk(diskID string) {
 
 	v := new(ZBufDisk)
 
-	meta := &vdisk.SyncMeta{Disk: new(metapb.Disk)}
+	meta := (*vdisk.SyncMeta)(new(metapb.Disk))
 	meta.Id = diskID
 	path := MakeDiskDir(diskID, d.DataRoot)
 	meta.Type = d.VDisk.GetType(path)
 	_ = d.VDisk.InitUsage(path, meta)
-	if weight != 0 {
-		meta.Weight = weight
-	}
 
 	v.Info = meta
 	v.DiskID = diskID
@@ -188,8 +182,8 @@ func (d *ZBufDisks) CloseSched(diskIDs ...uint32) {
 }
 
 // MakeDiskDir makes disk path according diskID
-func MakeDiskDir(diskID uint32, root string) string {
-	return filepath.Join(root, diskNamePrefix+cast.ToString(diskID))
+func MakeDiskDir(diskID string, root string) string {
+	return filepath.Join(root, diskNamePrefix+diskID)
 }
 
 // GetInfo gets disk info by diskID.
