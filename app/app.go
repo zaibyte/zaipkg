@@ -21,6 +21,10 @@ func TimeCalibrateLoop(ctx context.Context, interval time.Duration) {
 		return
 	}
 
+	if interval == 0 {
+		interval = DefaultTimeCalibrateInterval
+	}
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
