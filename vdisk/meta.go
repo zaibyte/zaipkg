@@ -3,6 +3,8 @@ package vdisk
 import (
 	"sync/atomic"
 
+	"g.tesamc.com/IT/zaipkg/uid"
+
 	"g.tesamc.com/IT/zaipkg/config/settings"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
@@ -105,11 +107,16 @@ func (d *SyncMeta) IsOffline() bool {
 }
 
 // GetIsolationValue gets isolation level value.
-// Return instanceID or diskID.
-func (d *SyncMeta) GetIsolationValue(key string) uint32 {
+func (d *SyncMeta) GetIsolationValue(key string) string {
 	switch key {
+	case settings.IsolationIDC:
+		return uid.GetIDCFromInstanceID(d.InstanceId)
+	case settings.IsolationRack:
+		return d.RackId
 	case settings.IsolationDisk:
 		return d.Id
+	case settings.IsolationNone:
+		return ""
 	default:
 		return d.InstanceId
 	}
