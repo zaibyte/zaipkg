@@ -22,6 +22,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/jaypipes/ghw/pkg/block"
+
 	"github.com/gyuho/linux-inspect/df"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
@@ -81,18 +83,53 @@ func GetFreeSize(path string) (free uint64, err error) {
 // GetDiskType gets disk device interface type by `df`.
 //
 // It regards all non-nvme devices as SATA in present.
-func GetDiskType(path string) metapb.DiskType {
+func GetDiskType(mntPoint string) metapb.DiskType {
 	rs, err := df.GetDefault(``)
 	if err != nil {
 		return metapb.DiskType_Disk_SATA
 	}
 
 	for _, r := range rs {
-		if r.MountedOn == path {
+		if r.MountedOn == mntPoint {
 			if strings.HasPrefix(r.FileSystem, "/dev/nvme") {
 				return metapb.DiskType_Disk_NVMe
 			}
 		}
 	}
 	return metapb.DiskType_Disk_SATA
+}
+
+// UnknownSN will be used when cannot get the correct disk S/N.
+const UnknownSN = "n/a"
+
+// GetDiskSN gets disk's serial number.
+func GetDiskSN(mntPoint string) string {
+	blk, err := block.New()
+	if err != nil {
+		return UnknownSN
+	}
+
+	if len(blk.Disks) == 0 {
+		return UnknownSN
+	}
+
+	for _, d := range blk.Disks {
+		if len(d.Partitions) == 0 {
+			continue
+		}
+		for _, p := range d.Partitions {
+
+			if p.MountPoint == mntPoint {
+				sn := d.SerialNumber
+				if sn == "" || sn == "unknown" {
+					return UnknownSN
+				} else {
+					return sn
+				}
+			}
+		}
+
+	}
+
+	return UnknownSN
 }
