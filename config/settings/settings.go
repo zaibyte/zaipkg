@@ -35,7 +35,7 @@ const (
 	ExtVtest uint16 = 666
 )
 
-var ExtAvailVersion = []uint16{ExtV1, ExtVtest}
+var ValidExtVersions = []uint16{ExtV1, ExtVtest}
 
 // Zai has three different isolation levels.
 const (
@@ -43,3 +43,7 @@ const (
 	IsolationDisk     = "disk"
 	IsolationNone     = "none"
 )
+
+var ValidIsolationLevels = []string{IsolationInstance, IsolationDisk, IsolationNone}
+
+var DefaultIsolationLevel = IsolationInstance

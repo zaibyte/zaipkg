@@ -8,7 +8,9 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a
+	github.com/jaypipes/ghw v0.8.0 // indirect
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/lni/goutils v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
