@@ -3,6 +3,8 @@ package uid
 import (
 	"fmt"
 	"strings"
+
+	"g.tesamc.com/IT/zaipkg/xmath/xrand"
 )
 
 // GetIDCFromInstanceID gets idc label from instance_id.
@@ -16,4 +18,9 @@ func GetIDCFromInstanceID(instanceID string) string {
 	}
 
 	return strings.TrimSuffix(instanceID, "-"+ss[3])
+}
+
+// GenRandInstanceID generates an instance_id for testing only.
+func GenRandInstanceID() string {
+	return fmt.Sprintf("cn-sz-001-%02d", xrand.Int63n(9999999))
 }
