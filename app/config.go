@@ -10,7 +10,7 @@ type Config struct {
 	// boxID: [1, 255)
 	BoxID uint32 `toml:"box_id"`
 	// Every instance has its own unique instanceID
-	InstanceID uint32 `toml:"instance-id"`
+	InstanceID string `toml:"instance_id"`
 	// Every instance belongs to a certain rack.
 	// RackID: [1, ?)
 	// 0 is reserved, it's default rack, means ignore rack location.
