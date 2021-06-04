@@ -1,6 +1,7 @@
 package vdisk
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"g.tesamc.com/IT/zaipkg/uid"
@@ -115,12 +116,14 @@ func (d *SyncMeta) GetIsolationValue(key string) string {
 		return uid.GetIDCFromInstanceID(d.InstanceId)
 	case settings.IsolationRack:
 		return d.RackId
+	case settings.IsolationInstance:
+		return d.InstanceId
 	case settings.IsolationDisk:
 		return d.Id
 	case settings.IsolationNone:
 		return ""
 	default:
-		return d.InstanceId
+		panic(fmt.Sprintf("illegal isolation level: %s", key))
 	}
 }
 
