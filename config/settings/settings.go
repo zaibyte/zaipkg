@@ -49,3 +49,5 @@ const (
 var ValidIsolationLevels = []string{IsolationIDC, IsolationRack, IsolationInstance, IsolationDisk, IsolationNone}
 
 var DefaultIsolationLevel = IsolationInstance
+
+var DefaultReplicas = 2 // In Tesamc, we will start at 2 replicas first for saving overhead.
