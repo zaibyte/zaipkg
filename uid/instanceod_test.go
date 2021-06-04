@@ -25,5 +25,6 @@ func TestIsValidInstanceID(t *testing.T) {
 	assert.True(t, IsValidInstanceID(GenRandInstanceID()))
 
 	assert.False(t, IsValidInstanceID(strings.ToUpper(GenRandInstanceID())))
+
 	assert.False(t, IsValidInstanceID(GenRandInstanceID()+"0"))
 }

@@ -23,10 +23,10 @@ func GetIDCFromInstanceID(instanceID string) string {
 
 // GenRandInstanceID generates an instance_id for testing only.
 func GenRandInstanceID() string {
-	return fmt.Sprintf("cn-sz-001-%02d", xrand.Int63n(9999999))
+	return fmt.Sprintf("cn-sz-%03d-%06d", xrand.Int63n(1000), xrand.Int63n(1000000))
 }
 
-var InstanceIDRegexp = regexp.MustCompile(`^[a-z]{2}-[a-z]{2}-\d{3}-\d{7}`)
+var InstanceIDRegexp = regexp.MustCompile(`^[a-z]{2}-[a-z]{2}-\d{3}-\d{6}`)
 
 // IsValidInstanceID returns the instanceID is valid in Zai or not.
 func IsValidInstanceID(instanceID string) bool {
