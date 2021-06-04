@@ -8,6 +8,8 @@ import (
 	"g.tesamc.com/IT/zaipkg/xmath/xrand"
 )
 
+const InstanceIDLen = 16
+
 // GetIDCFromInstanceID gets idc label from instance_id.
 // <region>-<city>-<idc_number>-<machine_number>
 // e.g. cn-sz-001-0000001
@@ -30,5 +32,10 @@ var InstanceIDRegexp = regexp.MustCompile(`^[a-z]{2}-[a-z]{2}-\d{3}-\d{6}`)
 
 // IsValidInstanceID returns the instanceID is valid in Zai or not.
 func IsValidInstanceID(instanceID string) bool {
+
+	if len(instanceID) != InstanceIDLen {
+		return false
+	}
+
 	return InstanceIDRegexp.FindString(instanceID) == instanceID
 }
