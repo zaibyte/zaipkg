@@ -31,11 +31,10 @@ const (
 )
 
 const (
-	ExtV1    uint16 = 1
-	ExtVtest uint16 = 666
+	ExtV1 uint16 = 1
 )
 
-var ValidExtVersions = []uint16{ExtV1, ExtVtest}
+var ValidExtVersions = []uint16{ExtV1}
 
 // Zai has five different isolation levels.
 const (
