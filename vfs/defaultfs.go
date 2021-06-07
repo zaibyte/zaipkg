@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !zbuf_memfs_test
+// +build !memfs_test
 
 package vfs
 
