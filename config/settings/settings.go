@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-// Settings is the global settings of zai.
+// Package settings is the global settings of zai.
 // Don't modify it unless you totally know what will happen.
 package settings
+
+import (
+	"g.tesamc.com/IT/zproto/pkg/stmpb"
+)
 
 const (
 	// DefaultLogRoot is the default log files path root.
@@ -47,6 +51,34 @@ const (
 
 var ValidIsolationLevels = []string{IsolationIDC, IsolationRack, IsolationInstance, IsolationDisk, IsolationNone}
 
-var DefaultIsolationLevel = IsolationInstance
+// DefaultIsolationLevel is IsolationInstance, enough for giving enough protection:
+// 1. Each machine in the same box will only be placed in the same IDC. (see arch docs for details)
+// 2. Instance isolation is enough storage for giving high durability.
+const DefaultIsolationLevel = IsolationInstance
 
-var DefaultReplicas = 2 // In Tesamc, we will start at 2 replicas first for saving overhead.
+// DefaultReplicas is 2.
+// In Tesamc, we will start at 2 replicas first for saving overhead.
+// There are other replicas in public/private cloud storage. 2 replicas just for speeding up repairing.
+const DefaultReplicas = 2
+
+const (
+	kb = 1024
+	mb = 1024 * kb
+	gb = 1024 * mb
+)
+
+// DefaultExtV1SegSize is 1GB, which means the extent size is 256GB.
+// For a 8TB NVMe driver(raw capacity), in real world, there will be space for over-provisioning & other things.
+// So we have about less than 30 extents on each disk.
+//
+// It's obvious that the bigger extent, the lower rate of losing group when there are broken disks.
+// But we can't make it too bigger either, because we may lose the property of distributed repairing,
+// we hope if there is a broken disk, more disks could help to reconstruct the data, it'll reduce the
+// load of reconstruction on disks in avg. and speeding up the process.
+//
+// More details about the rate of group failed see: https://g.tesamc.com/IT/zai-docs/issues/19
+const DefaultExtV1SegSize = gb
+
+var DefaultExtV1Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(DefaultExtV1SegSize),
+}
