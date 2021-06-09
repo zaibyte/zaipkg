@@ -28,10 +28,33 @@ func ExtV1Preallocate(params []byte) uint64 {
 		panic(fmt.Sprintf("parse ext.v1 params failed: %s", err.Error()))
 	}
 
-	seg := p.SegmentSize
-	if seg == 0 {
-		seg = settings.DefaultExtV1SegSize
+	return getExtV1Preallocate(p.GetSegmentSize())
+}
+
+func getExtV1Preallocate(ss uint64) uint64 {
+	if ss == 0 {
+		ss = settings.DefaultExtV1SegSize
 	}
 
-	return (256 + 1) * seg
+	return (256 + 1) * ss
+}
+
+var DefaultExtV1Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(settings.DefaultExtV1SegSize),
+}
+
+func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
+	b, err := p.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// DefaultExtParams is the default extent params collection.
+var DefaultExtParams = map[uint16]*stmpb.ExtParams{
+	settings.ExtV1: &stmpb.ExtParams{
+		Size_:  getExtV1Preallocate(settings.DefaultExtV1SegSize),
+		Params: marshalExtV1Params(DefaultExtV1Params),
+	},
 }
