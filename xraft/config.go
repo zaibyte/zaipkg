@@ -19,7 +19,7 @@ const (
 	defaultHeartbeatRTT       = 2
 	defaultCompactionOverhead = 1024
 	defaultMaxInMemLogSize    = 128 * 1024 * 1024
-	defaultRTTMillisecond     = 2
+	defaultRTTMillisecond     = 2 // 2ms is a good start, the ping between two server is about 300-400us in anlian.
 )
 
 type RaftNodeConfig struct {
