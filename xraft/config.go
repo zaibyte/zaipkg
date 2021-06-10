@@ -24,13 +24,13 @@ const (
 
 type RaftNodeConfig struct {
 	// NodeID is a non-zero value used to identify a node within a Raft cluster.
-	NodeID uint64
+	NodeID uint64 `toml:"node_id"`
 	// ClusterID is the unique value used to identify a Raft cluster.
-	ClusterID uint64
+	ClusterID uint64 `toml:"cluster_id"`
 	// CheckQuorum specifies whether the leader node should periodically check
 	// non-leader node status and step down to become a follower node when it no
 	// longer has the quorum.
-	CheckQuorum bool
+	CheckQuorum bool `toml:"check_quorum"`
 	// ElectionRTT is the minimum number of message RTT between elections. Message
 	// RTT is defined by NodeHostConfig.RTTMillisecond. The Raft paper suggests it
 	// to be a magnitude greater than HeartbeatRTT, which is the interval between
@@ -43,7 +43,7 @@ type RaftNodeConfig struct {
 	//
 	// When CheckQuorum is enabled, ElectionRTT also defines the interval for
 	// checking leader quorum.
-	ElectionRTT uint64
+	ElectionRTT uint64 `toml:"election_rtt"`
 	// HeartbeatRTT is the number of message RTT between heartbeats. Message
 	// RTT is defined by NodeHostConfig.RTTMillisecond. The Raft paper suggest the
 	// heartbeat interval to be close to the average RTT between nodes.
@@ -51,7 +51,7 @@ type RaftNodeConfig struct {
 	// As an example, assuming NodeHostConfig.RTTMillisecond is 100 millisecond,
 	// to set the heartbeat interval to be every 200 milliseconds, then
 	// HeartbeatRTT should be set to 2.
-	HeartbeatRTT uint64
+	HeartbeatRTT uint64 `toml:"heartbeat_rtt"`
 	// SnapshotEntries defines how often the state machine should be snapshotted
 	// automcatically. It is defined in terms of the number of applied Raft log
 	// entries. SnapshotEntries can be set to 0 to disable such automatic
@@ -72,7 +72,7 @@ type RaftNodeConfig struct {
 	// Once automatic snapshotting is disabled by setting the SnapshotEntries
 	// field to 0, users can still use NodeHost's RequestSnapshot or
 	// SyncRequestSnapshot methods to manually request snapshots.
-	SnapshotEntries uint64
+	SnapshotEntries uint64 `toml:"snapshot_entries"`
 	// CompactionOverhead defines the number of most recent entries to keep after
 	// each Raft log compaction. Raft log compaction is performance automatically
 	// every time when a snapshot is created.
@@ -88,7 +88,7 @@ type RaftNodeConfig struct {
 	// Raft log entries between index (9,500, 1,0000] to other peers and only fall
 	// back to stream the full snapshot if any Raft log entry with index <= 9,500
 	// is required to be replicated.
-	CompactionOverhead uint64
+	CompactionOverhead uint64 `toml:"compaction_overhead"`
 	// MaxInMemLogSize is the target size in bytes allowed for storing in memory
 	// Raft logs on each Raft node. In memory Raft logs are the ones that have
 	// not been applied yet.
@@ -99,14 +99,14 @@ type RaftNodeConfig struct {
 	// when clients try to make new proposals.
 	// MaxInMemLogSize is recommended to be significantly larger than the biggest
 	// proposal you are going to use.
-	MaxInMemLogSize uint64
+	MaxInMemLogSize uint64 `toml:"max_in_mem_log_size"`
 	// DisableAutoCompactions disables auto compaction used for reclaiming Raft
 	// entry storage spaces. By default, compaction is issued every time when
 	// a snapshot is captured, this helps to reclaim disk spaces as soon as
 	// possible at the cost of higher IO overhead. Users can disable such auto
 	// compactions and use NodeHost.RequestCompaction to manually request such
 	// compactions when necessary.
-	DisableAutoCompactions bool
+	DisableAutoCompactions bool `toml:"disable_auto_compactions"`
 }
 
 func (cfg *RaftNodeConfig) adjust() {
@@ -116,12 +116,12 @@ func (cfg *RaftNodeConfig) adjust() {
 	config.Adjust(&cfg.MaxInMemLogSize, defaultMaxInMemLogSize)
 }
 
-//  - starting a brand new Raft cluster, set join to false and specify all initial
-//    member node details in the initialMembers map.
-//  - joining a new node to an existing Raft cluster, set join to true and leave
-//    the initialMembers map empty. This requires the joining node to have already
-//    been added as a member node of the Raft cluster.
 type MemberConfig struct {
+	//  - starting a brand new Raft cluster, set join to false and specify all initial
+	//    member node details in the initialMembers map.
+	//  - joining a new node to an existing Raft cluster, set join to true and leave
+	//    the initialMembers map empty. This requires the joining node to have already
+	//    been added as a member node of the Raft cluster.
 	InitialMembers map[uint64]string `toml:"initial_members"`
 	Join           bool              `toml:"join"`
 }
