@@ -26,3 +26,8 @@ func IsValidDiskID(diskID string) bool {
 
 	return true
 }
+
+// GenRandDiskID generates an disk_id for testing only.
+func GenRandDiskID() string {
+	return uuid.NewString()
+}
