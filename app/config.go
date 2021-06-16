@@ -19,8 +19,6 @@ type Config struct {
 	BoxID uint32 `toml:"box_id"`
 	// Every instance has its own unique instanceID
 	InstanceID string `toml:"instance_id"`
-	// Every instance belongs to a certain rack.
-	RackID string `toml:"rack_id"`
 
 	Log xlog.Config `toml:"log"`
 

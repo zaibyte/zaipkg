@@ -36,16 +36,14 @@ const (
 
 var ValidExtVersions = []uint16{ExtV1}
 
-// Zai has five different isolation levels.
+// Zai has three different isolation levels.
 const (
-	IsolationIDC      = "idc" // It's the instance_id's location label.
-	IsolationRack     = "rack"
 	IsolationInstance = "instance"
 	IsolationDisk     = "disk"
 	IsolationNone     = "none"
 )
 
-var ValidIsolationLevels = []string{IsolationIDC, IsolationRack, IsolationInstance, IsolationDisk, IsolationNone}
+var ValidIsolationLevels = []string{IsolationInstance, IsolationDisk, IsolationNone}
 
 // DefaultIsolationLevel is IsolationInstance, enough for giving enough protection:
 // 1. Each machine in the same box will only be placed in the same IDC. (see arch docs for details)
