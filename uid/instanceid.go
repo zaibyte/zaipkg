@@ -12,7 +12,7 @@ const InstanceIDLen = 16
 
 // GetIDCFromInstanceID gets idc label from instance_id.
 // <region>-<city>-<idc_number>-<machine_number>
-// e.g. cn-sz-001-0000001
+// e.g. cn-sz-001-000001, the return value will be cn-sz-001
 func GetIDCFromInstanceID(instanceID string) string {
 
 	ss := strings.Split(instanceID, "-")
@@ -21,6 +21,18 @@ func GetIDCFromInstanceID(instanceID string) string {
 	}
 
 	return strings.TrimSuffix(instanceID, "-"+ss[3])
+}
+
+// GetMachineFromInstanceID gets machine_number from instance_id.
+// <region>-<city>-<idc_number>-<machine_number>
+// e.g. cn-sz-001-0000001, the return value will be 0000001
+func GetMachineFromInstanceID(instanceID string) string {
+	ss := strings.Split(instanceID, "-")
+	if len(ss) != 4 {
+		panic(fmt.Sprintf("illegal instance_id: %s", instanceID))
+	}
+
+	return ss[3]
 }
 
 // GenRandInstanceID generates an instance_id for testing only.

@@ -11,12 +11,11 @@ import (
 )
 
 func TestGetIDCFromInstanceID(t *testing.T) {
-	assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID("cn-sz-001-0000001"))
+	assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID("cn-sz-001-000001"))
+}
 
-	xrand.Seed(tsc.UnixNano())
-	for i := 0; i < 1024; i++ {
-		assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID(GenRandInstanceID()))
-	}
+func TestGetMachineFromInstanceID(t *testing.T) {
+	assert.Equal(t, "000001", GetMachineFromInstanceID("cn-sz-001-000001"))
 }
 
 func TestIsValidInstanceID(t *testing.T) {
