@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-
 	"g.tesamc.com/IT/zaipkg/config/settings"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
@@ -25,7 +23,6 @@ func (d *SyncMeta) Clone() *metapb.Disk {
 		Type:       d.Type,
 		InstanceId: d.InstanceId,
 		SN:         d.SN,
-		RackId:     d.RackId,
 	}
 }
 
@@ -112,10 +109,6 @@ func (d *SyncMeta) IsOffline() bool {
 // GetIsolationValue gets isolation level value.
 func (d *SyncMeta) GetIsolationValue(key string) string {
 	switch key {
-	case settings.IsolationIDC:
-		return uid.GetIDCFromInstanceID(d.InstanceId)
-	case settings.IsolationRack:
-		return d.RackId
 	case settings.IsolationInstance:
 		return d.InstanceId
 	case settings.IsolationDisk:
