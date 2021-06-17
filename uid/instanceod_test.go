@@ -11,11 +11,11 @@ import (
 )
 
 func TestGetIDCFromInstanceID(t *testing.T) {
-	assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID("cn-sz-001-000001"))
+	assert.Equal(t, "cn-sz-001", GetIDCFromInstanceID("cn-sz-001-0001"))
 }
 
 func TestGetMachineFromInstanceID(t *testing.T) {
-	assert.Equal(t, "000001", GetMachineFromInstanceID("cn-sz-001-000001"))
+	assert.Equal(t, "0001", string(GetMachineFromInstanceID("cn-sz-001-0001")))
 }
 
 func TestIsValidInstanceID(t *testing.T) {

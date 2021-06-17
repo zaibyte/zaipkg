@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"g.tesamc.com/IT/zaipkg/xmath/xrand"
+	"g.tesamc.com/IT/zaipkg/xstrconv"
 )
 
 const InstanceIDLen = 14
@@ -26,13 +27,9 @@ func GetIDCFromInstanceID(instanceID string) string {
 // GetMachineFromInstanceID gets machine_number from instance_id.
 // <region>-<city>-<idc_number>-<machine_number>
 // e.g. cn-sz-001-0001, the return value will be 0001
-func GetMachineFromInstanceID(instanceID string) string {
-	ss := strings.Split(instanceID, "-")
-	if len(ss) != 4 {
-		panic(fmt.Sprintf("illegal instance_id: %s", instanceID))
-	}
+func GetMachineFromInstanceID(instanceID string) []byte {
 
-	return ss[3]
+	return xstrconv.ToBytes(instanceID[10:14])
 }
 
 // GenRandInstanceID generates an instance_id for testing only.
