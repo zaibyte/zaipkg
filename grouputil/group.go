@@ -22,3 +22,41 @@ func (g GroupsAvail) Less(i, j int) bool {
 func (g GroupsAvail) Swap(i, j int) {
 	g[i], g[j] = g[j], g[i]
 }
+
+// SetStateByExt sets group state by its extents.
+// Call it when extents changed.
+func SetStateByExt(g *metapb.Group, replicas int) {
+
+	extCnt := len(g.GetExts())
+
+	if extCnt == 0 { // Broken extent has been removed from group.
+		g.State = metapb.GroupState_Group_Collapse
+		return
+	}
+
+	rwCnt, fullCnt, sealCnt := 0, 0, 0
+	for _, ext := range g.Exts {
+		es := ext.GetState()
+		switch es {
+		case metapb.ExtentState_Extent_ReadWrite:
+			rwCnt++
+		case metapb.ExtentState_Extent_Full:
+			fullCnt++
+		case metapb.ExtentState_Extent_Sealed:
+			sealCnt++
+		}
+	}
+
+	if rwCnt+fullCnt+sealCnt == 0 {
+		g.State = metapb.GroupState_Group_Collapse
+		return
+	}
+
+	if rwCnt >= replicas {
+		g.State = metapb.GroupState_Group_ReadWrite
+		return
+	}
+
+	g.State = metapb.GroupState_Group_Read
+	return
+}
