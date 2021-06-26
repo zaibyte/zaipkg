@@ -18,8 +18,6 @@
 // Don't modify it unless you totally know what will happen.
 package settings
 
-import "g.tesamc.com/IT/zaipkg/uid"
-
 const (
 	// DefaultLogRoot is the default log files path root.
 	// e.g.:
@@ -74,7 +72,3 @@ const (
 //
 // More details about the rate of group failed see: https://g.tesamc.com/IT/zai-docs/issues/19
 const DefaultExtV1SegSize = gb
-
-const (
-	MaxGroupID = uid.MaxGroupID
-)
