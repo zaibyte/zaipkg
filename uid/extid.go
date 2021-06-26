@@ -1,7 +1,11 @@
 package uid
 
 // MakeExtID makes extentID.
+// groupSeq must >= 1.
 func MakeExtID(groupID, groupSeq uint16) uint32 {
+	if groupSeq < 1 {
+		panic("group_seq in ext_id must >= 1")
+	}
 	return uint32(groupSeq)<<16 | uint32(groupID)
 }
 

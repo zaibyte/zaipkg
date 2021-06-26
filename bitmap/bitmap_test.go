@@ -1,6 +1,8 @@
 package bitmap
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDataOrCopy(t *testing.T) {
 	data := make([]byte, 5)
