@@ -29,34 +29,21 @@ func (p *SyncExt) GetState() metapb.ExtentState {
 }
 
 // SetState sets extent state, return swap ok or not.
-// groupSealed in return values indicates should the group which extent belongs to being set sealed.
-func (p *SyncExt) SetState(state metapb.ExtentState) (ok, groupSealed bool, oldState metapb.ExtentState) {
-
-	defer func() {
-		if p.GetState() != metapb.ExtentState_Extent_ReadWrite {
-			groupSealed = false
-		}
-	}()
+func (p *SyncExt) SetState(state metapb.ExtentState) (ok bool, oldState metapb.ExtentState) {
 
 	oldSate := p.GetState()
 	if oldSate == state {
-		return true, groupSealed, oldState
-	}
-
-	if state == metapb.ExtentState_Extent_Tombstone {
-		return atomic.CompareAndSwapInt32((*int32)(&p.State), int32(oldSate), int32(state)), groupSealed, oldState
+		return true, oldState
 	}
 
 	switch oldState {
 	case metapb.ExtentState_Extent_Broken:
-		return false, groupSealed, oldState
-	case metapb.ExtentState_Extent_Ghost:
-		return false, groupSealed, oldState
+		return false, oldState
 	default:
 
 	}
 
-	return atomic.CompareAndSwapInt32((*int32)(&p.State), int32(oldSate), int32(state)), groupSealed, oldState
+	return atomic.CompareAndSwapInt32((*int32)(&p.State), int32(oldSate), int32(state)), oldState
 }
 
 // AddAvail adds delta to avail. delta could be negative means delta space have been used.
@@ -76,24 +63,9 @@ func (p *SyncExt) GetAvail() uint64 {
 // CouldClose returns whether we could close this Extenter or not.
 func (p *SyncExt) CouldClose() bool {
 	state := p.GetState()
-	if state == metapb.ExtentState_Extent_Broken ||
-		state == metapb.ExtentState_Extent_Ghost {
-		return true
-	}
-	if state == metapb.ExtentState_Extent_Tombstone {
-		return true
-	}
-	return false
-}
-
-// CouldRemove returns whether we could remove all files about this Extenter or not.
-func (p *SyncExt) CouldRemove() bool {
-	state := p.GetState()
 	if state == metapb.ExtentState_Extent_Broken {
 		return true
 	}
-	if state == metapb.ExtentState_Extent_Tombstone {
-		return true
-	}
+
 	return false
 }

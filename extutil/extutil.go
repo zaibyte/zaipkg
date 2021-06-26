@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"g.tesamc.com/IT/zaipkg/config/settings"
+	"g.tesamc.com/IT/zproto/pkg/metapb"
 	"g.tesamc.com/IT/zproto/pkg/stmpb"
 )
 
@@ -57,4 +58,24 @@ var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 		Size_:  getExtV1Preallocate(settings.DefaultExtV1SegSize),
 		Params: marshalExtV1Params(DefaultExtV1Params),
 	},
+}
+
+// SetState sets extent state, return swap ok or not.
+func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState metapb.ExtentState) {
+
+	oldSate := ext.GetState()
+	if oldSate == state {
+		return true, oldState
+	}
+
+	switch oldState {
+	case metapb.ExtentState_Extent_Broken:
+		return false, oldState
+	default:
+
+	}
+
+	ext.State = state
+
+	return true, oldState
 }
