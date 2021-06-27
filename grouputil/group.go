@@ -25,6 +25,9 @@ func (g GroupsAvail) Swap(i, j int) {
 
 // SetStateByExt sets group state by its extents.
 // Call it when extents changed.
+//
+// Warn:
+// clone_jobs inside extents must be handled already.
 func SetStateByExt(g *metapb.Group, replicas int) {
 
 	defer func() {
