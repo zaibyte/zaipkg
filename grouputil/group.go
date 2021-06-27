@@ -27,6 +27,14 @@ func (g GroupsAvail) Swap(i, j int) {
 // Call it when extents changed.
 func SetStateByExt(g *metapb.Group, replicas int) {
 
+	defer func() {
+		if g.GetState() == metapb.GroupState_Group_Collapse {
+			for _, ext := range g.Exts {
+				delete(g.Exts, ext.GetId())
+			}
+		}
+	}()
+
 	extCnt := len(g.GetExts())
 
 	if extCnt == 0 { // Broken extent has been removed from group.
