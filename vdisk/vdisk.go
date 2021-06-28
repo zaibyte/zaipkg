@@ -1,6 +1,8 @@
 package vdisk
 
-import "g.tesamc.com/IT/zproto/pkg/metapb"
+import (
+	"g.tesamc.com/IT/zproto/pkg/metapb"
+)
 
 type Disk interface {
 	InitUsage(path string, meta *SyncMeta) error
@@ -8,15 +10,29 @@ type Disk interface {
 	AddUsed(meta *SyncMeta, delta int64)
 }
 
-// NeedRepair returns if the disk need to be repaired or not.
-func NeedRepair(old, newState metapb.DiskState) bool {
+func SetState(d *metapb.Disk, state metapb.DiskState) {
 
-	if old != metapb.DiskState_Disk_ReadWrite || old != metapb.DiskState_Disk_Full {
-		return false
+	oldState := d.GetState()
+
+	if oldState == state {
+		return
 	}
 
-	if newState == metapb.DiskState_Disk_ReadWrite || newState == metapb.DiskState_Disk_Full {
-		return false
+	switch oldState {
+	case metapb.DiskState_Disk_Broken:
+		return
+	case metapb.DiskState_Disk_Tombstone:
+		return
+	case metapb.DiskState_Disk_Offline:
+		if state != metapb.DiskState_Disk_Tombstone {
+			return
+		}
+
+	default:
+
 	}
-	return true
+
+	d.State = state
+
+	return
 }
