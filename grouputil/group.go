@@ -30,17 +30,9 @@ func (g GroupsAvail) Swap(i, j int) {
 // clone_jobs inside extents must be handled already.
 func SetStateByExt(g *metapb.Group, replicas int) {
 
-	defer func() {
-		if g.GetState() == metapb.GroupState_Group_Collapse {
-			for _, ext := range g.Exts {
-				delete(g.Exts, ext.GetId())
-			}
-		}
-	}()
-
 	extCnt := len(g.GetExts())
 
-	if extCnt == 0 { // Broken extent has been removed from group.
+	if extCnt == 0 { // Actually in this case, the group must be collapse already.
 		g.State = metapb.GroupState_Group_Collapse
 		return
 	}
