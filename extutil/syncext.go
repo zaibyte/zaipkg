@@ -16,11 +16,10 @@ func (p *SyncExt) Clone() *metapb.Extent {
 		Id:         p.Id,
 		Size_:      p.Size_,
 		Avail:      p.GetAvail(),
-		Version:    p.Version,
 		DiskId:     p.DiskId,
 		InstanceId: p.InstanceId,
-		PreferDisk: p.PreferDisk,
 		CloneJob:   (*SyncCloneJob)(p.CloneJob).Clone(),
+		LastUpdate: p.LastUpdate,
 	}
 }
 

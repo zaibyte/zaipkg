@@ -39,10 +39,6 @@ func (p *SyncCloneJob) SetState(state metapb.CloneJobState) bool {
 	}
 
 	switch oldSate {
-	case metapb.CloneJobState_CloneJob_Failed:
-		return false
-	case metapb.CloneJobState_CloneJob_Collapse:
-		return false
 	case metapb.CloneJobState_CloneJob_Done:
 		return false
 	default:
