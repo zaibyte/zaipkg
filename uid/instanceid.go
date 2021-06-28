@@ -3,6 +3,7 @@ package uid
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"g.tesamc.com/IT/zaipkg/xmath/xrand"
@@ -24,12 +25,23 @@ func GetIDCFromInstanceID(instanceID string) string {
 	return strings.TrimSuffix(instanceID, "-"+ss[3])
 }
 
-// GetMachineFromInstanceID gets machine_number from instance_id.
+// GetMachineFromInstanceID gets machine_number(in bytes) from instance_id.
 // <region>-<city>-<idc_number>-<machine_number>
 // e.g. cn-sz-001-0001, the return value will be 0001
 func GetMachineFromInstanceID(instanceID string) []byte {
 
 	return xstrconv.ToBytes(instanceID[10:14])
+}
+
+// GetMachineNumFromInstanceID gets machine_number(in uint) from instance_id.
+// <region>-<city>-<idc_number>-<machine_number>
+// e.g. cn-sz-001-0001, the return value will be 1
+func GetMachineNumFromInstanceID(instanceID string) uint64 {
+	num, err := strconv.ParseUint(instanceID[10:14], 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return num
 }
 
 // GenRandInstanceID generates an instance_id for testing only.
