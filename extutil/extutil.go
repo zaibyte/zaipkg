@@ -6,6 +6,8 @@ import (
 	"g.tesamc.com/IT/zaipkg/config/settings"
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 	"g.tesamc.com/IT/zproto/pkg/stmpb"
+
+	"github.com/gogo/protobuf/proto"
 )
 
 // ExtPreallocate is the disk size maybe taken by an extent.
@@ -78,4 +80,37 @@ func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState m
 	ext.State = state
 
 	return true, oldState
+}
+
+// Copy copies from src to dst.
+// dst is extent existed in state-machine.
+// src is created by heartbeat or internal methods which want to update some dst states.
+func Copy(dst, src *metapb.Extent, noState bool) {
+
+	// These elements won't be changed after extent put into state-machine.
+	// dst.Id
+	// dst.Size_
+	// dst.DiskId
+	// dst.InstanceId
+
+	if !noState {
+		dst.State = src.GetState()
+	}
+	dst.Avail = src.GetAvail()
+	dst.LastUpdate = src.LastUpdate
+
+	if src.CloneJob == nil {
+		return
+	}
+
+	if dst.CloneJob == nil {
+		dst.CloneJob = proto.Clone(src.CloneJob).(*metapb.CloneJob)
+	} else {
+		dst.CloneJob.State = src.CloneJob.State
+		dst.CloneJob.Done = src.CloneJob.Done
+		if dst.CloneJob.IsSource {
+			dst.CloneJob.Total = src.CloneJob.Total
+			dst.CloneJob.OidsOid = src.CloneJob.OidsOid
+		}
+	}
 }
