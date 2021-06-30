@@ -73,6 +73,10 @@ func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState m
 	switch oldState {
 	case metapb.ExtentState_Extent_Broken:
 		return false, oldState
+	case metapb.ExtentState_Extent_Clone:
+		if state != metapb.ExtentState_Extent_Broken {
+			return false, oldState
+		}
 	default:
 
 	}
@@ -94,7 +98,7 @@ func Copy(dst, src *metapb.Extent, noState bool) {
 	// dst.InstanceId
 
 	if !noState {
-		dst.State = src.GetState()
+		SetState(dst, src.GetState())
 	}
 	dst.Avail = src.GetAvail()
 	dst.LastUpdate = src.LastUpdate
