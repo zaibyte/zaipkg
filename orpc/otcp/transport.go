@@ -56,7 +56,7 @@ const (
 	keepAlivePeriod   = 30 * time.Second
 )
 
-// NewTCPServer creates a server listening TCP connections
+// NewServer creates a server listening TCP connections
 // on the given addr and processing incoming requests
 // with the given Router.
 //

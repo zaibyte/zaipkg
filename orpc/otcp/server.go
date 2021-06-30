@@ -47,17 +47,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/panjf2000/ants/v2"
-
-	"g.tesamc.com/IT/zaipkg/xtime"
-
-	"g.tesamc.com/IT/zaipkg/uid"
-
 	"g.tesamc.com/IT/zaipkg/orpc"
+	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xerrors"
 	"g.tesamc.com/IT/zaipkg/xlog"
+	"g.tesamc.com/IT/zaipkg/xtime"
+
+	"github.com/panjf2000/ants/v2"
 )
 
 // Server implements orpc.Server.
@@ -114,7 +112,7 @@ type Server struct {
 const (
 	// DefaultConcurrency is the default number of concurrent rpc calls
 	// the server can process.
-	DefaultConcurrency = 4 * 1024 // 4096 is enough to hold 256 default clients.
+	DefaultConcurrency = 4096 // 4096 is enough to hold 256 default clients.
 	// DefaultServerSendBufferSize is the default size for Server send buffers.
 	DefaultServerSendBufferSize = 64 * 1024
 	// DefaultServerRecvBufferSize is the default size for Server receive buffers.
@@ -432,11 +430,13 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 		}
 	}()
 
+	if method == objGetMethod {
+		return s.Handler.GetObj(reqid, oid, extID, false)
+	}
+
 	switch method {
 	case objPutMethod:
 		err = s.Handler.PutObj(reqid, oid, extID, reqBody)
-	case objGetMethod:
-		resp, err = s.Handler.GetObj(reqid, oid, extID, false)
 	case objGetCloneMethod:
 		resp, err = s.Handler.GetObj(reqid, oid, extID, true)
 	case objDelMethod:

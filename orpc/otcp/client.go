@@ -221,12 +221,12 @@ reset:
 	c.stopChan = nil
 }
 
-// Put puts object to the ZBuf node which orpc.Client connected.
+// PutObj puts object to the ZBuf node which orpc.Client connected.
 func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, _timeout time.Duration) error {
 	return c.call(reqid, objPutMethod, oid, extID, objData)
 }
 
-// Get gets object from the ZBuf node which orpc.Client connected.
+// GetObj gets object from the ZBuf node which orpc.Client connected.
 func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone bool, _timeout time.Duration) error {
 	method := objGetMethod
 	if isClone {
@@ -235,7 +235,7 @@ func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone
 	return c.call(reqid, method, oid, extID, objData)
 }
 
-// Delete deletes object in the ZBuf node which orpc.Client connected.
+// DeleteObj deletes object in the ZBuf node which orpc.Client connected.
 func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, _timeout time.Duration) error {
 	return c.call(reqid, objDelMethod, oid, extID, nil)
 }
