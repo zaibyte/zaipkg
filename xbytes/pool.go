@@ -1,4 +1,4 @@
-// xbytes provdies bytes slice pool.
+// Package xbytes provides bytes slice pool.
 //
 // Warning:
 // 1. Do not use it when you only need <= 32KB byte slice, and this slice will not escape to the heap.
@@ -18,50 +18,23 @@ import (
 // Warn:
 // Not thread safe.
 func ResetLeakyCap(tiny, small, mid, max int) {
-	_defaultPool = NewPool(tiny, small, mid, max, false)
 	_alignPool = NewPool(tiny, small, mid, max, true)
 }
 
-var (
-	_defaultPool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
-	_alignPool   = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, true)
+// EnableDefault enables default memory pool.
+// Use it in testing env. (saving memory)
+func EnableDefault() {
+	ResetLeakyCap(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky)
+}
 
-	GetBytes = func(n int) []byte {
-		if n <= _MaxSyncPoolSize {
-			return _defaultPool.spPool.Get().([]byte)[:n]
-		}
-		if n <= _MaxTinySize {
-			return _defaultPool.tinyPool.Get()[:n]
-		}
-		if n <= _MaxSmallSize {
-			return _defaultPool.smallPool.Get()[:n]
-		}
-		if n <= _MaxMidSize {
-			return _defaultPool.MidPool.Get()[:n]
-		}
-		return _defaultPool.maxPool.Get()[:n]
-	}
-	PutBytes = func(b []byte) {
-		n := len(b)
-		b = b[:0]
-		if n <= _MaxSyncPoolSize {
-			_defaultPool.spPool.Put(b)
-			return
-		}
-		if n <= _MaxTinySize {
-			_defaultPool.tinyPool.Put(b)
-			return
-		}
-		if n <= _MaxSmallSize {
-			_defaultPool.smallPool.Put(b)
-			return
-		}
-		if n <= _MaxMidSize {
-			_defaultPool.MidPool.Put(b)
-			return
-		}
-		_defaultPool.maxPool.Put(b)
-	}
+// EnableMax enables max memory pool.
+// Use it in production env when start an application.
+func EnableMax() {
+	ResetLeakyCap(maxTinySizeLeaky, maxSmallSizeLeaky, maxMidSizeLeaky, maxMaxSizeLeaky)
+}
+
+var (
+	_alignPool *BufferPool
 
 	GetAlignedBytes = func(n int) []byte {
 		if n <= _MaxSyncPoolSize {
@@ -112,12 +85,15 @@ const (
 	_MaxMidSize      = _MaxSmallSize * 4      // 2MB.
 	_MaxSize         = settings.MaxObjectSize // 4MB.
 
-	defaultTinySizeLeaky  = 1024 // 128MB leaky at most for 128KB []byte.
-	defaultSmallSizeLeaky = 256  // 128MB leaky at most for 512KB []byte.
-	defaultMidSizeLeaky   = 64   // 128MB leaky at most for 2MB []byte.
-	// 512MB memory leaky at most for 4MB []byte.
-	// In Tesamc, the number of 4MB objects maybe large.
-	defaultMaxSizeLeaky = 128
+	defaultTinySizeLeaky  = 16 // 2MB leaky at most for 128KB []byte.
+	defaultSmallSizeLeaky = 4  // 2MB leaky at most for 512KB []byte.
+	defaultMidSizeLeaky   = 2  // 4MB leaky at most for 2MB []byte.
+	defaultMaxSizeLeaky   = 2  // 8MB memory leaky at most for 4MB []byte.
+
+	maxTinySizeLeaky  = 1024 // 128MB leaky at most for 128KB []byte.
+	maxSmallSizeLeaky = 256  // 128MB leaky at most for 512KB []byte.
+	maxMidSizeLeaky   = 64   // 128MB leaky at most for 2MB []byte.
+	maxMaxSizeLeaky   = 128  // 512MB memory leaky at most for 4MB []byte.
 )
 
 // BufferPool is a bytes slice pool helping to reduce GC overhead.
