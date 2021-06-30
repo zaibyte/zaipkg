@@ -107,6 +107,27 @@ func BenchmarkInt63MathRandParallel(b *testing.B) {
 	})
 }
 
+// Int63n is much faster. 3x faster.
+func BenchmarkInt63nParallel(b *testing.B) {
+
+	b.SetParallelism(runtime.NumCPU())
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			Int63n(1000)
+		}
+	})
+}
+
+func BenchmarkInt63nMathRandParallel(b *testing.B) {
+
+	b.SetParallelism(runtime.NumCPU())
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			rand.Int63n(1000)
+		}
+	})
+}
+
 func BenchmarkPickTwo(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
