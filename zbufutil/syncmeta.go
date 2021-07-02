@@ -40,10 +40,6 @@ func (p *SyncMeta) IsTombstone() bool {
 	return p.GetState() == metapb.ZBufState_ZBuf_Tombstone
 }
 
-func (p *SyncMeta) IsDown() bool {
-	return p.GetState() == metapb.ZBufState_ZBuf_Down
-}
-
 func (p *SyncMeta) IsDisconnected() bool {
 	return p.GetState() == metapb.ZBufState_ZBuf_Disconnected
 }

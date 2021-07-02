@@ -8,13 +8,15 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/frankban/quicktest v1.13.0 // indirect
+	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.2.0
 	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a
 	github.com/jaypipes/ghw v0.8.0
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/lni/goutils v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
+	github.com/pierrec/lz4 v2.6.1+incompatible
 	github.com/prometheus/client_golang v1.6.0
 	github.com/spf13/cast v1.3.1
 	github.com/stretchr/testify v1.6.1
@@ -26,7 +28,7 @@ require (
 	github.com/zaibyte/nanozap v0.0.6
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
-	google.golang.org/grpc v1.24.0
+	google.golang.org/grpc v1.29.1
 )
 
 // TODO GitLAB proxy issues
