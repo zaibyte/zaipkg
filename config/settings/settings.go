@@ -63,14 +63,18 @@ const (
 	gb = 1024 * mb
 )
 
-// DefaultExtV1SegSize is 1GB, which means the extent size is 256GB.
-// For a 8TB NVMe driver(raw capacity), in real world, there will be space for over-provisioning & other things.
-// So we have about less than 30 extents on each disk.
-//
-// It's obvious that the bigger extent, the lower rate of losing group when there are broken disks.
-// But we can't make it too bigger either, because we may lose the property of distributed repairing,
-// we hope if there is a broken disk, more disks could help to reconstruct the data, it'll reduce the
-// load of reconstruction on disks in avg. and speeding up the process.
-//
-// More details about the rate of group failed see: https://g.tesamc.com/IT/zai-docs/issues/19
-const DefaultExtV1SegSize = typeutil.ByteSize(gb)
+const (
+	// DefaultExtV1SegSize is 1GB, which means the extent size is 256GB.
+	// For a 8TB NVMe driver(raw capacity), in real world, there will be space for over-provisioning & other things.
+	// So we have about less than 30 extents on each disk.
+	//
+	// It's obvious that the bigger extent, the lower rate of losing group when there are broken disks.
+	// But we can't make it too bigger either, because we may lose the property of distributed repairing,
+	// we hope if there is a broken disk, more disks could help to reconstruct the data, it'll reduce the
+	// load of reconstruction on disks in avg. and speeding up the process.
+	//
+	// More details about the rate of group failed see: https://g.tesamc.com/IT/zai-docs/issues/19
+	DefaultExtV1SegSize = typeutil.ByteSize(gb)
+
+	ExtV1SegCnt = 256
+)

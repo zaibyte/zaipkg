@@ -3,6 +3,8 @@ package extutil
 import (
 	"fmt"
 
+	"g.tesamc.com/IT/zaipkg/typeutil"
+
 	"g.tesamc.com/IT/zaipkg/config/settings"
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 	"g.tesamc.com/IT/zproto/pkg/stmpb"
@@ -36,14 +38,20 @@ func ExtV1Preallocate(params []byte) uint64 {
 
 func getExtV1Preallocate(ss uint64) uint64 {
 	if ss == 0 {
-		ss = settings.DefaultExtV1SegSize
+		ss = uint64(settings.DefaultExtV1SegSize)
 	}
 
-	return (256 + 1) * ss
+	return (settings.ExtV1SegCnt + 1) * ss
 }
 
 var DefaultExtV1Params = &stmpb.ExtV1Params{
 	SegmentSize: uint64(settings.DefaultExtV1SegSize),
+}
+
+func makeExtV1Params(segSize typeutil.ByteSize) *stmpb.ExtV1Params {
+	return &stmpb.ExtV1Params{
+		SegmentSize: uint64(segSize),
+	}
 }
 
 func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
@@ -57,9 +65,21 @@ func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
 // DefaultExtParams is the default extent params collection.
 var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 	settings.ExtV1: &stmpb.ExtParams{
-		Size_:  getExtV1Preallocate(settings.DefaultExtV1SegSize),
-		Params: marshalExtV1Params(DefaultExtV1Params),
+		DiskSize: getExtV1Preallocate(uint64(settings.DefaultExtV1SegSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultExtV1SegSize),
+		Params:   marshalExtV1Params(DefaultExtV1Params),
 	},
+}
+
+// MakeExtParamsV1 make stmpb.ZBufParams with ext.v1 segments_size config.
+func MakeExtParamsV1(segSize typeutil.ByteSize) map[uint32]*stmpb.ExtParams {
+	return map[uint32]*stmpb.ExtParams{
+		uint32(settings.ExtV1): &stmpb.ExtParams{
+			DiskSize: getExtV1Preallocate(uint64(segSize)),
+			ExtSize:  settings.ExtV1SegCnt * uint64(segSize),
+			Params:   marshalExtV1Params(makeExtV1Params(segSize)),
+		},
+	}
 }
 
 // SetState sets extent state, return swap ok or not.
