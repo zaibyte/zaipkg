@@ -33,15 +33,15 @@ func ExtV1Preallocate(params []byte) uint64 {
 		panic(fmt.Sprintf("parse ext.v1 params failed: %s", err.Error()))
 	}
 
-	return getExtV1Preallocate(p.GetSegmentSize())
+	return GetExtV1Preallocate(p.GetSegmentSize())
 }
 
-func getExtV1Preallocate(ss uint64) uint64 {
-	if ss == 0 {
-		ss = uint64(settings.DefaultExtV1SegSize)
+func GetExtV1Preallocate(segSize uint64) uint64 {
+	if segSize == 0 {
+		segSize = uint64(settings.DefaultExtV1SegSize)
 	}
 
-	return (settings.ExtV1SegCnt + 1) * ss
+	return (settings.ExtV1SegCnt + 1) * segSize
 }
 
 var DefaultExtV1Params = &stmpb.ExtV1Params{
@@ -65,7 +65,7 @@ func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
 // DefaultExtParams is the default extent params collection.
 var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 	settings.ExtV1: &stmpb.ExtParams{
-		DiskSize: getExtV1Preallocate(uint64(settings.DefaultExtV1SegSize)),
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultExtV1SegSize)),
 		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultExtV1SegSize),
 		Params:   marshalExtV1Params(DefaultExtV1Params),
 	},
@@ -75,7 +75,7 @@ var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 func MakeExtParamsV1(segSize typeutil.ByteSize) map[uint32]*stmpb.ExtParams {
 	return map[uint32]*stmpb.ExtParams{
 		uint32(settings.ExtV1): &stmpb.ExtParams{
-			DiskSize: getExtV1Preallocate(uint64(segSize)),
+			DiskSize: GetExtV1Preallocate(uint64(segSize)),
 			ExtSize:  settings.ExtV1SegCnt * uint64(segSize),
 			Params:   marshalExtV1Params(makeExtV1Params(segSize)),
 		},
