@@ -35,6 +35,7 @@ func init() {
 	c.poolCompressor.New = func() interface{} {
 		w := lz4lib.NewWriter(ioutil.Discard)
 		w.WithConcurrency(1) // I don't want to start many goroutines which are not under my control.
+
 		return &writer{Writer: w, pool: &c.poolCompressor}
 	}
 	encoding.RegisterCompressor(c)

@@ -90,6 +90,7 @@ const (
 	defaultMidSizeLeaky   = 2  // 4MB leaky at most for 2MB []byte.
 	defaultMaxSizeLeaky   = 2  // 8MB memory leaky at most for 4MB []byte.
 
+	// Don't set them too big, Go has no generational GC.
 	maxTinySizeLeaky  = 1024 // 128MB leaky at most for 128KB []byte.
 	maxSmallSizeLeaky = 256  // 128MB leaky at most for 512KB []byte.
 	maxMidSizeLeaky   = 64   // 128MB leaky at most for 2MB []byte.
