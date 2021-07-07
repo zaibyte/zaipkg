@@ -49,7 +49,7 @@ var (
 
 func getJitter() float64 {
 
-	c := jitterC[xrand.Int63n(10)]
+	c := jitterC[xrand.Uint32n(10)]
 	return jitterMin + c*(jitterMax-jitterMin)
 }
 

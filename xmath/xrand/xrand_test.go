@@ -1,6 +1,7 @@
 package xrand
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"runtime"
@@ -40,7 +41,7 @@ func TestPickTwoDistribution(t *testing.T) {
 	avg := float64(64 * 1024 / 64 * 2)
 
 	if len(cnt) != 64 {
-		t.Fatal("distribution too bad, even cannot fill all elements")
+		t.Fatal(fmt.Sprintf("distribution too bad, even cannot fill all elements: %d", len(cnt)))
 	}
 
 	for k, v := range cnt {
@@ -103,6 +104,16 @@ func BenchmarkInt63MathRandParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
 			rand.Int63()
+		}
+	})
+}
+
+func BenchmarkFastRandParallel(b *testing.B) {
+
+	b.SetParallelism(runtime.NumCPU())
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			Uint32()
 		}
 	})
 }

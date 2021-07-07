@@ -87,27 +87,6 @@ func Uint64() uint64 {
 	return s.H
 }
 
-// PickTwo picks up two elements which belong to [0, n).
-// Useful for implementing Two Randomly Choices algorithm.
-// Warn:
-// a & b maybe equal.
-func PickTwo(n int64) (a, b int64) {
-
-	if n < 0 {
-		panic("invalid argument to Shuffle")
-	}
-
-	if n == 1 {
-		return 0, 0
-	}
-
-	if n == 2 {
-		return 0, 1
-	}
-
-	return Int63n(n), Int63n(n)
-}
-
 // returns random number,
 // compared with D. Lemire against
 // http://grepcode.com/file/repository.grepcode.com/java/root/jdk/openjdk/8-b132/java/util/SplittableRandom.java#SplittableRandom.0gamma
