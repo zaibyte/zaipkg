@@ -12,6 +12,34 @@ The reasons to implement a new RPC protocol but not using GRPC/HTTP like others 
 
 In present, we only have implementation based on TCP. 
 
+### OUDP
+
+It's based on UDP. 
+
+The RTT testing made by `netperf` shows TCP maybe better or UDP cannot be better:
+
+**UDP:**
+
+```shell
+➜  ~ netperf -H 10.188.33.13 -l 10 -t UDP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate
+```
+|Minimum Latency Microseconds|Mean Latency Microseconds|Maximum Latency Microseconds|Stddev Latency Microseconds|Transaction Rate Tran/s|
+|----|----|----|----|----|
+|128|152.50|3186|20.99|6522.789|
+
+**TCP:**
+
+```
+➜  ~ netperf -H 10.188.33.13 -l 10 -t TCP_RR -v 2 -- -o min_latency,mean_latency,max_latency,stddev_latency,transaction_rate
+```
+|Minimum Latency Microseconds|Mean Latency Microseconds|Maximum Latency Microseconds|Stddev Latency Microseconds|Transaction Rate Tran/s|
+|----|----|----|----|----|
+|122|145.88|919|15.11|6817.025|
+
+I can't see the significant difference between TCP and UDP.
+
+Before making a UDP version, we should do more researching.
+
 #### Protocol
 
 Protocol is simple, and we can regard it as a user-defined version of HTTP:
