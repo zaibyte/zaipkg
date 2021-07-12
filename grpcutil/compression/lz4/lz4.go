@@ -6,10 +6,9 @@ package lz4
 
 import (
 	"io"
-	"io/ioutil"
 	"sync"
 
-	lz4lib "github.com/pierrec/lz4"
+	lz4lib "github.com/pierrec/lz4/v4"
 	"google.golang.org/grpc/encoding"
 )
 
@@ -33,8 +32,8 @@ type reader struct {
 func init() {
 	c := &compressor{}
 	c.poolCompressor.New = func() interface{} {
-		w := lz4lib.NewWriter(ioutil.Discard)
-		w.WithConcurrency(1) // I don't want to start many goroutines which are not under my control.
+		w := lz4lib.NewWriter(nil)
+		_ = w.Apply(lz4lib.ConcurrencyOption(1)) // I don't want to start many goroutines which are not under my control.
 
 		return &writer{Writer: w, pool: &c.poolCompressor}
 	}
