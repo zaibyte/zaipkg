@@ -8,12 +8,12 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/frankban/quicktest v1.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.2.0
 	github.com/gyuho/linux-inspect v0.0.0-20180929231013-a492bfc5f12a
 	github.com/jaypipes/ghw v0.8.0
 	github.com/julienschmidt/httprouter v1.2.0
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lni/goutils v1.2.0
 	github.com/panjf2000/ants/v2 v2.4.3
 	github.com/pierrec/lz4/v4 v4.1.8

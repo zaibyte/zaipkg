@@ -20,15 +20,20 @@ import (
 )
 
 const (
-	// DefaultThreads is the single disk concurrent readers/writers.
-	// ZBuf has internal cache, these threads are used for accessing disk.
-	// Beyond 32, we may get higher IOPS, but much higher latency.
+	// DefaultThreads is the max concurrent readers/writers in single disk.
+	// Beyond 128, we may get higher IOPS, but much higher latency.
 	//
-	// In an enterprise-class TLC/QLC NVMe driver, 16-64 would be a good choice.
+	// In an enterprise-class TLC/QLC NVMe driver, 16-64 would be a good choice for daily using.
 	// For large I/O, 16 is a better choice.
+	// I set a big number here for hitting the largest IOPS with randomly read small data blocks,
+	// after peak, the extra goroutines will be recycled, won't cause any wasting.
 	//
 	// This value is the result of combination of Intel manual & my experience & testing results.
-	DefaultThreads = 32
+	DefaultThreads = 128
+
+	// DefaultThreadsSATA is the max concurrent readers/writers in single SATA disk.
+	// The concurrency ability of SATA disk really poor.
+	DefaultThreadsSATA = 8
 )
 
 // Config is Scheduler's config.
@@ -75,7 +80,7 @@ func (s *Scheduler) DoSync(reqType uint64, f xio.File, offset int64, d []byte) (
 // New creates a scheduler instance.
 func New(ctx context.Context, cfg *Config, dm *vdisk.SyncMeta) *Scheduler {
 
-	cfg.adjust()
+	cfg.adjust(dm.Type)
 
 	ctx2, cancel := context.WithCancel(ctx)
 
@@ -115,8 +120,13 @@ func (s *Scheduler) Close() {
 	xlog.Info(fmt.Sprintf("disk: %s scheduler is closed", s.diskMeta.Id))
 }
 
-func (c *Config) adjust() {
-	config.Adjust(&c.Threads, DefaultThreads)
+func (c *Config) adjust(dt metapb.DiskType) {
+
+	if dt == metapb.DiskType_Disk_SATA {
+		config.Adjust(&c.Threads, DefaultThreadsSATA)
+	} else {
+		config.Adjust(&c.Threads, DefaultThreads)
+	}
 }
 
 // That balancing is expected to happen over a specific time window,
@@ -148,7 +158,7 @@ func (s *Scheduler) FindRunnableLoop() {
 			}
 		}
 		r.Err <- err
-	}, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(true))
+	}, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second))
 	defer ioWorkers.Release()
 
 	start := tsc.UnixNano()
