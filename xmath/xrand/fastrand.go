@@ -9,8 +9,6 @@ package xrand
 
 import (
 	"sync"
-
-	"github.com/templexxx/tsc"
 )
 
 // Uint32 returns pseudorandom uint32.
@@ -72,7 +70,7 @@ func (r *RNG) Uint32n(maxN uint32) uint32 {
 }
 
 func getRandomUint32() uint32 {
-	x := tsc.UnixNano()
+	x := Uint64()
 	return uint32((x >> 32) ^ x)
 }
 
