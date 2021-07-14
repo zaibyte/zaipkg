@@ -51,6 +51,8 @@ We don't waste any byte in header for efficiency of network I/O.
 
 No compression on body, because the body may have been compressed, and it makes data integrity checking getting complex.
 
+Protocol must be not modified unless could get huge benefit.
+
 #### Optimization
 
 About what I've done, you could find in [otcp README](otcp/README.md).
