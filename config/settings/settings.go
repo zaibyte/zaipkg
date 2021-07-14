@@ -18,7 +18,11 @@
 // Don't modify it unless you totally know what will happen.
 package settings
 
-import "g.tesamc.com/IT/zaipkg/typeutil"
+import (
+	"time"
+
+	"g.tesamc.com/IT/zaipkg/typeutil"
+)
 
 const (
 	// DefaultLogRoot is the default log files path root.
@@ -77,4 +81,10 @@ const (
 	DefaultExtV1SegSize = typeutil.ByteSize(gb)
 
 	ExtV1SegCnt = 256
+)
+
+const (
+	// DefaultZBufHeartbeatInterval is the interval of two zBuf heartbeat in zBuf server.
+	// Our env is stable, we won't too frequently heartbeat.
+	DefaultZBufHeartbeatInterval = 15 * time.Second
 )
