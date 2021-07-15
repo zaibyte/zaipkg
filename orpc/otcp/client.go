@@ -216,22 +216,22 @@ reset:
 }
 
 // PutObj puts object to the ZBuf node which orpc.Client connected.
-func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, _timeout time.Duration) error {
-	return c.call(reqid, objPutMethod, oid, extID, objData)
+func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
+	return c.call(reqid, objPutMethod, oid, extID, objData, timeout)
 }
 
 // GetObj gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone bool, _timeout time.Duration) error {
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error {
 	method := objGetMethod
 	if isClone {
 		method = objGetCloneMethod
 	}
-	return c.call(reqid, method, oid, extID, objData)
+	return c.call(reqid, method, oid, extID, objData, timeout)
 }
 
 // DeleteObj deletes object in the ZBuf node which orpc.Client connected.
-func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, _timeout time.Duration) error {
-	return c.call(reqid, objDelMethod, oid, extID, nil)
+func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, timeout time.Duration) error {
+	return c.call(reqid, objDelMethod, oid, extID, nil, timeout)
 }
 
 func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout time.Duration) error {
@@ -242,7 +242,7 @@ func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout 
 	}
 	digest := xdigest.Sum32(body)
 	fakeOID := uint64(digest) << 32 // It's a fake oid, just for passing E2E checksum.
-	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body)
+	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body, timeout)
 }
 
 // call sends the given request to the server and obtains response
@@ -251,7 +251,7 @@ func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout 
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte) (err error) {
+func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, timeout time.Duration) (err error) {
 
 	if atomic.LoadInt64(&c.isRunning) != 1 {
 		return orpc.ErrServiceClosed
@@ -262,8 +262,17 @@ func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body
 		return err
 	}
 
-	err = <-ar.err
-	releaseAsyncResult(ar)
+	t := xtime.AcquireTimer(timeout)
+
+	select {
+	case err = <-ar.err:
+		releaseAsyncResult(ar)
+	case <-t.C:
+		err = orpc.ErrTimeout
+		xlog.WarnID(reqid, err.Error())
+	}
+	xtime.ReleaseTimer(t)
+
 	return
 }
 
