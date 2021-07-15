@@ -22,8 +22,6 @@ import (
 type Client interface {
 	// Start starts Client.
 	Start() error
-	// Stop stops Client, release resource.
-	Stop()
 	// Close closes Client with an error which will be passed to the pending requests.
 	Close(err error)
 
@@ -31,6 +29,7 @@ type Client interface {
 	// 1. For PutObj, we must know which extent want to put. Same as DeleteObj / DeleteBatch.
 	// 2. In test env, we may deploy extents in the same group in the same device(or don't care the geo disaster).
 	// If we don't pass extID in this situation, we may cannot find the right extent.
+	//
 	//
 	// PutObj puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error

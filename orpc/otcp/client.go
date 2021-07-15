@@ -179,12 +179,6 @@ func (c *Client) Start() error {
 	return nil
 }
 
-// Stop stops rpc client.
-func (c *Client) Stop() {
-
-	c.Close(nil)
-}
-
 func (c *Client) Close(err error) {
 	if !atomic.CompareAndSwapInt64(&c.isRunning, 1, 0) {
 		return
