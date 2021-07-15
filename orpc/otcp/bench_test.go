@@ -74,14 +74,13 @@ func BenchmarkClient_Put(b *testing.B) {
 	c.Conns = 4
 
 	c.Start()
-	defer c.Stop()
+	defer c.Close(nil)
 
 	objData := make([]byte, 4096)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
-	b.SetParallelism(16)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
@@ -128,12 +127,11 @@ func BenchmarkClient_Get(b *testing.B) {
 	c.Conns = 4
 
 	c.Start()
-	defer c.Stop()
+	defer c.Close(nil)
 
 	objData := make([]byte, 4096)
 	oid := uid.MakeOID(1, 1, 1, xdigest.Sum32(objData), uid.NormalObj)
 
-	b.SetParallelism(64)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
@@ -159,14 +157,13 @@ func BenchmarkClient_Delete(b *testing.B) {
 
 	c := newTestClient(addr)
 	c.Start()
-	defer c.Stop()
+	defer c.Close(nil)
 
 	req := make([]byte, 4096)
 	rand.Read(req)
 	digest := xdigest.Sum32(req)
 	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
 
-	b.SetParallelism(64)
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
