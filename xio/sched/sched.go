@@ -42,6 +42,9 @@ type Config struct {
 	// Default is DefaultThreads.
 	Threads     int          `toml:"threads"`
 	QueueConfig *QueueConfig `toml:"queue_config"`
+
+	noReqSleep    time.Duration
+	balanceWindow int64
 }
 
 // Scheduler is disk I/O scheduler provides fair scheduling with priority classes.
@@ -124,16 +127,26 @@ func (c *Config) adjust(dt metapb.DiskType) {
 
 	if dt == metapb.DiskType_Disk_SATA {
 		config.Adjust(&c.Threads, DefaultThreadsSATA)
+		config.Adjust(&c.balanceWindow, balanceWindowsSATA)
+		config.Adjust(&c.noReqSleep, noReqSleepSATA)
 	} else {
 		config.Adjust(&c.Threads, DefaultThreads)
+		config.Adjust(&c.balanceWindow, defaultBalanceWindows)
+		config.Adjust(&c.noReqSleep, defaultNoReqSleep)
 	}
 }
 
 // That balancing is expected to happen over a specific time window,
-// default is 10ms.
-const balanceWindow = int64(10 * time.Millisecond)
+// default is 10ms. Good enough for NVMe device.
+const (
+	defaultBalanceWindows = int64(10 * time.Millisecond)
+	balanceWindowsSATA    = int64(100 * time.Millisecond)
+)
 
-const noReqSleep = 10 * time.Microsecond
+const (
+	defaultNoReqSleep = 10 * time.Microsecond
+	noReqSleepSATA    = 2 * time.Millisecond
+)
 
 // FindRunnableLoop finds runnable request by scheduler rules round and round.
 func (s *Scheduler) FindRunnableLoop() {
@@ -184,7 +197,7 @@ func (s *Scheduler) FindRunnableLoop() {
 			ar = <-s.queue.pqs[minQ].reqQueue.queue
 			atomic.AddInt64(&s.queue.pqs[minQ].pending, -1)
 		} else {
-			time.Sleep(noReqSleep)
+			time.Sleep(s.cfg.noReqSleep)
 			continue
 		}
 
@@ -198,7 +211,7 @@ func (s *Scheduler) FindRunnableLoop() {
 		_ = ioWorkers.Invoke(ar)
 
 		now := tsc.UnixNano()
-		if now-start >= balanceWindow {
+		if now-start >= s.cfg.balanceWindow {
 			s.setCostsZero()
 			start = now
 			continue
