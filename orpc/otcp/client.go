@@ -132,6 +132,8 @@ type asyncResult struct {
 	reqData []byte
 
 	respBody []byte
+	offset   int64
+	n        int64
 
 	err chan error
 }
@@ -217,21 +219,21 @@ reset:
 
 // PutObj puts object to the ZBuf node which orpc.Client connected.
 func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, timeout time.Duration) error {
-	return c.call(reqid, objPutMethod, oid, extID, objData, timeout)
+	return c.call(reqid, objPutMethod, oid, extID, objData, 0, 0, timeout)
 }
 
 // GetObj gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error {
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, buf []byte, offset, n int64, isClone bool, timeout time.Duration) error {
 	method := objGetMethod
 	if isClone {
 		method = objGetCloneMethod
 	}
-	return c.call(reqid, method, oid, extID, objData, timeout)
+	return c.call(reqid, method, oid, extID, buf, offset, n, timeout)
 }
 
 // DeleteObj deletes object in the ZBuf node which orpc.Client connected.
 func (c *Client) DeleteObj(reqid, oid uint64, extID uint32, timeout time.Duration) error {
-	return c.call(reqid, objDelMethod, oid, extID, nil, timeout)
+	return c.call(reqid, objDelMethod, oid, extID, nil, 0, 0, timeout)
 }
 
 func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout time.Duration) error {
@@ -242,7 +244,7 @@ func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout 
 	}
 	digest := xdigest.Sum32(body)
 	fakeOID := uint64(digest) << 32 // It's a fake oid, just for passing E2E checksum.
-	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body, timeout)
+	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body, 0, 0, timeout)
 }
 
 // call sends the given request to the server and obtains response
@@ -251,14 +253,14 @@ func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout 
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, timeout time.Duration) (err error) {
+func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n int64, timeout time.Duration) (err error) {
 
 	if atomic.LoadInt64(&c.isRunning) != 1 {
 		return orpc.ErrServiceClosed
 	}
 
 	var ar *asyncResult
-	if ar, err = c.callAsync(reqid, method, oid, extID, body); err != nil {
+	if ar, err = c.callAsync(reqid, method, oid, extID, body, offset, n); err != nil {
 		return err
 	}
 
@@ -276,7 +278,7 @@ func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body
 	return
 }
 
-func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32, body []byte) (ar *asyncResult, err error) {
+func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n int64) (ar *asyncResult, err error) {
 
 	if reqid == 0 {
 		reqid = uid.MakeReqID()
@@ -297,8 +299,10 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	if method == objPutMethod || method == objDelBatchMethod {
 		ar.reqData = body
 	}
-	if method == objGetMethod {
+	if method == objGetMethod || method == objGetCloneMethod {
 		ar.respBody = body
+		ar.offset = offset
+		ar.n = n
 	}
 
 	select {
@@ -602,6 +606,9 @@ func releaseAsyncResult(ar *asyncResult) {
 	ar.reqData = nil
 
 	ar.respBody = nil
+	ar.offset = 0
+	ar.n = 0
+
 	ar.err = nil
 
 	asyncResultPool.Put(ar)

@@ -47,6 +47,7 @@ func TestRequestHeaderCanBeEncodedAndDecoded(t *testing.T) {
 		method:   1,
 		msgID:    2,
 		reqid:    uid.MakeReqID(),
+		offset:   3,
 		bodySize: 4,
 		oid:      5,
 		extID:    6,
@@ -66,6 +67,7 @@ func TestRequestHeaderCRCIsChecked(t *testing.T) {
 		method:   1,
 		msgID:    2,
 		reqid:    uid.MakeReqID(),
+		offset:   3,
 		bodySize: 4,
 		oid:      5,
 		extID:    6,
@@ -77,11 +79,11 @@ func TestRequestHeaderCRCIsChecked(t *testing.T) {
 	rr := &reqHeader{}
 	assert.Nil(t, rr.decode(result))
 
-	crc := binary.BigEndian.Uint32(result[33:])
-	binary.BigEndian.PutUint32(result[33:], crc+1)
+	crc := binary.BigEndian.Uint32(result[37:])
+	binary.BigEndian.PutUint32(result[37:], crc+1)
 	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 
-	binary.BigEndian.PutUint32(result[33:], crc)
+	binary.BigEndian.PutUint32(result[37:], crc)
 	assert.Nil(t, rr.decode(result))
 
 	result[0] = 0
@@ -93,6 +95,7 @@ func TestRespHeaderCanBeEncodedAndDecoded(t *testing.T) {
 		msgID:    2048,
 		errno:    22,
 		bodySize: 1024,
+		bodyCrc:  1025,
 	}
 	buf := make([]byte, respHeaderSize)
 	result := r.encode(buf)
@@ -109,6 +112,7 @@ func TestRespHeaderCRCIsChecked(t *testing.T) {
 		msgID:    2048,
 		errno:    22,
 		bodySize: 1024,
+		bodyCrc:  1024,
 	}
 	buf := make([]byte, respHeaderSize)
 	result := r.encode(buf)
@@ -117,11 +121,11 @@ func TestRespHeaderCRCIsChecked(t *testing.T) {
 	rr := respHeader{}
 	assert.Nil(t, rr.decode(result))
 
-	crc := binary.BigEndian.Uint32(result[14:])
-	binary.BigEndian.PutUint32(result[14:], crc+1)
+	crc := binary.BigEndian.Uint32(result[18:])
+	binary.BigEndian.PutUint32(result[18:], crc+1)
 	assert.Equal(t, orpc.ErrChecksumMismatch, rr.decode(result))
 
-	binary.BigEndian.PutUint32(result[14:], crc)
+	binary.BigEndian.PutUint32(result[18:], crc)
 	assert.Nil(t, rr.decode(result))
 
 	binary.BigEndian.PutUint64(result[0:], 0)

@@ -19,22 +19,24 @@ import (
 )
 
 // Client is the object RPC client.
+// The reason why we need extID for these methods:
+// 1. For PutObj, we must know which extent want to put. Same as DeleteObj / DeleteBatch.
+// 2. In test env, we may deploy extents in the same group in the same device(or don't care the geo disaster).
+// If we don't pass extID in this situation, we may cannot find the right extent.
+// 3. After zBuf addresses exchanges, we may try to access extent which doesn't belong to the zBuf we want to request
+//    (inconsistent meta between management service and client), using extID could find this case.
 type Client interface {
 	// Start starts Client.
 	Start() error
 	// Close closes Client with an error which will be passed to the pending requests.
 	Close(err error)
 
-	// The reason why we need extID for these methods:
-	// 1. For PutObj, we must know which extent want to put. Same as DeleteObj / DeleteBatch.
-	// 2. In test env, we may deploy extents in the same group in the same device(or don't care the geo disaster).
-	// If we don't pass extID in this situation, we may cannot find the right extent.
-	//
-	//
 	// PutObj puts object to the ZBuf node which Client connected.
 	PutObj(reqid uint64, oid uint64, extID uint32, objData []byte, timeout time.Duration) error
 	// GetObj gets object from the ZBuf node which Client connected.
-	GetObj(reqid uint64, oid uint64, extID uint32, objData []byte, isClone bool, timeout time.Duration) error
+	// offset is the offset of origin object data.
+	// n is the total requested length.
+	GetObj(reqid uint64, oid uint64, extID uint32, buf []byte, offset, n int64, isClone bool, timeout time.Duration) error
 	// DeleteObj deletes object in the ZBuf node which Client connected.
 	DeleteObj(reqid uint64, oid uint64, extID uint32, timeout time.Duration) error
 	// DeleteBatch deletes multi objects in a single RPC call.
