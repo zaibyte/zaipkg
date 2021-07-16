@@ -50,6 +50,7 @@ func New(discard bool) {
 		Rotation: nil,
 	}
 	xlog.InitGlobalLogger(el)
+	_ = xlog.SetLevel("debug")
 }
 
 // A Syncer is a spy for the Sync portion of zapcore.WriteSyncer.
