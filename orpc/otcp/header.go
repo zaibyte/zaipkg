@@ -45,7 +45,7 @@ type header interface {
 	getBodySize() uint32
 }
 
-const reqHeaderSize = 41
+const reqHeaderSize = 45
 
 // reqHeader is the header for request.
 type reqHeader struct {
@@ -53,10 +53,11 @@ type reqHeader struct {
 	msgID    uint64 // [1, 9)
 	reqid    uint64 // [9, 17)
 	offset   uint32 // [17, 21)
-	bodySize uint32 // [21, 25)
-	oid      uint64 // [25, 33)
-	extID    uint32 // [33, 37)
-	crc      uint32 // [37, 41)
+	wantSize uint32 // [21, 25)	// It's wanted response body size.
+	bodySize uint32 // [25, 29)	// It's request body size.
+	oid      uint64 // [29, 37)
+	extID    uint32 // [37, 41)
+	crc      uint32 // [41, 45)
 }
 
 func (h *reqHeader) encode(buf []byte) []byte {
@@ -67,12 +68,13 @@ func (h *reqHeader) encode(buf []byte) []byte {
 	binary.BigEndian.PutUint64(buf[1:9], h.msgID)
 	binary.BigEndian.PutUint64(buf[9:17], h.reqid)
 	binary.BigEndian.PutUint32(buf[17:21], h.offset)
-	binary.BigEndian.PutUint32(buf[21:25], h.bodySize)
-	binary.BigEndian.PutUint64(buf[25:33], h.oid)
-	binary.BigEndian.PutUint32(buf[33:37], h.extID)
-	binary.BigEndian.PutUint32(buf[37:41], 0)
+	binary.BigEndian.PutUint32(buf[21:25], h.wantSize)
+	binary.BigEndian.PutUint32(buf[25:29], h.bodySize)
+	binary.BigEndian.PutUint64(buf[29:37], h.oid)
+	binary.BigEndian.PutUint32(buf[37:41], h.extID)
+	binary.BigEndian.PutUint32(buf[41:45], 0)
 	crc := xchecksum.Sum32(buf[:reqHeaderSize])
-	binary.BigEndian.PutUint32(buf[37:41], crc)
+	binary.BigEndian.PutUint32(buf[41:45], crc)
 	h.crc = crc
 	return buf[:reqHeaderSize]
 }
@@ -82,21 +84,22 @@ func (h *reqHeader) decode(buf []byte) error {
 		panic("input buf too small")
 	}
 
-	incoming := binary.BigEndian.Uint32(buf[37:41])
-	binary.BigEndian.PutUint32(buf[37:41], 0)
+	incoming := binary.BigEndian.Uint32(buf[41:45])
+	binary.BigEndian.PutUint32(buf[41:45], 0)
 	expected := xchecksum.Sum32(buf[:reqHeaderSize])
 	if incoming != expected {
 		return orpc.ErrChecksumMismatch
 	}
-	binary.BigEndian.PutUint32(buf[37:41], incoming)
+	binary.BigEndian.PutUint32(buf[41:45], incoming)
 
 	h.method = buf[0]
 	h.msgID = binary.BigEndian.Uint64(buf[1:9])
 	h.reqid = binary.BigEndian.Uint64(buf[9:17])
 	h.offset = binary.BigEndian.Uint32(buf[17:21])
-	h.bodySize = binary.BigEndian.Uint32(buf[21:25])
-	h.oid = binary.BigEndian.Uint64(buf[25:33])
-	h.extID = binary.BigEndian.Uint32(buf[33:37])
+	h.wantSize = binary.BigEndian.Uint32(buf[21:25])
+	h.bodySize = binary.BigEndian.Uint32(buf[25:29])
+	h.oid = binary.BigEndian.Uint64(buf[29:37])
+	h.extID = binary.BigEndian.Uint32(buf[37:41])
 	h.crc = incoming
 
 	return nil

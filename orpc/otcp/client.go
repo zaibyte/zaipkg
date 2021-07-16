@@ -133,7 +133,7 @@ type asyncResult struct {
 
 	respBody []byte
 	offset   int64
-	n        int64
+	wantSize int64
 
 	err chan error
 }
@@ -247,6 +247,8 @@ func (c *Client) DeleteBatch(reqid uint64, oids []uint64, extID uint32, timeout 
 	return c.call(reqid, objDelBatchMethod, fakeOID, extID, body, 0, 0, timeout)
 }
 
+const DefaultRequestTimeout = 3 * time.Second
+
 // call sends the given request to the server and obtains response
 // from the server.
 //
@@ -262,6 +264,10 @@ func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body
 	var ar *asyncResult
 	if ar, err = c.callAsync(reqid, method, oid, extID, body, offset, n); err != nil {
 		return err
+	}
+
+	if timeout == 0 {
+		timeout = DefaultRequestTimeout
 	}
 
 	t := xtime.AcquireTimer(timeout)
@@ -301,8 +307,21 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 	}
 	if method == objGetMethod || method == objGetCloneMethod {
 		ar.respBody = body
-		ar.offset = offset
-		ar.n = n
+		if method == objGetMethod {
+
+			if offset <= 0 || offset > int64(uid.GetGrains(oid))*uid.GrainSize {
+				offset = 0
+			}
+			if n <= 0 {
+				n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
+			}
+			if offset+n > int64(uid.GetGrains(oid))*uid.GrainSize {
+				n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
+			}
+
+			ar.offset = offset
+			ar.wantSize = n
+		}
 	}
 
 	select {
@@ -383,6 +402,7 @@ func (c *Client) clientHandleConnection(conn net.Conn) {
 		_ = conn.Close()
 		return
 	}
+	xlog.Debugf("handshake ok to: %s", c.Addr)
 
 	stopChan := make(chan struct{})
 
@@ -493,6 +513,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		if ar.reqData != nil {
 			rh.bodySize = uint32(len(ar.reqData))
 		} else {
+			rh.wantSize = uint32(ar.wantSize)
 			rh.bodySize = 0
 		}
 		rh.oid = ar.oid
@@ -573,7 +594,7 @@ func (c *Client) clientReader(r net.Conn, pendingRequests map[uint64]*asyncResul
 				return
 			}
 
-			digest := uid.GetDigest(ar.oid)
+			digest := rh.bodyCrc
 			actDigest := hash.Sum32()
 			if actDigest != digest {
 				xlog.ErrorID(ar.reqid, xerrors.WithMessage(orpc.ErrChecksumMismatch, fmt.Sprintf("response exp: %d, but: %d", digest, actDigest)).Error())
@@ -607,7 +628,7 @@ func releaseAsyncResult(ar *asyncResult) {
 
 	ar.respBody = nil
 	ar.offset = 0
-	ar.n = 0
+	ar.wantSize = 0
 
 	ar.err = nil
 

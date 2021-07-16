@@ -54,7 +54,7 @@ type Server interface {
 // ServerHandler is the object rpc handler.
 type ServerHandler interface {
 	PutObj(reqid, oid uint64, extID uint32, objData []byte) error
-	GetObj(reqid, oid uint64, extID uint32, isClone bool) (objData []byte, err error)
+	GetObj(reqid, oid uint64, extID uint32, isClone bool, offset, n uint32) (data []byte, crc uint32, err error)
 	DeleteObj(reqid, oid uint64, extID uint32) error
 	DeleteBatch(reqid uint64, extID uint32, oids []byte) error
 }

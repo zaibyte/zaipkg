@@ -98,10 +98,11 @@ func newBenchGetHandler() *testHandler {
 		putFn: func(reqid uint64, oid uint64, objData []byte) error {
 			return nil
 		},
-		getFn: func(reqid uint64, oid uint64) (objData []byte, err error) {
+		getFn: func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 			_, _, grains, _, _, _ := uid.ParseOID(oid)
 			objData = xbytes.GetAlignedBytes(int(grains * uid.GrainSize))
 			xorsimd.Bytes(objData, objData, objData) // Return empty data block.
+			crc = uid.GetDigest(oid)
 			return
 		},
 		delFn: func(reqid uint64, oid uint64) error {

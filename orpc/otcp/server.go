@@ -288,16 +288,19 @@ func (s *Server) serverHandleConnection(conn net.Conn) {
 }
 
 type serverMessage struct {
-	method   uint8
-	msgID    uint64
-	reqid    uint64
-	oid      uint64
-	extID    uint32
-	bodySize uint32
-	reqbody  []byte
+	method      uint8
+	msgID       uint64
+	reqid       uint64
+	oid         uint64
+	extID       uint32
+	offset      uint32
+	wantSize    uint32
+	reqBodySize uint32
+	reqbody     []byte
 
-	resp []byte
-	err  error
+	resp    []byte
+	bodyCrc uint32
+	err     error
 }
 
 var serverMessagePool = &sync.Pool{
@@ -312,8 +315,10 @@ func (s *serverMessage) reset() {
 	s.reqid = 0
 	s.oid = 0
 	s.extID = 0
-	s.bodySize = 0
+	s.reqBodySize = 0
 	s.reqbody = nil
+	s.wantSize = 0
+	s.offset = 0
 
 	s.resp = nil
 	s.err = nil
@@ -352,9 +357,11 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 		m.reqid = rh.reqid
 		m.oid = rh.oid
 		m.extID = rh.extID
-		m.bodySize = rh.bodySize
+		m.offset = rh.offset
+		m.reqBodySize = rh.bodySize
+		m.wantSize = rh.wantSize
 
-		n := int(m.bodySize)
+		n := int(m.reqBodySize)
 		if n != 0 {
 			body := xbytes.GetAlignedBytes(n)
 			err = dec.decodeBody(body, n)
@@ -395,8 +402,9 @@ func (s *Server) serverReader(r net.Conn, responsesChan chan<- *serverMessage,
 func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-chan struct{}, m *serverMessage) {
 
 	if m.err == nil {
-		resp, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.extID, m.reqbody)
+		resp, crc, err := s.callHandlerWithRecover(m.reqid, m.method, m.oid, m.extID, m.reqbody, m.offset, m.wantSize)
 		m.resp = resp
+		m.bodyCrc = crc
 		if err != nil {
 			m.resp = nil
 		}
@@ -420,7 +428,8 @@ func (s *Server) serveRequest(responsesChan chan<- *serverMessage, stopChan <-ch
 	}
 }
 
-func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, extID uint32, reqBody []byte) (resp []byte, err error) {
+func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, extID uint32, reqBody []byte, offset, want uint32) (
+	resp []byte, bodyCrc uint32, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			stackTrace := make([]byte, 1<<20)
@@ -431,14 +440,14 @@ func (s *Server) callHandlerWithRecover(reqid uint64, method uint8, oid uint64, 
 	}()
 
 	if method == objGetMethod {
-		return s.Handler.GetObj(reqid, oid, extID, false)
+		return s.Handler.GetObj(reqid, oid, extID, false, offset, want)
 	}
 
 	switch method {
 	case objPutMethod:
 		err = s.Handler.PutObj(reqid, oid, extID, reqBody)
 	case objGetCloneMethod:
-		resp, err = s.Handler.GetObj(reqid, oid, extID, true)
+		resp, _, err = s.Handler.GetObj(reqid, oid, extID, true, 0, 0)
 	case objDelMethod:
 		err = s.Handler.DeleteObj(reqid, oid, extID)
 	case objDelBatchMethod:
@@ -504,6 +513,7 @@ func (s *Server) serverWriter(w net.Conn, responsesChan <-chan *serverMessage, s
 		rh.msgID = m.msgID
 		if resp != nil {
 			rh.bodySize = uint32(len(resp))
+			rh.bodyCrc = m.bodyCrc
 		} else {
 			rh.bodySize = 0
 		}

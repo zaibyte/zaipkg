@@ -49,14 +49,13 @@ import (
 	"time"
 
 	"g.tesamc.com/IT/zaipkg/config/settings"
-
 	"g.tesamc.com/IT/zaipkg/directio"
-
 	"g.tesamc.com/IT/zaipkg/orpc"
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xbytes"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/templexxx/tsc"
 )
@@ -68,7 +67,7 @@ func init() {
 
 type testHandler struct {
 	putFn      func(reqid uint64, oid uint64, objData []byte) error
-	getFn      func(reqid uint64, oid uint64) (objData []byte, err error)
+	getFn      func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error)
 	delFn      func(reqid uint64, oid uint64) error
 	delBatchFn func(reqid uint64, oids []byte) error
 }
@@ -77,7 +76,7 @@ func (h *testHandler) PutObj(reqid uint64, oid uint64, extID uint32, objData []b
 	return h.putFn(reqid, oid, objData)
 }
 
-func (h *testHandler) GetObj(reqid uint64, oid uint64, extID uint32, isClone bool) (objData []byte, err error) {
+func (h *testHandler) GetObj(reqid uint64, oid uint64, extID uint32, isClone bool, offset, want uint32) (objData []byte, crc uint32, err error) {
 	return h.getFn(reqid, oid)
 }
 
@@ -94,8 +93,8 @@ func nopHandler() *testHandler {
 		putFn: func(reqid uint64, oid uint64, objData []byte) error {
 			return nil
 		},
-		getFn: func(reqid uint64, oid uint64) (objData []byte, err error) {
-			return nil, nil
+		getFn: func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
+			return nil, uid.GetDigest(oid), nil
 		},
 		delFn: func(reqid uint64, oid uint64) error {
 			return nil
@@ -138,11 +137,13 @@ func TestClient_GetObj(t *testing.T) {
 		sizes[oid] = uint32(len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 		size := sizes[oid]
 		objData = xbytes.GetAlignedBytes(int(size))
 		o := stor[oid]
 		copy(objData, o)
+		uid.GetDigest(oid)
+		crc = uid.GetDigest(oid)
 		return
 	}
 
@@ -202,14 +203,15 @@ func TestClient_DeleteObj(t *testing.T) {
 		sizes[oid] = uint32(len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 		o, ok := stor[oid]
 		if !ok {
-			return nil, orpc.ErrNotFound
+			return nil, 0, orpc.ErrNotFound
 		}
 		size := sizes[oid]
 		objData = xbytes.GetAlignedBytes(int(size))
 		copy(objData, o)
+		crc = uid.GetDigest(oid)
 		return
 	}
 	h.delFn = func(reqid uint64, oid uint64) error {
@@ -297,14 +299,15 @@ func TestClient_DeleteBatch(t *testing.T) {
 		sizes[oid] = uint32(len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 		o, ok := stor[oid]
 		if !ok {
-			return nil, orpc.ErrNotFound
+			return nil, 0, orpc.ErrNotFound
 		}
 		size := sizes[oid]
 		objData = xbytes.GetAlignedBytes(int(size))
 		copy(objData, o)
+		crc = uid.GetDigest(oid)
 		return
 	}
 	h.delBatchFn = func(reqid uint64, oids []byte) error {
@@ -397,20 +400,21 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 		sizes.Store(oid, len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 
 		v, ok := sizes.Load(oid)
 		if !ok {
-			return nil, orpc.ErrNotFound
+			return nil, 0, orpc.ErrNotFound
 		}
 		size := v.(int)
 		objData = xbytes.GetAlignedBytes(size)
 
 		o, ok := stor.Load(oid)
 		if !ok {
-			return nil, orpc.ErrNotFound
+			return nil, 0, orpc.ErrNotFound
 		}
 		copy(objData, o.([]byte))
+		crc = uid.GetDigest(oid)
 		return
 	}
 
@@ -487,8 +491,9 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		sizes.Store(oid, len(o))
 		return nil
 	}
-	h.getFn = func(reqid uint64, oid uint64) (objData []byte, err error) {
+	h.getFn = func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
 		err = orpc.ErrNotFound
+		crc = uid.GetDigest(oid)
 		return
 	}
 
