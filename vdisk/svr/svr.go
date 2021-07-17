@@ -251,7 +251,7 @@ func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 }
 
 // UpdateDiskStates updates all disk states.
-// Usaually for heartbeat.
+// For heartbeat only.
 func (d *ZBufDisks) UpdateDiskStates(dss map[string]metapb.DiskState) {
 
 	for id, s := range dss {
