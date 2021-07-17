@@ -27,3 +27,7 @@ func (p *PhyDisk) InitUsage(path string, meta *SyncMeta) error {
 	atomic.StoreUint64(&meta.Used, usage.Used)
 	return nil
 }
+
+func (p *PhyDisk) GetSN(path string) string {
+	return diskutil.GetDiskSN(path)
+}

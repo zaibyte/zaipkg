@@ -8,6 +8,7 @@ type Disk interface {
 	InitUsage(path string, meta *SyncMeta) error
 	GetType(path string) metapb.DiskType
 	AddUsed(meta *SyncMeta, delta int64)
+	GetSN(path string) string
 }
 
 func SetState(d *metapb.Disk, state metapb.DiskState) {

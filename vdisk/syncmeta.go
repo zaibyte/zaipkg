@@ -26,6 +26,10 @@ func (d *SyncMeta) Clone() *metapb.Disk {
 	}
 }
 
+func (d *SyncMeta) Update(newOne *metapb.Disk) {
+	d.SetState(newOne.State) // Actually we only need update state by heartbeat response.
+}
+
 func (d *SyncMeta) GetState() metapb.DiskState {
 	return metapb.DiskState(atomic.LoadInt32((*int32)(&d.State)))
 }

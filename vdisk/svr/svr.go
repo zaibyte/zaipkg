@@ -7,8 +7,10 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"g.tesamc.com/IT/zaipkg/uid"
+	"g.tesamc.com/IT/zaipkg/xtime"
 
 	"g.tesamc.com/IT/zaipkg/vdisk"
 	"g.tesamc.com/IT/zaipkg/vfs"
@@ -25,16 +27,18 @@ const (
 	diskNamePrefix = "disk_"
 )
 
-// ZBufDisks contains all avail disks on single ZBuf server.
+// ZBufDisks contains all avail disks on single zBuf server.
 type ZBufDisks struct {
-	VDisk    vdisk.Disk
-	DataRoot string
+	InstanceID string
+	VDisk      vdisk.Disk
+	DataRoot   string
 	// Using sync.Map for online adding/removing disk.
 	Disks *sync.Map // k: diskID, v: ZBufDisk
 
 	schedCfg *sched.Config
 
 	ctx context.Context
+	wg  *sync.WaitGroup
 }
 
 // ZBufDisk
@@ -46,13 +50,15 @@ type ZBufDisk struct {
 }
 
 // NewZBufDisks creates a new ZBufDisks instance.
-func NewZBufDisks(ctx context.Context, vdisk vdisk.Disk, dataRoot string, schedCfg *sched.Config) *ZBufDisks {
+func NewZBufDisks(ctx context.Context, wg *sync.WaitGroup, vdisk vdisk.Disk, instanceID, dataRoot string, schedCfg *sched.Config) *ZBufDisks {
 	d := &ZBufDisks{
-		VDisk:    vdisk,
-		DataRoot: dataRoot,
-		Disks:    new(sync.Map),
-		schedCfg: schedCfg,
-		ctx:      ctx,
+		InstanceID: instanceID,
+		VDisk:      vdisk,
+		DataRoot:   dataRoot,
+		Disks:      new(sync.Map),
+		schedCfg:   schedCfg,
+		ctx:        ctx,
+		wg:         wg,
 	}
 	return d
 }
@@ -107,10 +113,17 @@ func (d *ZBufDisks) AddDisk(diskID string) {
 	v := new(ZBufDisk)
 
 	meta := (*vdisk.SyncMeta)(new(metapb.Disk))
+	meta.State = metapb.DiskState_Disk_ReadWrite
 	meta.Id = diskID
 	path := MakeDiskDir(diskID, d.DataRoot)
 	meta.Type = d.VDisk.GetType(path)
+	meta.SN = d.VDisk.GetSN(path)
 	_ = d.VDisk.InitUsage(path, meta)
+	meta.InstanceId = d.InstanceID
+
+	if meta.Used >= meta.Size_ {
+		meta.State = metapb.DiskState_Disk_Full
+	}
 
 	v.Info = meta
 	v.DiskID = diskID
@@ -125,7 +138,7 @@ func (d *ZBufDisks) AddDisk(diskID string) {
 // StartSched starts disk I/O scheduler.
 // If diskIDs is not empty, using diskIDs, if diskID is not found, ignore.
 // If it's empty, starting all schedulers which haven't started.
-func (d *ZBufDisks) StartSched(diskIDs ...uint32) {
+func (d *ZBufDisks) StartSched(diskIDs ...string) {
 
 	if len(diskIDs) != 0 {
 		for _, diskID := range diskIDs {
@@ -155,7 +168,7 @@ func (d *ZBufDisks) StartSched(diskIDs ...uint32) {
 // CloseSched closes disk I/O scheduler.
 // If diskIDs is not empty, using diskIDs, if diskID is not found, ignore.
 // If it's empty, closing all schedulers which have started.
-func (d *ZBufDisks) CloseSched(diskIDs ...uint32) {
+func (d *ZBufDisks) CloseSched(diskIDs ...string) {
 	if len(diskIDs) != 0 {
 		for _, diskID := range diskIDs {
 			zd := d.GetDisk(diskID)
@@ -187,7 +200,7 @@ func MakeDiskDir(diskID string, root string) string {
 }
 
 // GetInfo gets disk info by diskID.
-func (d *ZBufDisks) GetInfo(diskID uint32) *vdisk.SyncMeta {
+func (d *ZBufDisks) GetInfo(diskID string) *vdisk.SyncMeta {
 	di, ok := d.Disks.Load(diskID)
 	if !ok {
 		return nil
@@ -196,7 +209,7 @@ func (d *ZBufDisks) GetInfo(diskID uint32) *vdisk.SyncMeta {
 }
 
 // GetSched gets scheduler by diskID and started or not.
-func (d *ZBufDisks) GetSched(diskID uint32) (xio.Scheduler, bool) {
+func (d *ZBufDisks) GetSched(diskID string) (xio.Scheduler, bool) {
 	di, ok := d.Disks.Load(diskID)
 	if !ok {
 		return nil, false
@@ -206,7 +219,7 @@ func (d *ZBufDisks) GetSched(diskID uint32) (xio.Scheduler, bool) {
 }
 
 // GetDisk gets ZBufDisk by diskID.
-func (d *ZBufDisks) GetDisk(diskID uint32) *ZBufDisk {
+func (d *ZBufDisks) GetDisk(diskID string) *ZBufDisk {
 	di, ok := d.Disks.Load(diskID)
 	if !ok {
 		return nil
@@ -214,16 +227,66 @@ func (d *ZBufDisks) GetDisk(diskID uint32) *ZBufDisk {
 	return di.(*ZBufDisk)
 }
 
-// ListDiskIDs lists all disk IDs in this ZBuf server.
-func (d *ZBufDisks) ListDiskIDs() []uint32 {
+// ListDiskMetas lists all disks' meta.
+// Usaually for heartbeat.
+func (d *ZBufDisks) ListDiskMetas() []*metapb.Disk {
 
-	ids := make([]uint32, 0, 32)
+	ms := make([]*metapb.Disk, 0, 36)
+	d.Disks.Range(func(key, value interface{}) bool {
+		i := value.(*ZBufDisk)
+		m := i.Info.Clone()
+		ms = append(ms, m)
+		return true
+	})
+	return ms
+}
+
+// UpdateDiskMetas updates all disk metas.
+// Usaually for heartbeat.
+func (d *ZBufDisks) UpdateDiskMetas(ms []*metapb.Disk) {
+
+	for _, m := range ms {
+		act, loaded := d.Disks.LoadOrStore(m.Id, (*vdisk.SyncMeta)(m))
+		if loaded {
+			mo := act.(*vdisk.SyncMeta)
+			mo.Update(m)
+		}
+	}
+}
+
+// ListDiskIDs lists all disk IDs in this ZBuf server.
+func (d *ZBufDisks) ListDiskIDs() []string {
+
+	ids := make([]string, 0, 32)
 	cnt := 0
 	d.Disks.Range(func(key, value interface{}) bool {
-		id := key.(uint32)
+		id := key.(string)
 		ids = append(ids, id)
 		cnt++
 		return true
 	})
 	return ids[:cnt]
+}
+
+// DetectLoop detects local disks round and round.
+// Helping us to add new disk automatically.
+func (d *ZBufDisks) DetectLoop() {
+	defer d.wg.Done()
+
+	ctx, cancel := context.WithCancel(d.ctx)
+	defer cancel()
+
+	t := xtime.AcquireTimer(10 * time.Minute)
+	defer xtime.ReleaseTimer(t)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			diskIDs := d.ListDiskIDs()
+			d.AddDisks(diskIDs)
+			d.StartSched()
+		}
+	}
 }
