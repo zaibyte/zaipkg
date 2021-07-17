@@ -38,9 +38,9 @@ const (
 
 // Config is Scheduler's config.
 type Config struct {
-	// The maximum number of concurrent read/write.
-	// Default is DefaultThreads.
-	Threads     int          `toml:"threads"`
+	Thread      int
+	NVMeThread  int          `toml:"nv_me_thread"`
+	SATAThread  int          `toml:"sata_thread"`
 	QueueConfig *QueueConfig `toml:"queue_config"`
 
 	noReqSleep    time.Duration
@@ -56,8 +56,6 @@ type Scheduler struct {
 	diskMeta *vdisk.SyncMeta
 
 	queue *Queue
-
-	worker chan struct{}
 
 	ctx    context.Context
 	cancel func()
@@ -93,8 +91,6 @@ func New(ctx context.Context, cfg *Config, dm *vdisk.SyncMeta) *Scheduler {
 		diskMeta: dm,
 		queue:    NewQueue(cfg.QueueConfig),
 
-		worker: make(chan struct{}, cfg.Threads),
-
 		ctx:    ctx2,
 		cancel: cancel,
 		stopWg: new(sync.WaitGroup),
@@ -126,11 +122,13 @@ func (s *Scheduler) Close() {
 func (c *Config) adjust(dt metapb.DiskType) {
 
 	if dt == metapb.DiskType_Disk_SATA {
-		config.Adjust(&c.Threads, DefaultThreadsSATA)
+		config.Adjust(&c.SATAThread, DefaultThreadsSATA)
+		config.Adjust(&c.Thread, &c.SATAThread)
 		config.Adjust(&c.balanceWindow, balanceWindowsSATA)
 		config.Adjust(&c.noReqSleep, noReqSleepSATA)
 	} else {
-		config.Adjust(&c.Threads, DefaultThreads)
+		config.Adjust(&c.NVMeThread, DefaultThreads)
+		config.Adjust(&c.Thread, &c.NVMeThread)
 		config.Adjust(&c.balanceWindow, defaultBalanceWindows)
 		config.Adjust(&c.noReqSleep, defaultNoReqSleep)
 	}
@@ -154,7 +152,7 @@ func (s *Scheduler) FindRunnableLoop() {
 
 	// ioWorkers is a Goroutine pool, for saving goroutine creating/destroy/scheduling cost.
 	// error here could be ignore because we won't pass illegal params.
-	ioWorkers, _ := ants.NewPoolWithFunc(s.cfg.Threads, func(i interface{}) {
+	ioWorkers, _ := ants.NewPoolWithFunc(s.cfg.Thread, func(i interface{}) {
 
 		r := i.(*xio.AsyncRequest)
 		var err error
