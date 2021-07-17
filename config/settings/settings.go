@@ -87,4 +87,6 @@ const (
 	// DefaultZBufHeartbeatInterval is the interval of two zBuf heartbeat in zBuf server.
 	// Our env is stable, we won't too frequently heartbeat.
 	DefaultZBufHeartbeatInterval = 15 * time.Second
+
+	DefaultExtHeartbeatInterval = 10 * time.Second
 )
