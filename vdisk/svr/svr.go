@@ -33,7 +33,7 @@ type ZBufDisks struct {
 	VDisk      vdisk.Disk
 	DataRoot   string
 	// Using sync.Map for online adding/removing disk.
-	Disks *sync.Map // k: diskID, v: ZBufDisk
+	Disks *sync.Map // k: diskID, v: *ZBufDisk
 
 	schedCfg *sched.Config
 
@@ -242,7 +242,7 @@ func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 	ret := make(map[string]*metapb.Disk)
 
 	d.Disks.Range(func(key, value interface{}) bool {
-		sm := value.(*vdisk.SyncMeta)
+		sm := value.(*ZBufDisk).Info
 		ret[key.(string)] = sm.Clone()
 		return true
 	})
@@ -250,29 +250,36 @@ func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 	return ret
 }
 
-// ListDiskMetas lists all disks' meta.
+// UpdateDiskStates updates all disk states.
 // Usaually for heartbeat.
-func (d *ZBufDisks) ListDiskMetas() []*metapb.Disk {
+func (d *ZBufDisks) UpdateDiskStates(dss map[string]metapb.DiskState) {
 
-	ms := make([]*metapb.Disk, 0, 36)
-	d.Disks.Range(func(key, value interface{}) bool {
-		i := value.(*ZBufDisk)
-		m := i.Info.Clone()
-		ms = append(ms, m)
-		return true
-	})
-	return ms
-}
+	for id, s := range dss {
+		v, ok := d.Disks.Load(id)
+		if ok {
+			mo := v.(*ZBufDisk).Info
+			mo.SetState(s)
+		} else {
+			zd := new(ZBufDisk)
 
-// UpdateDiskMetas updates all disk metas.
-// Usaually for heartbeat.
-func (d *ZBufDisks) UpdateDiskMetas(ms []*metapb.Disk) {
+			meta := (*vdisk.SyncMeta)(new(metapb.Disk))
+			meta.State = metapb.DiskState_Disk_Broken
+			meta.Id = id
+			path := MakeDiskDir(id, d.DataRoot)
+			meta.Type = d.VDisk.GetType(path)
+			meta.SN = d.VDisk.GetSN(path)
+			_ = d.VDisk.InitUsage(path, meta)
+			meta.InstanceId = d.InstanceID
 
-	for _, m := range ms {
-		act, loaded := d.Disks.LoadOrStore(m.Id, (*vdisk.SyncMeta)(m))
-		if loaded {
-			mo := act.(*vdisk.SyncMeta)
-			mo.Update(m)
+			if meta.Used >= meta.Size_ {
+				meta.State = metapb.DiskState_Disk_Full
+			}
+
+			zd.Info = meta
+			zd.DiskID = id
+
+			zd.Sched = new(xio.NopScheduler)
+			d.Disks.Store(id, zd)
 		}
 	}
 }
