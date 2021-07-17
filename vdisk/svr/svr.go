@@ -227,6 +227,29 @@ func (d *ZBufDisks) GetDisk(diskID string) *ZBufDisk {
 	return di.(*ZBufDisk)
 }
 
+func (d *ZBufDisks) GetDiskMeta(diskID string) *vdisk.SyncMeta {
+	zd := d.GetDisk(diskID)
+	if zd == nil {
+		return nil
+	}
+	return zd.Info
+}
+
+// CloneAllDiskMeta clones all *metapb.Disk.
+// Usually for heartbeat.
+func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
+
+	ret := make(map[string]*metapb.Disk)
+
+	d.Disks.Range(func(key, value interface{}) bool {
+		sm := value.(*vdisk.SyncMeta)
+		ret[key.(string)] = sm.Clone()
+		return true
+	})
+
+	return ret
+}
+
 // ListDiskMetas lists all disks' meta.
 // Usaually for heartbeat.
 func (d *ZBufDisks) ListDiskMetas() []*metapb.Disk {
