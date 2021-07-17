@@ -38,7 +38,7 @@ const (
 
 // Config is Scheduler's config.
 type Config struct {
-	Thread      int
+	Threads     int
 	NVMeThread  int          `toml:"nv_me_thread"`
 	SATAThread  int          `toml:"sata_thread"`
 	QueueConfig *QueueConfig `toml:"queue_config"`
@@ -123,12 +123,12 @@ func (c *Config) adjust(dt metapb.DiskType) {
 
 	if dt == metapb.DiskType_Disk_SATA {
 		config.Adjust(&c.SATAThread, DefaultThreadsSATA)
-		config.Adjust(&c.Thread, &c.SATAThread)
+		config.Adjust(&c.Threads, &c.SATAThread)
 		config.Adjust(&c.balanceWindow, balanceWindowsSATA)
 		config.Adjust(&c.noReqSleep, noReqSleepSATA)
 	} else {
 		config.Adjust(&c.NVMeThread, DefaultThreads)
-		config.Adjust(&c.Thread, &c.NVMeThread)
+		config.Adjust(&c.Threads, &c.NVMeThread)
 		config.Adjust(&c.balanceWindow, defaultBalanceWindows)
 		config.Adjust(&c.noReqSleep, defaultNoReqSleep)
 	}
@@ -152,7 +152,7 @@ func (s *Scheduler) FindRunnableLoop() {
 
 	// ioWorkers is a Goroutine pool, for saving goroutine creating/destroy/scheduling cost.
 	// error here could be ignore because we won't pass illegal params.
-	ioWorkers, _ := ants.NewPoolWithFunc(s.cfg.Thread, func(i interface{}) {
+	ioWorkers, _ := ants.NewPoolWithFunc(s.cfg.Threads, func(i interface{}) {
 
 		r := i.(*xio.AsyncRequest)
 		var err error
