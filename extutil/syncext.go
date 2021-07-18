@@ -44,11 +44,18 @@ func (p *SyncExt) SetCloneJobState(state metapb.CloneJobState) bool {
 	return (*SyncCloneJob)(p.GetCloneJob()).SetState(state)
 }
 
+// UpdateBy updates extent by headerbeat resp.
+// We cannot change value in clone job by this resp if local is non-nil,
+// only local clone job could update keeper state machine.
 func (p *SyncExt) UpdateBy(v *metapb.Extent) {
 	p.SetState(v.State)
 	atomic.StoreInt64(&p.LastUpdate, v.LastUpdate)
 	atomic.StoreInt32(&p.Created, v.Created)
-	p.SetCloneJob(v.CloneJob)
+
+	if p.GetCloneJob() == nil {
+		c := unsafe.Pointer(p.CloneJob)
+		atomic.StorePointer(&c, unsafe.Pointer(v))
+	}
 }
 
 func (p *SyncExt) GetCreated() int32 {
