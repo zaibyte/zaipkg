@@ -127,6 +127,7 @@ func Copy(dst, src *metapb.Extent, noState bool) {
 	}
 	dst.Avail = src.GetAvail()
 	dst.LastUpdate = src.LastUpdate
+	dst.Created = src.Created
 
 	if src.CloneJob == nil {
 		return
