@@ -37,11 +37,11 @@ func (p *SyncExt) GetCloneJobState() metapb.CloneJobState {
 	return (*SyncCloneJob)(p.GetCloneJob()).GetState()
 }
 
-func (p *SyncExt) SetCloneJobState(state metapb.CloneJobState) {
+func (p *SyncExt) SetCloneJobState(state metapb.CloneJobState) bool {
 	if p.GetCloneJob() == nil {
-		return
+		return false
 	}
-	(*SyncCloneJob)(p.GetCloneJob()).SetState(state)
+	return (*SyncCloneJob)(p.GetCloneJob()).SetState(state)
 }
 
 func (p *SyncExt) UpdateBy(v *metapb.Extent) {
