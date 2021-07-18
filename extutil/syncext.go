@@ -12,6 +12,11 @@ type SyncExt metapb.Extent
 
 // Clone clones SyncExt's metapb.Extent for heartbeat or other users.
 func (p *SyncExt) Clone() *metapb.Extent {
+
+	cj := p.GetCloneJob()
+	if cj != nil {
+		cj = (*SyncCloneJob)(cj).Clone()
+	}
 	return &metapb.Extent{
 		State:      p.GetState(),
 		Id:         p.Id,
@@ -19,10 +24,24 @@ func (p *SyncExt) Clone() *metapb.Extent {
 		Avail:      p.GetAvail(),
 		DiskId:     p.DiskId,
 		InstanceId: p.InstanceId,
-		CloneJob:   (*SyncCloneJob)(p.GetCloneJob()).Clone(),
+		CloneJob:   cj,
 		LastUpdate: p.LastUpdate,
 		Created:    p.GetCreated(),
 	}
+}
+
+func (p *SyncExt) GetCloneJobState() metapb.CloneJobState {
+	if p.GetCloneJob() == nil {
+		return metapb.CloneJobState_CloneJob_Init
+	}
+	return (*SyncCloneJob)(p.GetCloneJob()).GetState()
+}
+
+func (p *SyncExt) SetCloneJobState(state metapb.CloneJobState) {
+	if p.GetCloneJob() == nil {
+		return
+	}
+	(*SyncCloneJob)(p.GetCloneJob()).SetState(state)
 }
 
 func (p *SyncExt) UpdateBy(v *metapb.Extent) {
