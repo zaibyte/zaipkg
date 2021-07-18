@@ -88,5 +88,5 @@ const (
 	// Our env is stable, we won't too frequently heartbeat.
 	DefaultZBufHeartbeatInterval = 15 * time.Second
 
-	DefaultExtHeartbeatInterval = 10 * time.Second
+	DefaultExtHeartbeatInterval = 30 * time.Second
 )
