@@ -132,11 +132,11 @@ const (
 	diskOffline   = 20
 	diskTombstone = 21
 
-	extentFull   = 22
-	extentBroken = 23
-	extentGhost  = 26
-	extentClone  = 27
-	extentSealed = 28
+	extentFull     = 22
+	extentBroken   = 23
+	extentNotReady = 26
+	extentClone    = 27
+	extentSealed   = 28
 
 	replicasCollapse = 29
 
@@ -182,11 +182,11 @@ var errnoStr = map[uint16]string{
 	diskOffline:   "disk is offline",
 	diskTombstone: "disk is tombstone",
 
-	extentFull:   "extent is full",
-	extentBroken: "extent is broken",
-	extentClone:  "extent is in clone",
-	extentSealed: "extent is sealed",
-	extentGhost:  "extent is ghost",
+	extentFull:     "extent is full",
+	extentBroken:   "extent is broken",
+	extentClone:    "extent is in clone",
+	extentSealed:   "extent is sealed",
+	extentNotReady: "extent is not ready, haven't finished creating",
 
 	replicasCollapse: "replicas collapse, all replicas broken",
 
@@ -228,11 +228,11 @@ var (
 	ErrDiskOffline   = Errno(diskOffline)
 	ErrDiskTombstone = Errno(diskTombstone)
 
-	ErrExtentFull   = Errno(extentFull)
-	ErrExtentBroken = Errno(extentBroken)
-	ErrExtentGhost  = Errno(extentGhost)
-	ErrExtentClone  = Errno(extentClone)
-	ErrExtentSealed = Errno(extentSealed)
+	ErrExtentFull     = Errno(extentFull)
+	ErrExtentBroken   = Errno(extentBroken)
+	ErrExtentClone    = Errno(extentClone)
+	ErrExtentSealed   = Errno(extentSealed)
+	ErrExtentNotReady = Errno(extentNotReady)
 
 	ErrObjDigestExisted = Errno(objDigestExisted)
 
