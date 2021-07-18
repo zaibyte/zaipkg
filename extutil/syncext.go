@@ -20,7 +20,16 @@ func (p *SyncExt) Clone() *metapb.Extent {
 		InstanceId: p.InstanceId,
 		CloneJob:   (*SyncCloneJob)(p.CloneJob).Clone(),
 		LastUpdate: p.LastUpdate,
+		Created:    p.GetCreated(),
 	}
+}
+
+func (p *SyncExt) GetCreated() int32 {
+	return atomic.LoadInt32(&p.Created)
+}
+
+func (p *SyncExt) SetCreated(v int32) {
+	atomic.StoreInt32(&p.Created, v)
 }
 
 func (p *SyncExt) GetState() metapb.ExtentState {
