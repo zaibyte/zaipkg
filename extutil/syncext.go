@@ -2,6 +2,7 @@ package extutil
 
 import (
 	"sync/atomic"
+	"unsafe"
 
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 )
@@ -18,10 +19,17 @@ func (p *SyncExt) Clone() *metapb.Extent {
 		Avail:      p.GetAvail(),
 		DiskId:     p.DiskId,
 		InstanceId: p.InstanceId,
-		CloneJob:   (*SyncCloneJob)(p.CloneJob).Clone(),
+		CloneJob:   (*SyncCloneJob)(p.GetCloneJob()).Clone(),
 		LastUpdate: p.LastUpdate,
 		Created:    p.GetCreated(),
 	}
+}
+
+func (p *SyncExt) UpdateBy(v *metapb.Extent) {
+	p.SetState(v.State)
+	atomic.StoreInt64(&p.LastUpdate, v.LastUpdate)
+	atomic.StoreInt32(&p.Created, v.Created)
+	p.SetCloneJob(v.CloneJob)
 }
 
 func (p *SyncExt) GetCreated() int32 {
@@ -76,4 +84,18 @@ func (p *SyncExt) CouldClose() bool {
 	}
 
 	return false
+}
+
+// GetCloneJob gets clone_job.
+func (p *SyncExt) GetCloneJob() *metapb.CloneJob {
+
+	c := unsafe.Pointer(p.CloneJob)
+	ret := atomic.LoadPointer(&c)
+	return (*metapb.CloneJob)(ret)
+}
+
+func (p *SyncExt) SetCloneJob(v *metapb.CloneJob) {
+
+	c := unsafe.Pointer(p.CloneJob)
+	atomic.StorePointer(&c, unsafe.Pointer(v))
 }
