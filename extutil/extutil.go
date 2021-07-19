@@ -94,7 +94,7 @@ func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState m
 	case metapb.ExtentState_Extent_Broken:
 		return false, oldState
 	case metapb.ExtentState_Extent_Clone:
-		// Set clone extent to sealed, the data must be integrity.
+		// Set clone extent to sealed, the data must not be integrity.
 		// Regard this extent broken.
 		if state == metapb.ExtentState_Extent_Sealed {
 			state = metapb.ExtentState_Extent_Broken
