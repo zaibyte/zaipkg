@@ -10,8 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/diskutil"
-
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/vdisk"
 	"g.tesamc.com/IT/zaipkg/vfs"
@@ -257,12 +255,14 @@ func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 		sm := bd.Info
 		ret0 := sm.Clone()
 
-		usage, err := diskutil.GetUsageState(MakeDiskDir(bd.DiskID, d.DataRoot))
-		if err != nil {
-			xlog.Warnf(fmt.Sprintf("failed to get usage of disk: %s in CloneAllDiskMeta", bd.DiskID))
-			return true
-		}
-		atomic.StoreUint64(&ret0.Used, usage.Used)
+		// I'm using estimate value for each extent, then add to the disk used.
+		// https://g.tesamc.com/IT/zbuf/issues/294
+		// usage, err := diskutil.GetUsageState(MakeDiskDir(bd.DiskID, d.DataRoot))
+		// if err != nil {
+		// 	xlog.Warnf(fmt.Sprintf("failed to get usage of disk: %s in CloneAllDiskMeta", bd.DiskID))
+		// 	return true
+		// }
+		// atomic.StoreUint64(&ret0.Used, usage.Used)
 
 		ret[key.(string)] = ret0
 		return true
