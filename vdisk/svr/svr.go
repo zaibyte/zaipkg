@@ -3,6 +3,7 @@ package svr
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -10,12 +11,12 @@ import (
 	"time"
 
 	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xtime"
-
 	"g.tesamc.com/IT/zaipkg/vdisk"
 	"g.tesamc.com/IT/zaipkg/vfs"
 	"g.tesamc.com/IT/zaipkg/xio"
 	"g.tesamc.com/IT/zaipkg/xio/sched"
+	"g.tesamc.com/IT/zaipkg/xlog"
+	"g.tesamc.com/IT/zaipkg/xtime"
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 )
 
@@ -30,6 +31,7 @@ const (
 // ZBufDisks contains all avail disks on single zBuf server.
 type ZBufDisks struct {
 	InstanceID string
+	FS         vfs.FS
 	VDisk      vdisk.Disk
 	DataRoot   string
 	// Using sync.Map for online adding/removing disk.
@@ -41,7 +43,6 @@ type ZBufDisks struct {
 	wg  *sync.WaitGroup
 }
 
-// ZBufDisk
 type ZBufDisk struct {
 	DiskID       string
 	Info         *vdisk.SyncMeta
@@ -50,9 +51,10 @@ type ZBufDisk struct {
 }
 
 // NewZBufDisks creates a new ZBufDisks instance.
-func NewZBufDisks(ctx context.Context, wg *sync.WaitGroup, vdisk vdisk.Disk, instanceID, dataRoot string, schedCfg *sched.Config) *ZBufDisks {
+func NewZBufDisks(ctx context.Context, wg *sync.WaitGroup, fs vfs.FS, vdisk vdisk.Disk, instanceID, dataRoot string, schedCfg *sched.Config) *ZBufDisks {
 	d := &ZBufDisks{
 		InstanceID: instanceID,
+		FS:         fs,
 		VDisk:      vdisk,
 		DataRoot:   dataRoot,
 		Disks:      new(sync.Map),
@@ -109,6 +111,11 @@ func (d *ZBufDisks) AddDisks(diskIDs []string) {
 
 // AddDisk adds single disk.
 func (d *ZBufDisks) AddDisk(diskID string) {
+
+	_, ok := d.Disks.Load(diskID)
+	if ok {
+		return // Already has.
+	}
 
 	v := new(ZBufDisk)
 
@@ -314,7 +321,11 @@ func (d *ZBufDisks) DetectLoop() {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			diskIDs := d.ListDiskIDs()
+			diskIDs, err := ListDiskIDs(d.FS, d.DataRoot)
+			if err != nil {
+				xlog.Warn(fmt.Sprintf("failed to list disk ids in detect loop: %s", err.Error()))
+				continue
+			}
 			d.AddDisks(diskIDs)
 			d.StartSched()
 		}
