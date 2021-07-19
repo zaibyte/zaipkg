@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"g.tesamc.com/IT/zaipkg/diskutil"
+
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/vdisk"
 	"g.tesamc.com/IT/zaipkg/vfs"
@@ -243,14 +245,26 @@ func (d *ZBufDisks) GetDiskMeta(diskID string) *vdisk.SyncMeta {
 }
 
 // CloneAllDiskMeta clones all *metapb.Disk.
+// Before return we'll get new used space for disks.
 // Usually for heartbeat.
 func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 
 	ret := make(map[string]*metapb.Disk)
 
 	d.Disks.Range(func(key, value interface{}) bool {
-		sm := value.(*ZBufDisk).Info
-		ret[key.(string)] = sm.Clone()
+
+		bd := value.(*ZBufDisk)
+		sm := bd.Info
+		ret0 := sm.Clone()
+
+		usage, err := diskutil.GetUsageState(MakeDiskDir(bd.DiskID, d.DataRoot))
+		if err != nil {
+			xlog.Warnf(fmt.Sprintf("failed to get usage of disk: %s in CloneAllDiskMeta", bd.DiskID))
+			return true
+		}
+		atomic.StoreUint64(&ret0.Used, usage.Used)
+
+		ret[key.(string)] = ret0
 		return true
 	})
 
