@@ -19,6 +19,7 @@ import (
 // Not thread safe.
 func ResetLeakyCap(tiny, small, mid, max int) {
 	_alignPool = NewPool(tiny, small, mid, max, true)
+	_pool = NewPool(tiny, small, mid, max, false)
 }
 
 // EnableDefault enables default memory pool.
@@ -35,6 +36,44 @@ func EnableMax() {
 
 var (
 	_alignPool *BufferPool
+	_pool      *BufferPool
+
+	GetBytes = func(n int) []byte {
+		if n <= _MaxSyncPoolSize {
+			return _pool.spPool.Get().([]byte)[:n]
+		}
+		if n <= _MaxTinySize {
+			return _pool.tinyPool.Get()[:n]
+		}
+		if n <= _MaxSmallSize {
+			return _pool.smallPool.Get()[:n]
+		}
+		if n <= _MaxMidSize {
+			return _pool.MidPool.Get()[:n]
+		}
+		return _pool.maxPool.Get()[:n]
+	}
+	PutBytes = func(b []byte) {
+		n := len(b)
+		b = b[:0]
+		if n <= _MaxSyncPoolSize {
+			_pool.spPool.Put(b)
+			return
+		}
+		if n <= _MaxTinySize {
+			_pool.tinyPool.Put(b)
+			return
+		}
+		if n <= _MaxSmallSize {
+			_pool.smallPool.Put(b)
+			return
+		}
+		if n <= _MaxMidSize {
+			_pool.MidPool.Put(b)
+			return
+		}
+		_pool.maxPool.Put(b)
+	}
 
 	GetAlignedBytes = func(n int) []byte {
 		if n <= _MaxSyncPoolSize {
