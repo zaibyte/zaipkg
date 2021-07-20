@@ -45,9 +45,9 @@ func IsBroken(err error) bool {
 	}
 
 	// EIO: I/O error
-	// if errors.Is(err, syscall.EIO) {
-	// 	return true
-	// }
+	if errors.Is(err, syscall.EIO) {
+		return true
+	}
 
 	// EROFS: Read-only file system, caused by
 	// 1. VFS error,
