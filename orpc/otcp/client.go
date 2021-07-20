@@ -513,6 +513,7 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		if ar.reqData != nil {
 			rh.bodySize = uint32(len(ar.reqData))
 		} else {
+			rh.offset = uint32(ar.offset)
 			rh.wantSize = uint32(ar.wantSize)
 			rh.bodySize = 0
 		}

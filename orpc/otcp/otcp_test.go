@@ -105,6 +105,46 @@ func nopHandler() *testHandler {
 	}
 }
 
+type testHandlerOffset struct {
+	putFn      func(reqid uint64, oid uint64, objData []byte) error
+	getFn      func(reqid uint64, oid uint64, offset, n uint32) (objData []byte, crc uint32, err error)
+	delFn      func(reqid uint64, oid uint64) error
+	delBatchFn func(reqid uint64, oids []byte) error
+}
+
+func (h *testHandlerOffset) PutObj(reqid uint64, oid uint64, extID uint32, objData []byte) error {
+	return h.putFn(reqid, oid, objData)
+}
+
+func (h *testHandlerOffset) GetObj(reqid uint64, oid uint64, extID uint32, isClone bool, offset, want uint32) (objData []byte, crc uint32, err error) {
+	return h.getFn(reqid, oid, offset, want)
+}
+
+func (h *testHandlerOffset) DeleteObj(reqid uint64, oid uint64, extID uint32) error {
+	return h.delFn(reqid, oid)
+}
+
+func (h *testHandlerOffset) DeleteBatch(reqid uint64, extID uint32, oids []byte) error {
+	return h.delBatchFn(reqid, oids)
+}
+
+func nopHandlerOffset() *testHandlerOffset {
+	return &testHandlerOffset{
+		putFn: func(reqid uint64, oid uint64, objData []byte) error {
+			return nil
+		},
+		getFn: func(reqid uint64, oid uint64, offset, n uint32) (objData []byte, crc uint32, err error) {
+			return nil, uid.GetDigest(oid), nil
+		},
+		delFn: func(reqid uint64, oid uint64) error {
+			return nil
+		},
+		delBatchFn: func(reqid uint64, oids []byte) error {
+			return nil
+		},
+	}
+}
+
 func init() {
 	rand.Seed(tsc.UnixNano())
 	rand.Read(randObjData)
@@ -184,6 +224,78 @@ func TestClient_GetObj(t *testing.T) {
 		}
 
 		if !bytes.Equal(act, objBytes) {
+			t.Fatal("obj data mismatch")
+		}
+	}
+}
+
+func TestClient_GetObjWithOffset(t *testing.T) {
+	addr := getRandomAddr()
+
+	stor := make(map[uint64][]byte)
+	sizes := make(map[uint64]uint32)
+
+	h := nopHandlerOffset()
+	h.putFn = func(reqid uint64, oid uint64, objData []byte) error {
+		o := make([]byte, len(objData))
+		copy(o, objData)
+		stor[oid] = o
+		sizes[oid] = uint32(len(o))
+		return nil
+	}
+	h.getFn = func(reqid uint64, oid uint64, offset, n uint32) (objData []byte, crc uint32, err error) {
+		size := sizes[oid]
+		objData = xbytes.GetAlignedBytes(int(size))[:n]
+		o := stor[oid]
+		copy(objData, o[offset:offset+n])
+		crc = xdigest.Sum32(objData)
+		return
+	}
+
+	s := NewServer(addr, h)
+	if err := s.Start(); err != nil {
+		t.Fatalf("cannot start server: %s", err)
+	}
+	defer s.Stop()
+
+	c := newTestClient(addr)
+	c.Start()
+	defer c.Close(nil)
+
+	for i := 0; i < 128; i++ {
+
+		size := rand.Intn(1025)
+		if size == 0 {
+			size = 1
+		}
+		size *= 4096
+		objData := randObjData[:size]
+		digest := xdigest.Sum32(objData)
+		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+
+		err := c.PutObj(0, oid, 1, objData, 0)
+		if err != nil {
+			t.Fatal(err, size)
+		}
+	}
+
+	rand.Seed(tsc.UnixNano())
+
+	getBuf := make([]byte, settings.MaxObjectSize)
+	for oid, objBytes := range stor {
+		size := sizes[oid]
+		act := getBuf[:size]
+		offset := int64(rand.Intn(int(size - 1024)))
+		n := rand.Int63n(1024)
+		if n < 128 {
+			n = 128
+		}
+		err := c.GetObj(0, oid, 1, act[:n], offset, n, false, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !bytes.Equal(act[:n], objBytes[offset:offset+n]) {
 			t.Fatal("obj data mismatch")
 		}
 	}
