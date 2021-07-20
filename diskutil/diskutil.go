@@ -22,11 +22,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/jaypipes/ghw/pkg/block"
+	"g.tesamc.com/IT/zaipkg/orpc"
+	"g.tesamc.com/IT/zproto/pkg/metapb"
 
 	"github.com/gyuho/linux-inspect/df"
-
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/jaypipes/ghw/pkg/block"
 )
 
 // IsBroken returns an error is disk error or not.
@@ -42,6 +42,12 @@ import (
 func IsBroken(err error) bool {
 	if err == nil {
 		return false
+	}
+
+	// Silent data corruption.
+	if errors.Is(err, orpc.ErrChecksumMismatch) || errors.Is(err, orpc.ErrMisdirectedWrite) ||
+		errors.Is(err, orpc.ErrLostWrite) {
+		return true
 	}
 
 	// EIO: I/O error
