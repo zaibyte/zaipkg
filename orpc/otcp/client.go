@@ -309,15 +309,16 @@ func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32,
 		ar.respBody = body
 		if method == objGetMethod {
 
-			if offset <= 0 || offset > int64(uid.GetGrains(oid))*uid.GrainSize {
-				offset = 0
-			}
-			if n <= 0 {
-				n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
-			}
-			if offset+n > int64(uid.GetGrains(oid))*uid.GrainSize {
-				n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
-			}
+			// offset & n must be legal.
+			// if offset <= 0 || offset > int64(uid.GetGrains(oid))*uid.GrainSize {
+			// 	offset = 0
+			// }
+			// if n <= 0 {
+			// 	n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
+			// }
+			// if offset+n > int64(uid.GetGrains(oid))*uid.GrainSize {
+			// 	n = int64(uid.GetGrains(oid))*uid.GrainSize - offset
+			// }
 
 			ar.offset = offset
 			ar.wantSize = n
