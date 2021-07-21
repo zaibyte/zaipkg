@@ -285,8 +285,8 @@ func TestClient_GetObjWithOffset(t *testing.T) {
 	for oid, objBytes := range stor {
 		size := sizes[oid]
 		act := getBuf[:size]
-		offset := int64(rand.Intn(int(size - 1024)))
-		n := rand.Int63n(1024)
+		offset := uint32(rand.Intn(int(size - 1024)))
+		n := uint32(rand.Int63n(1024))
 		if n < 128 {
 			n = 128
 		}

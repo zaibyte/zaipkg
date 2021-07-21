@@ -132,8 +132,8 @@ type asyncResult struct {
 	reqData []byte
 
 	respBody []byte
-	offset   int64
-	wantSize int64
+	offset   uint32
+	wantSize uint32
 
 	err chan error
 }
@@ -223,7 +223,7 @@ func (c *Client) PutObj(reqid, oid uint64, extID uint32, objData []byte, timeout
 }
 
 // GetObj gets object from the ZBuf node which orpc.Client connected.
-func (c *Client) GetObj(reqid, oid uint64, extID uint32, buf []byte, offset, n int64, isClone bool, timeout time.Duration) error {
+func (c *Client) GetObj(reqid, oid uint64, extID uint32, buf []byte, offset, n uint32, isClone bool, timeout time.Duration) error {
 	method := objGetMethod
 	if isClone {
 		method = objGetCloneMethod
@@ -255,7 +255,7 @@ const DefaultRequestTimeout = 3 * time.Second
 // Returns non-nil error if the response cannot be obtained.
 //
 // Don't forget starting the client with Client.Start() before calling Client.call().
-func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n int64, timeout time.Duration) (err error) {
+func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n uint32, timeout time.Duration) (err error) {
 
 	if atomic.LoadInt64(&c.isRunning) != 1 {
 		return orpc.ErrServiceClosed
@@ -284,7 +284,7 @@ func (c *Client) call(reqid uint64, method uint8, oid uint64, extID uint32, body
 	return
 }
 
-func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n int64) (ar *asyncResult, err error) {
+func (c *Client) callAsync(reqid uint64, method uint8, oid uint64, extID uint32, body []byte, offset, n uint32) (ar *asyncResult, err error) {
 
 	if reqid == 0 {
 		reqid = uid.MakeReqID()
@@ -514,8 +514,8 @@ func (c *Client) clientWriter(w net.Conn, pendingRequests map[uint64]*asyncResul
 		if ar.reqData != nil {
 			rh.bodySize = uint32(len(ar.reqData))
 		} else {
-			rh.offset = uint32(ar.offset)
-			rh.wantSize = uint32(ar.wantSize)
+			rh.offset = ar.offset
+			rh.wantSize = ar.wantSize
 			rh.bodySize = 0
 		}
 		rh.oid = ar.oid

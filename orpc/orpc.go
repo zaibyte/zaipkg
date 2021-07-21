@@ -36,7 +36,7 @@ type Client interface {
 	// GetObj gets object from the ZBuf node which Client connected.
 	// offset is the offset of origin object data.
 	// n is the total requested length.
-	GetObj(reqid uint64, oid uint64, extID uint32, buf []byte, offset, n int64, isClone bool, timeout time.Duration) error
+	GetObj(reqid uint64, oid uint64, extID uint32, buf []byte, offset, n uint32, isClone bool, timeout time.Duration) error
 	// DeleteObj deletes object in the ZBuf node which Client connected.
 	DeleteObj(reqid uint64, oid uint64, extID uint32, timeout time.Duration) error
 	// DeleteBatch deletes multi objects in a single RPC call.
