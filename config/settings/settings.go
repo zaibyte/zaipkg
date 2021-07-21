@@ -25,6 +25,12 @@ import (
 )
 
 const (
+	kb = 1024
+	mb = 1024 * kb
+	gb = 1024 * mb
+)
+
+const (
 	// DefaultLogRoot is the default log files path root.
 	// e.g.:
 	// <DefaultLogRoot>/<appName>/access.log
@@ -33,7 +39,7 @@ const (
 )
 
 const (
-	MaxObjectSize = 4 * 1024 * 1024 // 4MiB.
+	MaxObjectSize = 4 * mb
 )
 
 const (
@@ -60,12 +66,6 @@ const DefaultIsolationLevel = IsolationInstance
 // In Tesamc, we will start at 2 replicas first for saving overhead.
 // There are other replicas in public/private cloud storage. 2 replicas just for speeding up repairing.
 const DefaultReplicas = 2
-
-const (
-	kb = 1024
-	mb = 1024 * kb
-	gb = 1024 * mb
-)
 
 const (
 	// DefaultExtV1SegSize is 1GB, which means the extent size is 256GB.
