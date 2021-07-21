@@ -14,12 +14,25 @@ import (
 	"g.tesamc.com/IT/zaipkg/directio"
 )
 
+const (
+	NeedAligned = iota
+	NeedUnAligned
+	NeedBoth
+)
+
+// Need indicates what kinds of bytes do we need.
+var Need = NeedBoth
+
 // ResetLeakyCap resets leaky pools capacities.
 // Warn:
 // Not thread safe.
 func ResetLeakyCap(tiny, small, mid, max int) {
-	_alignPool = NewPool(tiny, small, mid, max, true)
-	_pool = NewPool(tiny, small, mid, max, false)
+	if Need != NeedUnAligned {
+		_alignPool = NewPool(tiny, small, mid, max, true)
+	}
+	if Need != NeedAligned {
+		_pool = NewPool(tiny, small, mid, max, false)
+	}
 }
 
 // EnableDefault enables default memory pool.
