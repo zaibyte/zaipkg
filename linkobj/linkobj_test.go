@@ -76,10 +76,52 @@ func TestGetOffsets(t *testing.T) {
 		}
 
 		assert.Equal(t, n, actN)
+	}
+}
 
-		// actOff := offs[0].Offset
-		// actN := offs[0].Size
-		// // TODO how to verify it? oids with fixed size?
+func BenchmarkGetOffsets(b *testing.B) {
 
+	grains := 256
+	oids := genFixedSizeOIDs(MaxObjsInLink, grains)
+
+	bl := CalcLen(int64(len(oids)))
+	buf := make([]byte, bl)
+
+	Make(oids, buf)
+
+	totalSize := GetTotalSize(buf)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		offset := uint64(xmath.AlignSize(rand.Int63n(int64(totalSize)), uid.GrainSize))
+		if offset >= totalSize-uint64(grains)*uid.GrainSize {
+			offset -= uint64(grains) * uid.GrainSize
+		}
+		_ = GetOffsets(buf, offset, uint64(grains)*uid.GrainSize)
+	}
+}
+
+// Link_Obj total size about 100MB.
+func BenchmarkGetOffsets100MB(b *testing.B) {
+
+	grains := 256
+	oids := genFixedSizeOIDs(128, grains)
+
+	bl := CalcLen(int64(len(oids)))
+	buf := make([]byte, bl)
+
+	Make(oids, buf)
+
+	totalSize := GetTotalSize(buf)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		offset := uint64(xmath.AlignSize(rand.Int63n(int64(totalSize)), uid.GrainSize))
+		if offset >= totalSize-uint64(grains)*uid.GrainSize {
+			offset -= uint64(grains) * uid.GrainSize
+		}
+		_ = GetOffsets(buf, offset, uint64(grains)*uid.GrainSize)
 	}
 }
