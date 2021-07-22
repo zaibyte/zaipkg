@@ -46,10 +46,19 @@ func TestGetOffsets(t *testing.T) {
 
 	totalSize := GetTotalSize(buf)
 
-	// TODO testing first one only
-	// TODO testing last one only
-	// TODO testing first one +1
-	// TODO testing +1 last one
+	// testing first one only
+	verifyGetOffsetsResult(t, 0, 4096, buf, oids, grains)
+	verifyGetOffsetsResult(t, 0, uint64(grains)*uid.GrainSize, buf, oids, grains)
+	// testing last one only
+	verifyGetOffsetsResult(t, totalSize-uint64(grains)*uid.GrainSize, 4096, buf, oids, grains)
+	verifyGetOffsetsResult(t, totalSize-uint64(grains)*uid.GrainSize, uint64(grains)*uid.GrainSize, buf, oids, grains)
+
+	// testing first one +1
+	verifyGetOffsetsResult(t, 0, uint64(grains)*uid.GrainSize+4096, buf, oids, grains)
+	verifyGetOffsetsResult(t, 0, uint64(grains)*uid.GrainSize+uint64(grains)*uid.GrainSize, buf, oids, grains)
+	// testing +1 last one
+	verifyGetOffsetsResult(t, totalSize-2*uint64(grains)*uid.GrainSize, uint64(grains)*uid.GrainSize+4096, buf, oids, grains)
+	verifyGetOffsetsResult(t, totalSize-2*uint64(grains)*uid.GrainSize, 2*uint64(grains)*uid.GrainSize, buf, oids, grains)
 
 	for i := 0; i < 64; i++ { // 64 loops will cost more than 1 second.
 
@@ -62,21 +71,26 @@ func TestGetOffsets(t *testing.T) {
 			n = uid.GrainSize
 		}
 
-		offs := GetOffsets(buf, offset, n)
-
-		firstIdx := offset / uint64(grains*uid.GrainSize)
-		expFirstOID := oids[firstIdx]
-		assert.Equal(t, expFirstOID, offs[0].Oid)
-
-		actN := uint64(offs[0].Size)
-		for j := 1; j < len(offs); j++ {
-			off := offs[j]
-			actN += uint64(off.Size)
-			assert.Equal(t, off.Oid, oids[int(firstIdx)+j])
-		}
-
-		assert.Equal(t, n, actN)
+		verifyGetOffsetsResult(t, offset, n, buf, oids, grains)
 	}
+}
+
+func verifyGetOffsetsResult(t *testing.T, offset, n uint64, buf []byte, oids []uint64, grains int) {
+
+	offs := GetOffsets(buf, offset, n)
+
+	firstIdx := offset / uint64(grains*uid.GrainSize)
+	expFirstOID := oids[firstIdx]
+	assert.Equal(t, expFirstOID, offs[0].Oid)
+
+	actN := uint64(offs[0].Size)
+	for j := 1; j < len(offs); j++ {
+		off := offs[j]
+		actN += uint64(off.Size)
+		assert.Equal(t, off.Oid, oids[int(firstIdx)+j])
+	}
+
+	assert.Equal(t, n, actN)
 }
 
 func BenchmarkGetOffsets(b *testing.B) {
