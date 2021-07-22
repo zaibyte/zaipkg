@@ -109,11 +109,13 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 
 	ret := make([]ObjOffset, 0, 2) // 2 is enough for most cases.
 	firstCums := binary.LittleEndian.Uint32(linkO[12+4*firstIdx : 12+4*firstIdx+4])
-	if firstCums > offGrain {
+	if firstCums > offGrain { // Part of wanted bytes is in this object.
 
 		sizeGrainInObj := firstCums - offGrain
+		couldRet := false
 		if sizeGrainInObj > sizeGrain {
 			sizeGrainInObj = sizeGrain
+			couldRet = true
 		}
 
 		sizeSum += uint64(sizeGrainInObj) * uid.GrainSize
@@ -123,6 +125,9 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 			Offset: (firstCums - offGrain) * uid.GrainSize,
 			Size:   sizeGrainInObj * uid.GrainSize,
 		})
+		if couldRet {
+			return ret
+		}
 	}
 
 	// We could use binary search for end object, but the cost maybe higher in most cases.
@@ -138,8 +143,8 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 		}
 
 		cums := binary.LittleEndian.Uint32(linkO[12+4*nextIdx : 12+4*nextIdx+4])
-		delta := cums - (offGrain + sizeGrain)
-		if delta <= 0 {
+		delta := int64(cums) - int64(offGrain+sizeGrain)
+		if delta <= 0 { // We need this object and maybe more.
 			oid := binary.LittleEndian.Uint64(linkO[oidListOffset+nextIdx*8 : oidListOffset+nextIdx*8+8])
 			size := uid.GetGrains(oid) * uid.GrainSize
 			sizeSum += uint64(size)
@@ -148,29 +153,18 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 				Offset: 0,
 				Size:   size,
 			})
-			if delta == 0 {
+			if delta == 0 { // We just need this object.
 				return ret
 			}
-		} else { // > 0
+		} else { // > 0, last part is in this object or
 			oid := binary.LittleEndian.Uint64(linkO[oidListOffset+nextIdx*8 : oidListOffset+nextIdx*8+8])
 
-			og := uid.GetGrains(oid)
-			if og > delta {
-				ret = append(ret, ObjOffset{
-					Oid:    oid,
-					Offset: 0,
-					Size:   (uid.GetGrains(oid) - delta) * uid.GrainSize,
-				})
-				return ret
-			}
 			ret = append(ret, ObjOffset{
 				Oid:    oid,
 				Offset: 0,
-				Size:   og * uid.GrainSize,
+				Size:   (uid.GetGrains(oid) - uint32(delta)) * uid.GrainSize,
 			})
-
-			sizeSum += uint64(og) * uid.GrainSize
-
+			return ret
 		}
 
 		nextIdx++
