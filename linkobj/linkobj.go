@@ -83,6 +83,10 @@ type ObjOffset struct {
 // All offsets & n are aligned to uid.GrainSize.
 func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 
+	if n == 0 {
+		return nil
+	}
+
 	totalSize := binary.LittleEndian.Uint64(linkO[4:12])
 	if offset+n > totalSize {
 		panic(fmt.Sprintf("link objects out of range [%d] with length %d", offset+n, totalSize))
@@ -93,7 +97,7 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 
 	cnt := binary.LittleEndian.Uint32(linkO[:4])
 
-	firstIdx := sort.Search(int(cnt), func(i int) bool {
+	firstIdx := sort.Search(int(cnt), func(i int) bool { // At least has one.
 		cums := binary.LittleEndian.Uint32(linkO[12+4*i : 12+4*i+4])
 		return cums >= offGrain
 	})
@@ -101,18 +105,22 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 	grainsCumsOffset := 4 + 8
 	oidListOffset := grainsCumsOffset + int(cnt)*4
 
-	ret := make([]ObjOffset, 0, 2) // 2 is enough for most cases.
-	fc := binary.LittleEndian.Uint32(linkO[12+4*firstIdx : 12+4*firstIdx+4])
-	if fc > offGrain {
+	var sizeSum uint64
 
-		cums := binary.LittleEndian.Uint32(linkO[12+4*firstIdx : 12+4*firstIdx+4])
-		sizeGrainInObj := cums - offGrain
+	ret := make([]ObjOffset, 0, 2) // 2 is enough for most cases.
+	firstCums := binary.LittleEndian.Uint32(linkO[12+4*firstIdx : 12+4*firstIdx+4])
+	if firstCums > offGrain {
+
+		sizeGrainInObj := firstCums - offGrain
 		if sizeGrainInObj > sizeGrain {
 			sizeGrainInObj = sizeGrain
 		}
+
+		sizeSum += uint64(sizeGrainInObj) * uid.GrainSize
+
 		ret = append(ret, ObjOffset{
 			Oid:    binary.LittleEndian.Uint64(linkO[oidListOffset+firstIdx*8 : oidListOffset+firstIdx*8+8]),
-			Offset: (cums - offGrain) * uid.GrainSize,
+			Offset: (firstCums - offGrain) * uid.GrainSize,
 			Size:   sizeGrainInObj * uid.GrainSize,
 		})
 	}
@@ -122,7 +130,10 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 	// which means we just need one more step, it should be much faster than binary search.
 	nextIdx := firstIdx + 1
 	for {
-		if nextIdx >= int(cnt) {
+		if nextIdx == int(cnt) {
+			break
+		}
+		if sizeSum == n {
 			break
 		}
 
@@ -130,22 +141,36 @@ func GetOffsets(linkO []byte, offset, n uint64) []ObjOffset {
 		delta := cums - (offGrain + sizeGrain)
 		if delta <= 0 {
 			oid := binary.LittleEndian.Uint64(linkO[oidListOffset+nextIdx*8 : oidListOffset+nextIdx*8+8])
+			size := uid.GetGrains(oid) * uid.GrainSize
+			sizeSum += uint64(size)
 			ret = append(ret, ObjOffset{
 				Oid:    oid,
 				Offset: 0,
-				Size:   uid.GetGrains(oid) * uid.GrainSize,
+				Size:   size,
 			})
 			if delta == 0 {
 				return ret
 			}
 		} else { // > 0
 			oid := binary.LittleEndian.Uint64(linkO[oidListOffset+nextIdx*8 : oidListOffset+nextIdx*8+8])
+
+			og := uid.GetGrains(oid)
+			if og > delta {
+				ret = append(ret, ObjOffset{
+					Oid:    oid,
+					Offset: 0,
+					Size:   (uid.GetGrains(oid) - delta) * uid.GrainSize,
+				})
+				return ret
+			}
 			ret = append(ret, ObjOffset{
 				Oid:    oid,
 				Offset: 0,
-				Size:   (uid.GetGrains(oid) - delta) * uid.GrainSize,
+				Size:   og * uid.GrainSize,
 			})
-			return ret
+
+			sizeSum += uint64(og) * uid.GrainSize
+
 		}
 
 		nextIdx++

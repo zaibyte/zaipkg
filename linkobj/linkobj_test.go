@@ -46,7 +46,12 @@ func TestGetOffsets(t *testing.T) {
 
 	totalSize := GetTotalSize(buf)
 
-	for i := 0; i < MaxObjsInLink/2; i++ {
+	// TODO testing first one only
+	// TODO testing last one only
+	// TODO testing first one +1
+	// TODO testing +1 last one
+
+	for i := 0; i < 64; i++ { // 64 loops will cost more than 1 second.
 
 		offset := uint64(xmath.AlignSize(rand.Int63n(int64(totalSize)), uid.GrainSize))
 		if offset == totalSize {
@@ -59,8 +64,18 @@ func TestGetOffsets(t *testing.T) {
 
 		offs := GetOffsets(buf, offset, n)
 
-		expFirstOID := oids[offset/uint64(grains*uid.GrainSize)]
+		firstIdx := offset / uint64(grains*uid.GrainSize)
+		expFirstOID := oids[firstIdx]
 		assert.Equal(t, expFirstOID, offs[0].Oid)
+
+		actN := uint64(offs[0].Size)
+		for j := 1; j < len(offs); j++ {
+			off := offs[j]
+			actN += uint64(off.Size)
+			assert.Equal(t, off.Oid, oids[int(firstIdx)+j])
+		}
+
+		assert.Equal(t, n, actN)
 
 		// actOff := offs[0].Offset
 		// actN := offs[0].Size
