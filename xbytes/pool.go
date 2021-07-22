@@ -21,6 +21,7 @@ const (
 )
 
 // Need indicates what kinds of bytes do we need.
+// Set it before using.
 var Need = NeedBoth
 
 // ResetLeakyCap resets leaky pools capacities.
