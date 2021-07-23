@@ -111,6 +111,28 @@ func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState m
 	return true, oldState
 }
 
+func SetCloneJobState(cj *metapb.CloneJob, state metapb.CloneJobState) bool {
+	oldSate := cj.State
+
+	if oldSate == state {
+		return true
+	}
+
+	if oldSate == metapb.CloneJobState_CloneJob_Doing && state == metapb.CloneJobState_CloneJob_Init {
+		return false
+	}
+
+	switch oldSate {
+	case metapb.CloneJobState_CloneJob_Done:
+		return false
+	default:
+
+	}
+
+	cj.State = state
+	return true
+}
+
 // Copy copies from src to dst.
 // dst is extent existed in state-machine.
 // src is created by heartbeat or internal methods which want to update some dst states.
