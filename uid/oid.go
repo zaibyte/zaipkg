@@ -33,7 +33,7 @@ import (
 // boxID: [0, 3), 0 is reserved.
 // groupID: [3, 19), 0 is reserved.
 // grains: [19, 30), supports 4MB for 4KB grain.
-// otype: [30, 32), 0 is reserved.
+// otype: [30, 32).
 // digest: [32, 64), object digest.
 
 const (
@@ -55,6 +55,11 @@ func IsValidGroupID(groupID uint16) bool {
 
 // Object types.
 const (
+	// NopObj means this object is empty. Useful to indicate there is an object (something is done),
+	// but no need to care about the content. e.g., For init clone job source, if the extent is empty,
+	// we will set the oidsoid with an oid has NopObj type. Then the clone job destination will find
+	// the oidsoid is not zero, but it's NopObj.
+	NopObj    uint8 = 0
 	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
 	// LinkObj is Link Object, linking objects together(we could have multi-level links).
 	// In present, we only use one-level link.
@@ -81,7 +86,7 @@ func checkOIDElements(boxID, groupID, grains uint32, otype uint8) bool {
 		return false
 	}
 
-	if otype == 0 || otype > MaxOType {
+	if otype > MaxOType {
 		return false
 	}
 

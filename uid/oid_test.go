@@ -51,13 +51,13 @@ func TestBytesToGrains(t *testing.T) {
 
 func TestOIDMinMax(t *testing.T) {
 
-	min := MakeOID(1, 1, 0, 0, NormalObj)
+	min := MakeOID(1, 1, 0, 0, 0)
 	boxID, groupID, grains, digest, otype, err := ParseOID(min)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if boxID != 1 || groupID != 1 || grains != 0 ||
-		digest != 0 || otype != NormalObj {
+		digest != 0 || otype != NopObj {
 		t.Fatal("min mismatch", boxID, groupID, grains, digest, otype)
 	}
 
