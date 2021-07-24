@@ -160,7 +160,7 @@ func Copy(dst, src *metapb.Extent, noState bool) {
 	} else {
 		dst.CloneJob.State = src.CloneJob.State
 		dst.CloneJob.Done = src.CloneJob.Done
-		if dst.CloneJob.IsSource {
+		if dst.CloneJob.OidsOid == 0 {
 			dst.CloneJob.Total = src.CloneJob.Total
 			dst.CloneJob.OidsOid = src.CloneJob.OidsOid
 		}
