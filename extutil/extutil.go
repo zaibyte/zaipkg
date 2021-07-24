@@ -112,6 +112,11 @@ func SetState(ext *metapb.Extent, state metapb.ExtentState) (ok bool, oldState m
 }
 
 func SetCloneJobState(cj *metapb.CloneJob, state metapb.CloneJobState) bool {
+
+	if cj == nil {
+		return false
+	}
+
 	oldSate := cj.State
 
 	if oldSate == state {
