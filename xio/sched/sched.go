@@ -204,18 +204,17 @@ func (s *Scheduler) FindRunnableLoop() {
 			continue
 		}
 
-		n := int64(len(ar.Data))
+		now := tsc.UnixNano()
 
 		_ = ioWorkers.Invoke(ar)
 
-		now := tsc.UnixNano()
 		if now-start >= s.cfg.balanceWindow {
 			s.setCostsZero()
 			start = now
 			continue
 		}
 
-		c := calcCost(n, ar.PTS, now, s.queue.pqs[minQ].shares)
+		c := calcCost(int64(len(ar.Data)), ar.PTS, now, s.queue.pqs[minQ].shares)
 		s.queue.pqs[minQ].totalCost += c
 	}
 }
