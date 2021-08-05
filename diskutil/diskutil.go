@@ -89,14 +89,14 @@ func GetFreeSize(path string) (free uint64, err error) {
 // GetDiskType gets disk device interface type by `df`.
 //
 // It regards all non-nvme devices as SATA in present.
-func GetDiskType(mntPoint string) metapb.DiskType {
+func GetDiskType(path string) metapb.DiskType {
 	rs, err := df.GetDefault(``)
 	if err != nil {
 		return metapb.DiskType_Disk_SATA
 	}
 
 	for _, r := range rs {
-		if r.MountedOn == mntPoint {
+		if strings.HasPrefix(path, r.MountedOn) {
 			if strings.HasPrefix(r.FileSystem, "/dev/nvme") {
 				return metapb.DiskType_Disk_NVMe
 			}
