@@ -153,6 +153,9 @@ const (
 	// but we don't need it in most cases. I think it's better to handle could retry or not case by case.
 	stmRejected       = 35
 	stmNotImplemented = 36
+
+	// Target object is an uid.NopObj.
+	nopObj = 37
 )
 
 // Error table.
@@ -201,6 +204,8 @@ var errnoStr = map[uint16]string{
 
 	stmRejected:       "propose to state machine is rejected",
 	stmNotImplemented: "method not implemented in state machine",
+
+	nopObj: "object is nop",
 }
 
 var (
@@ -247,6 +252,8 @@ var (
 
 	ErrSTMRejected       = Errno(stmRejected)
 	ErrSTMNotImplemented = Errno(stmNotImplemented)
+
+	ErrNopObj = Errno(nopObj)
 )
 
 // StrError is using for other network transport to convert string message to a certain error type.
