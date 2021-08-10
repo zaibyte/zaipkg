@@ -163,7 +163,7 @@ type GRPCLogV2 struct {
 }
 
 func (g *GRPCLogV2) Info(args ...interface{}) {
-	
+
 	g.logger.Info(0, fmt.Sprint(args))
 }
 
@@ -184,6 +184,10 @@ func (g *GRPCLogV2) Warningln(args ...interface{}) {
 }
 
 func (g *GRPCLogV2) Warningf(format string, args ...interface{}) {
+	g.logger.Warn(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) Warnf(format string, args ...interface{}) {
 	g.logger.Warn(0, fmt.Sprintf(format, args))
 }
 
@@ -208,6 +212,18 @@ func (g *GRPCLogV2) Fatalln(args ...interface{}) {
 }
 
 func (g *GRPCLogV2) Fatalf(format string, args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprintf(format, args))
+}
+
+func (g *GRPCLogV2) Debug(args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprint(args))
+}
+
+func (g *GRPCLogV2) Debugln(args ...interface{}) {
+	g.logger.Fatal(0, fmt.Sprintln(args))
+}
+
+func (g *GRPCLogV2) Debugf(format string, args ...interface{}) {
 	g.logger.Fatal(0, fmt.Sprintf(format, args))
 }
 
