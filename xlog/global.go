@@ -227,6 +227,16 @@ func (g *GRPCLogV2) Debugf(format string, args ...interface{}) {
 	g.logger.Fatal(0, fmt.Sprintf(format, args))
 }
 
+// no trace in xlog, using debug replaceing.
+
+func (g *GRPCLogV2) Tracef(format string, args ...interface{}) {
+	g.logger.Debugf(0, format, args)
+}
+
+func (g *GRPCLogV2) Trace(args ...interface{}) {
+	g.logger.Debug(0, fmt.Sprint(args))
+}
+
 func (g *GRPCLogV2) V(l int) bool {
 	return true
 }
