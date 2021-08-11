@@ -28,10 +28,14 @@ var Need = NeedBoth
 // Warn:
 // Not thread safe.
 func ResetLeakyCap(tiny, small, mid, max int) {
-	if Need != NeedUnAligned {
+
+	switch Need {
+	case NeedAligned:
 		_alignPool = NewPool(tiny, small, mid, max, true)
-	}
-	if Need != NeedAligned {
+	case NeedUnAligned:
+		_pool = NewPool(tiny, small, mid, max, false)
+	default:
+		_alignPool = NewPool(tiny, small, mid, max, true)
 		_pool = NewPool(tiny, small, mid, max, false)
 	}
 }
