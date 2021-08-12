@@ -20,6 +20,10 @@ const (
 	NeedBoth
 )
 
+func init() {
+	_pool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
+}
+
 // Need indicates what kinds of bytes do we need.
 // Set it before using.
 var Need = NeedBoth
