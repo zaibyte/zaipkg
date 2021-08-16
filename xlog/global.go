@@ -183,8 +183,16 @@ func (g *GRPCLogV2) Warningln(args ...interface{}) {
 	g.logger.Warn(0, fmt.Sprintln(args))
 }
 
+func Warningln(format string, args ...interface{}) {
+	_global.Warn(0, fmt.Sprintf(format, args))
+}
+
 func (g *GRPCLogV2) Warningf(format string, args ...interface{}) {
 	g.logger.Warn(0, fmt.Sprintf(format, args))
+}
+
+func Warningf(format string, args ...interface{}) {
+	_global.Warn(0, fmt.Sprintf(format, args))
 }
 
 func (g *GRPCLogV2) Warnf(format string, args ...interface{}) {
@@ -199,6 +207,10 @@ func (g *GRPCLogV2) Errorln(args ...interface{}) {
 	g.logger.Error(0, fmt.Sprintln(args))
 }
 
+func Errorln(format string, args ...interface{}) {
+	_global.Error(0, fmt.Sprintf(format, args))
+}
+
 func (g *GRPCLogV2) Errorf(format string, args ...interface{}) {
 	g.logger.Error(0, fmt.Sprintf(format, args))
 }
@@ -211,26 +223,38 @@ func (g *GRPCLogV2) Fatalln(args ...interface{}) {
 	g.logger.Fatal(0, fmt.Sprintln(args))
 }
 
+func Fatalln(args ...interface{}) {
+	_global.Fatal(0, fmt.Sprintln(args))
+}
+
 func (g *GRPCLogV2) Fatalf(format string, args ...interface{}) {
 	g.logger.Fatal(0, fmt.Sprintf(format, args))
 }
 
 func (g *GRPCLogV2) Debug(args ...interface{}) {
-	g.logger.Fatal(0, fmt.Sprint(args))
+	g.logger.Debug(0, fmt.Sprint(args))
 }
 
 func (g *GRPCLogV2) Debugln(args ...interface{}) {
-	g.logger.Fatal(0, fmt.Sprintln(args))
+	g.logger.Debug(0, fmt.Sprintln(args))
+}
+
+func Debugln(args ...interface{}) {
+	_global.Debug(0, fmt.Sprintln(args))
 }
 
 func (g *GRPCLogV2) Debugf(format string, args ...interface{}) {
-	g.logger.Fatal(0, fmt.Sprintf(format, args))
+	g.logger.Debug(0, fmt.Sprintf(format, args))
 }
 
 // no trace in xlog, using debug replaceing.
 
 func (g *GRPCLogV2) Tracef(format string, args ...interface{}) {
 	g.logger.Debugf(0, format, args)
+}
+
+func Tracef(format string, args ...interface{}) {
+	_global.Debugf(0, format, args)
 }
 
 func (g *GRPCLogV2) Trace(args ...interface{}) {
