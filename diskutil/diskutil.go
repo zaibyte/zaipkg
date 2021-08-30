@@ -50,6 +50,11 @@ func IsBroken(err error) bool {
 		return true
 	}
 
+	// Set disk broken when extent broken.
+	if errors.Is(err, orpc.ErrExtentBroken) {
+		return true
+	}
+
 	// EIO: I/O error
 	if errors.Is(err, syscall.EIO) {
 		return true
