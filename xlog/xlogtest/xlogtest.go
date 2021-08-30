@@ -92,6 +92,15 @@ func (s *Stdouter) Write(b []byte) (int, error) {
 	return os.Stdout.Write(b)
 }
 
+func SetLevel(lvl string) {
+	_ = xlog.SetLevel(lvl)
+}
+
+// Sync syncs logger buffer.
+func Sync() {
+	_ = xlog.Sync()
+}
+
 // Close closes logger.
 func Close() {
 	_ = xlog.Close()
