@@ -6,7 +6,25 @@ import (
 	"math/rand"
 	"runtime"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
+
+// TestPickOne testing distribution.
+func TestPickOne(t *testing.T) {
+
+	s := make([]int, 64)
+	for i := 0; i < 64*1024; i++ {
+		s[Uint32n(64)]++
+	}
+
+	var totalDelta float64
+	for i := range s {
+		totalDelta += math.Abs(float64(s[i] - 1024))
+	}
+
+	assert.True(t, totalDelta/64 < 40)
+}
 
 func TestPickTwo(t *testing.T) {
 
@@ -81,6 +99,18 @@ func BenchmarkInt63(b *testing.B) {
 	}
 }
 
+func BenchmarkUint32(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = Uint32()
+	}
+}
+
+func BenchmarkUint32Fr(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = Uint32Fr()
+	}
+}
+
 func BenchmarkInt63MathRand(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rand.Int63()
@@ -108,7 +138,17 @@ func BenchmarkInt63MathRandParallel(b *testing.B) {
 	})
 }
 
-func BenchmarkFastRandParallel(b *testing.B) {
+func BenchmarkUint32FrRandParallel(b *testing.B) {
+
+	b.SetParallelism(runtime.NumCPU())
+	b.RunParallel(func(pb *testing.PB) {
+		for i := 0; pb.Next(); i++ {
+			Uint32Fr()
+		}
+	})
+}
+
+func BenchmarkUint32RandParallel(b *testing.B) {
 
 	b.SetParallelism(runtime.NumCPU())
 	b.RunParallel(func(pb *testing.PB) {
