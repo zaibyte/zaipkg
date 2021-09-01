@@ -17,7 +17,7 @@
 package vfs
 
 func GetFS() FS {
-	return MemStrictFS
+	return NewStrictMem()
 }
 
 func GetTestFS() FS {
