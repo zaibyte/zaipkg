@@ -158,16 +158,3 @@ func IsDirExisted(fs FS, dir string) bool {
 
 	return true
 }
-
-// SyncDir syncs directory.
-func SyncDir(fs FS, dir string) error {
-
-	f, err := fs.OpenDir(dir)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	err = f.Sync()
-	return err
-}
