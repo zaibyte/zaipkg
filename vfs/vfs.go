@@ -27,7 +27,7 @@ import (
 // The names are filepath names: they may be / separated or \ separated,
 // depending on the underlying operating system.
 type FS interface {
-	// Create creates the named file for writing, truncating it if it already
+	// Create creates the named file for writing/reading, truncating it if it already
 	// exists.
 	Create(name string) (File, error)
 
