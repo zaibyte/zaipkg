@@ -5,7 +5,9 @@ import (
 	"os"
 )
 
-// TryFAlloc tries to alloc space for File if it has file description (!= 0).
+// TryFAlloc tries to alloc space for File.
+// Warn:
+// It should only be invoked for a 0 length file.
 func TryFAlloc(f File, length int64) error {
 
 	fd := f.Fd()
