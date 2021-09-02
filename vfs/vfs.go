@@ -46,7 +46,7 @@ type FS interface {
 	// Remove removes the named file or directory.
 	Remove(name string) error
 
-	// Remove removes the named file or directory and any children it
+	// RemoveAll removes the named file or directory and any children it
 	// contains. It removes everything it can but returns the first error it
 	// encounters.
 	RemoveAll(name string) error
