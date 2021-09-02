@@ -224,6 +224,7 @@ func (y *MemFS) Create(fullname string) (File, error) {
 				n:     n,
 				fs:    y,
 				write: true,
+				read:  true,
 			}
 		}
 		return nil
