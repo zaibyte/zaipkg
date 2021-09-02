@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// xlogtest implements functions to generate temporary loggers.
+// Package xlogtest implements functions to generate temporary loggers.
 package xlogtest
 
 import (
