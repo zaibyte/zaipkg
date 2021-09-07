@@ -32,7 +32,7 @@ import (
 //
 // boxID: [0, 3), 0 is reserved.
 // groupID: [3, 19), 0 is reserved.
-// grains: [19, 30), supports 4MB for 4KB grain.
+// grains: [19, 30), supports up to 4MB for 4KB grain size.
 // otype: [30, 32).
 // digest: [32, 64), object digest.
 
@@ -102,6 +102,11 @@ func BytesToGrains(bytes uint32) uint32 {
 // GrainsToBytes returns bytes the grains takes.
 func GrainsToBytes(grains uint32) uint32 {
 	return GrainSize * grains
+}
+
+// MakeNopOID makes an NopObj's oid.
+func MakeNopOID(boxID uint32) uint64 {
+	return MakeOID(boxID, 1, 0, 0, NopObj)
 }
 
 // MakeOID makes a new oid.
