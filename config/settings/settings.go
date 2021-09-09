@@ -43,10 +43,15 @@ const (
 )
 
 const (
-	ExtV1 uint16 = 1
+	ExtReserved uint16 = iota
+	ExtV1
+	ExtV2
+	ExtV3
+	ExtV4
+	ExtV5
 )
 
-var ValidExtVersions = []uint16{ExtV1}
+var ValidExtVersions = []uint16{ExtV1, ExtV2, ExtV3, ExtV4, ExtV5}
 
 // Zai has three different isolation levels.
 const (
