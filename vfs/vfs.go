@@ -109,7 +109,7 @@ type FS interface {
 }
 
 // DefaultFS is a vfs instance using underlying OS fs.
-var DefaultFS FS = DirectFS
+var DefaultFS = DirectFS
 
 // File is the file interface returned by FS.
 type File interface {

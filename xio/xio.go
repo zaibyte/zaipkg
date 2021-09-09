@@ -39,12 +39,12 @@ const (
 const (
 	ReqNull = 65535
 
-	// ReqObjWrite/Read is I/O requests of object write/read.
+	// ReqObjWrite & ReqObjRead is I/O requests of object write/read.
 	// Should have the highest priority.
 	ReqObjWrite = 0
 	ReqObjRead  = 1
 
-	// ReqChunkWrite/Read is I/O requests of big data chunk write/read or heavy I/O job(e.g. clone).
+	// ReqChunkWrite & ReqChunkRead is I/O requests of big data chunk write/read or heavy I/O job(e.g. clone).
 	// Should have the lowest priority.
 	// Warn:
 	// In present, we only use it in clone job.
@@ -54,7 +54,7 @@ const (
 	ReqCloneWrite = ReqChunkWrite
 	ReqCloneRead  = ReqChunkRead
 
-	// ReqGCWrite/Read is I/O requests of extent GC write/read.
+	// ReqGCWrite & ReqGCRead is I/O requests of extent GC write/read.
 	// Should have low/mid priority.
 	ReqGCWrite = 4
 	ReqGCRead  = 5
@@ -62,7 +62,7 @@ const (
 	// ReqMetaWrite is I/O requests of extent meta write.
 	// Should have high/highest priority.
 	ReqMetaWrite = 6
-	// In instance starting process, we'll read the meta.
+	// ReqMetaRead is the meta reading in instance starting process.
 	// Actually the I/O priority won't be a issue in this period,
 	// but I still want all I/O go through the scheduler.
 	ReqMetaRead = 7

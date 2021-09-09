@@ -13,7 +13,7 @@ func init() {
 	close(nopTime)
 }
 
-// GetTimeEvent gets a single time event.
+// GetTimerEvent gets a single time event.
 // It could be used in a time event loop.
 //
 // It's designed for process which need accurate control of time event.

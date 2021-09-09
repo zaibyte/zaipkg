@@ -233,18 +233,26 @@ func testSchedulerCostNopFile(t *testing.T, s xio.Scheduler) {
 	wg2 := new(sync.WaitGroup)
 	wg2.Add(threads)
 	start := tsc.UnixNano()
+
+	errC := make(chan error, threads)
+
 	for i := 0; i < threads; i++ {
 		go func() {
 			defer wg2.Done()
 			for j := 0; j < cnt; j++ {
 				err := s.DoSync(xio.ReqObjRead, f, 0, nil)
 				if err != nil {
-					t.Fatal(err)
+					errC <- err
+					return
 				}
 			}
 		}()
 	}
 	wg2.Wait()
+	close(errC)
+	for err := range errC {
+		t.Fatal(err)
+	}
 	cost := tsc.UnixNano() - start
 	t.Logf("each req cost: %dns\n", cost/int64(cnt))
 }

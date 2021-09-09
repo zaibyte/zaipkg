@@ -73,13 +73,16 @@ func BenchmarkClient_Put(b *testing.B) {
 	c := newTestClient(addr)
 	c.Conns = 4
 
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		b.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	objData := make([]byte, 4096)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
-	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -99,7 +102,7 @@ func newBenchGetHandler() *testHandler {
 			return nil
 		},
 		getFn: func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
-			_, _, grains, _, _, _ := uid.ParseOID(oid)
+			_, grains, _, _, _ := uid.ParseOID(oid)
 			objData = xbytes.GetAlignedBytes(int(grains * uid.GrainSize))
 			xorsimd.Bytes(objData, objData, objData) // Return empty data block.
 			crc = uid.GetDigest(oid)
@@ -127,11 +130,14 @@ func BenchmarkClient_Get(b *testing.B) {
 	c := newTestClient(addr)
 	c.Conns = 4
 
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		b.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	objData := make([]byte, 4096)
-	oid := uid.MakeOID(1, 1, 1, xdigest.Sum32(objData), uid.NormalObj)
+	oid := uid.MakeOID(1, 1, xdigest.Sum32(objData), uid.NormalObj)
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -157,13 +163,16 @@ func BenchmarkClient_Delete(b *testing.B) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		b.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	req := make([]byte, 4096)
 	rand.Read(req)
 	digest := xdigest.Sum32(req)
-	oid := uid.MakeOID(1, 1, 1, digest, uid.NormalObj)
+	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {

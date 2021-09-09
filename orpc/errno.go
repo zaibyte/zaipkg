@@ -261,7 +261,7 @@ func StrError(str string) error {
 	var en uint16
 	for i := range errnoStr {
 		if str == errnoStr[i] {
-			en = uint16(i)
+			en = i
 		}
 	}
 	return Errno(en)

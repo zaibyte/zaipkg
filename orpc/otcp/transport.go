@@ -133,7 +133,7 @@ type Listener interface {
 	// All subsequent calls to Accept() must immediately return error.
 	Close() error
 
-	// Addr returns the listener's network address.
+	// ListenAddr returns the listener's network address.
 	ListenAddr() net.Addr
 }
 

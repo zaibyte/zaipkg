@@ -66,7 +66,10 @@ func TestServerChecksum(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Fatal("should ok")
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// 3. Pass wrong checksum
 	req, err = http.NewRequest(http.MethodGet,

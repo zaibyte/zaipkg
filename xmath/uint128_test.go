@@ -75,7 +75,7 @@ func TestMult(t *testing.T) {
 		bbig := makeBigInt(b)
 		resu := au.Mult(bu)
 		resbig.Mod(multbig.Mul(abig, bbig), mod)
-		//compare abig, resu
+		// compare abig, resu
 		resubig := uint128ToBigInt(resu)
 		if resbig.Cmp(resubig) != 0 {
 			t.Errorf("Multiplied %x by %x (%x %x x %x %x), expected %x got %x (%x %x)",

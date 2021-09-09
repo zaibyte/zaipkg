@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	// Size to align the buffer to
+	// AlignSize is size to align the buffer to
 	AlignSize = 4096
 
-	// Minimum block size
+	// BlockSize is the minimum block size
 	BlockSize = 4096
 )
 

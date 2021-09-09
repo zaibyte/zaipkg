@@ -28,7 +28,7 @@ func genFixedSizeOIDs(cnt int, grains int) []uint64 {
 
 		ot := uint8(rand.Intn(uid.MaxOType))
 		ot = uid.NormalObj
-		oids[i] = uid.MakeOID(uint32(uid.TestBoxID), uint32(gid), uint32(grains), digests[i], ot)
+		oids[i] = uid.MakeOID(uint32(gid), uint32(grains), digests[i], ot)
 	}
 
 	return oids

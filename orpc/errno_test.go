@@ -28,10 +28,10 @@ func TestErrno_Error(t *testing.T) {
 	assert.Equal(t, "", Errno(0).Error())
 	for i := range errnoStr {
 		err := Errno(i)
-		if errnoStr[uint16(i)] == "" {
+		if errnoStr[i] == "" {
 			assert.Equal(t, "unknown error", err.Error())
 		} else {
-			assert.Equal(t, errnoStr[uint16(i)], err.Error())
+			assert.Equal(t, errnoStr[i], err.Error())
 		}
 	}
 }

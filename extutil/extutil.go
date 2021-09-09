@@ -64,7 +64,7 @@ func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
 
 // DefaultExtParams is the default extent params collection.
 var DefaultExtParams = map[uint16]*stmpb.ExtParams{
-	settings.ExtV1: &stmpb.ExtParams{
+	settings.ExtV1: {
 		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultExtV1SegSize)),
 		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultExtV1SegSize),
 		Params:   marshalExtV1Params(DefaultExtV1Params),
@@ -74,7 +74,7 @@ var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 // MakeExtParamsV1 make stmpb.ZBufParams with ext.v1 segments_size config.
 func MakeExtParamsV1(segSize typeutil.ByteSize) map[uint32]*stmpb.ExtParams {
 	return map[uint32]*stmpb.ExtParams{
-		uint32(settings.ExtV1): &stmpb.ExtParams{
+		uint32(settings.ExtV1): {
 			DiskSize: GetExtV1Preallocate(uint64(segSize)),
 			ExtSize:  settings.ExtV1SegCnt * uint64(segSize),
 			Params:   marshalExtV1Params(makeExtV1Params(segSize)),

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// package xhttp provides http implementation for Zai.
+// Package xhttp provides http implementation for Zai.
 // Zai uses HTTP/1.1 for handling management requests,
 // these requests are not performance sensitive,
 // HTTP/1.1 is a good choice to make normal operations easier.

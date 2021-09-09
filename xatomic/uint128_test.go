@@ -2,8 +2,8 @@ package xatomic
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/binary"
+	"math/rand"
 	"runtime"
 	"testing"
 	"unsafe"

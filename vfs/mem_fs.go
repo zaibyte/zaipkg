@@ -586,7 +586,7 @@ func (f *memNode) dump(w *bytes.Buffer, level int) {
 		w.WriteString("          ")
 	} else {
 		f.mu.Lock()
-		fmt.Fprintf(w, "%8d  ", len(f.mu.data))
+		_, _ = fmt.Fprintf(w, "%8d  ", len(f.mu.data))
 		f.mu.Unlock()
 	}
 	for i := 0; i < level; i++ {

@@ -42,6 +42,7 @@ package otcp
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -194,7 +195,10 @@ func TestClient_GetObj(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	for i := 0; i < 128; i++ {
@@ -206,7 +210,7 @@ func TestClient_GetObj(t *testing.T) {
 		size *= 4096
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
@@ -259,7 +263,10 @@ func TestClient_GetObjWithOffset(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	for i := 0; i < 128; i++ {
@@ -271,7 +278,7 @@ func TestClient_GetObjWithOffset(t *testing.T) {
 		size *= 4096
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
@@ -342,7 +349,10 @@ func TestClient_DeleteObj(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	for i := 0; i < 128; i++ {
@@ -355,7 +365,7 @@ func TestClient_DeleteObj(t *testing.T) {
 
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
@@ -441,7 +451,10 @@ func TestClient_DeleteBatch(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	for i := 0; i < 128; i++ {
@@ -454,7 +467,7 @@ func TestClient_DeleteBatch(t *testing.T) {
 
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
@@ -472,7 +485,7 @@ func TestClient_DeleteBatch(t *testing.T) {
 		cnt++
 	}
 
-	err := c.DeleteBatch(0, deleted, 1, 0)
+	err = c.DeleteBatch(0, deleted, 1, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -537,7 +550,10 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	testCnt := 128
@@ -551,13 +567,15 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 		size *= 4096
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
 		oids[i] = oid
 	}
+
+	errC := make(chan error, testCnt)
 
 	var wg sync.WaitGroup
 	for _, oid := range oids {
@@ -566,27 +584,36 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 			defer wg.Done()
 			v, ok := sizes.Load(oid)
 			if !ok {
-				t.Fatal("not found")
+				errC <- errors.New("not found")
+				return
 			}
 			size := v.(int)
 			act := make([]byte, size)
 			err := c.GetObj(0, oid, 1, act, 0, 0, false, 0)
 			if err != nil {
-				t.Fatal(err)
+				errC <- err
+				return
 			}
 
 			v2, ok := stor.Load(oid)
 			if !ok {
-				t.Fatal("not found")
+				errC <- errors.New("not found")
+				return
 			}
 			if !bytes.Equal(act, v2.([]byte)) {
-				t.Fatal("get obj data mismatch")
+				errC <- errors.New("get obj data mismatch")
+				return
 			}
 
 		}(oid)
 	}
 
 	wg.Wait()
+
+	close(errC)
+	for err := range errC {
+		t.Error(err)
+	}
 }
 
 func TestClient_GetObj_Error_Concurrency(t *testing.T) {
@@ -616,7 +643,10 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	defer s.Stop()
 
 	c := newTestClient(addr)
-	c.Start()
+	err := c.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer c.Close(nil)
 
 	oids := make([]uint64, 1024)
@@ -630,13 +660,15 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 		size *= 4096
 		objData := randObjData[:size]
 		digest := xdigest.Sum32(objData)
-		oid := uid.MakeOID(1, 1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
+		oid := uid.MakeOID(1, uid.BytesToGrains(uint32(size)), digest, uid.NormalObj)
 		err := c.PutObj(0, oid, 1, objData, 0)
 		if err != nil {
 			t.Fatal(err, size)
 		}
 		oids[i] = oid
 	}
+
+	errC := make(chan error, len(oids))
 
 	var wg sync.WaitGroup
 	for _, oid := range oids {
@@ -645,10 +677,17 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 			defer wg.Done()
 			err := c.GetObj(0, oid, 1, make([]byte, 0), 0, 0, false, 0)
 			if err != orpc.ErrNotFound {
-				t.Fatal("error should be not found")
+				errC <- err
+				return
 			}
 		}(oid)
 	}
 
 	wg.Wait()
+
+	close(errC)
+
+	for err := range errC {
+		assert.Equal(t, orpc.ErrNopObj, err, "should be not found")
+	}
 }
