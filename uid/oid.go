@@ -1,19 +1,3 @@
-/*
- * Copyright (c) 2020. Temple3x (temple3x@gmail.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package uid
 
 import (
@@ -23,31 +7,32 @@ import (
 )
 
 // oid struct(uint64):
-// +----------+-------------+------------+----------+------------+
-// | boxID(3) | groupID(16) | grains(11) | otype(2) | digest(32) |
-// +----------+-------------+------------+----------+------------+
-// 0                                                            64
+// +-------------+------------+----------+------------+
+// | groupID(19) | grains(11) | otype(2) | digest(32) |
+// +-------------+------------+----------+------------+
+// 0                                                 64
 //
 // Total length: 8B.
 //
-// boxID: [0, 3), 0 is reserved.
-// groupID: [3, 19), 0 is reserved.
+// groupID: [0, 19), 0 is reserved.
 // grains: [19, 30), supports up to 4MB for 4KB grain size.
 // otype: [30, 32).
-// digest: [32, 64), object digest.
+// digest: [32, 64), object digest, it's a kind of hash.Sum32, details of the algorithm is in package xdigest.
 
 const (
 	GrainSize = 4096 // 4KiB grain.
 
-	MaxBoxID   = (1 << 3) - 1
-	MaxGroupID = (1 << 16) - 1
+	MaxGroupID = (1 << 19) - 1
 	MaxGrains  = (1 << 11) - 1
 	MaxOType   = 3
 )
 
 // IsValidGroupID returns the groupID is valid or not.
-func IsValidGroupID(groupID uint16) bool {
+func IsValidGroupID(groupID uint32) bool {
 	if groupID == 0 {
+		return false
+	}
+	if groupID > MaxGroupID {
 		return false
 	}
 	return true
@@ -56,29 +41,28 @@ func IsValidGroupID(groupID uint16) bool {
 // Object types.
 const (
 	// NopObj means this object is empty. Useful to indicate there is an object (something is done),
-	// but no need to care about the content. e.g., For init clone job source, if the extent is empty,
+	// but no need to care about the content.
+	//
+	// e.g., For init clone job source, if the extent is empty,
 	// we will set the oidsoid with an oid has NopObj type. Then the clone job destination will find
 	// the oidsoid is not zero, but it's NopObj.
 	NopObj    uint8 = 0
 	NormalObj uint8 = 1 // NormalObj: Normal Object, maximum size is 4MB.
 	// LinkObj is Link Object, linking objects together(we could have multi-level links).
-	// In present, we only use one-level link.
+	// TODO In present, we only use one-level link, enough in our env.
 	LinkObj uint8 = 2
 )
 
 // IsValidOID returns the oid is valid or not.
 func IsValidOID(oid uint64) bool {
-	boxID, groupID, grains, _, otype := parseOID(oid)
-	return checkOIDElements(boxID, groupID, grains, otype)
+	groupID, grains, _, otype := parseOID(oid)
+	return checkOIDElements(groupID, grains, otype)
 }
 
 // checkOIDElements checks oid elements, return false if not legal.
-func checkOIDElements(boxID, groupID, grains uint32, otype uint8) bool {
-	if boxID == 0 || boxID > MaxBoxID {
-		return false
-	}
+func checkOIDElements(groupID, grains uint32, otype uint8) bool {
 
-	if groupID == 0 || groupID > MaxGroupID {
+	if !IsValidGroupID(groupID) {
 		return false
 	}
 
@@ -105,47 +89,40 @@ func GrainsToBytes(grains uint32) uint32 {
 }
 
 // MakeNopOID makes an NopObj's oid.
-func MakeNopOID(boxID uint32) uint64 {
-	return MakeOID(boxID, 1, 0, 0, NopObj)
+func MakeNopOID() uint64 {
+	return MakeOID(1, 0, 0, NopObj)
 }
 
 // MakeOID makes a new oid.
-func MakeOID(boxID, groupID, grains, digest uint32, otype uint8) uint64 {
+func MakeOID(groupID, grains, digest uint32, otype uint8) uint64 {
 
-	if !checkOIDElements(boxID, groupID, grains, otype) {
+	if !checkOIDElements(groupID, grains, otype) {
 		panic(fmt.Sprintf("illegal OID elements, "+
-			"boxID: %d, groupID: %d, grains: %d, otype: %d",
-			boxID, groupID, grains, otype))
+			"groupID: %d, grains: %d, otype: %d",
+			groupID, grains, otype))
 	}
 
-	return uint64(digest)<<32 | uint64(otype)<<30 | uint64(grains)<<19 | uint64(groupID)<<3 | uint64(boxID)
+	return uint64(digest)<<32 | uint64(otype)<<30 | uint64(grains)<<19 | uint64(groupID)
 }
 
 // ParseOID parses oid.
-func ParseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8, err error) {
+func ParseOID(oid uint64) (groupID, grains, digest uint32, otype uint8, err error) {
 
-	lowBits := uint32(oid)
-	boxID = lowBits & MaxBoxID
-	groupID = (lowBits >> 3) & MaxGroupID
-	grains = (lowBits >> 19) & MaxGrains
-	otype = uint8(lowBits>>30) & MaxOType
+	groupID, grains, digest, otype = parseOID(oid)
 
-	digest = uint32(oid >> 32)
-
-	if !checkOIDElements(boxID, groupID, grains, otype) {
+	if !checkOIDElements(groupID, grains, otype) {
 		err = fmt.Errorf("illegal OID elements, "+
-			"boxID: %d, groupID: %d, grains: %d, otype: %d",
-			boxID, groupID, grains, otype)
+			"groupID: %d, grains: %d, otype: %d",
+			groupID, grains, otype)
 		return
 	}
 	return
 }
 
-func parseOID(oid uint64) (boxID, groupID, grains, digest uint32, otype uint8) {
+func parseOID(oid uint64) (groupID, grains, digest uint32, otype uint8) {
 
 	lowBits := uint32(oid)
-	boxID = lowBits & MaxBoxID
-	groupID = (lowBits >> 3) & MaxGroupID
+	groupID = lowBits & MaxGroupID
 	grains = (lowBits >> 19) & MaxGrains
 	otype = uint8(lowBits>>30) & MaxOType
 
@@ -161,18 +138,18 @@ func GetDigest(oid uint64) uint32 {
 
 // GetGrains gets grains from an oid.
 func GetGrains(oid uint64) uint32 {
-	_, _, grains, _, _ := parseOID(oid)
+	_, grains, _, _ := parseOID(oid)
 	return grains
 }
 
 // GetOType gets otype from an oid.
 func GetOType(oid uint64) uint8 {
-	_, _, _, _, otype := parseOID(oid)
+	_, _, _, otype := parseOID(oid)
 	return otype
 }
 
 // GetGroupIDFromOID gets group_id from an oid.
 func GetGroupIDFromOID(oid uint64) uint32 {
-	_, groupID, _, _, _ := parseOID(oid)
+	groupID, _, _, _ := parseOID(oid)
 	return groupID
 }

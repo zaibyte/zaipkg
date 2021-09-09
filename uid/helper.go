@@ -7,8 +7,6 @@ import (
 	"github.com/templexxx/tsc"
 )
 
-const TestBoxID = 6
-
 // GenRandOIDs generates cnt unique random oids.
 func GenRandOIDs(cnt int) []uint64 {
 
@@ -28,10 +26,10 @@ func GenRandOIDs(cnt int) []uint64 {
 			grains = 1
 		}
 		ot := uint8(rand.Intn(MaxOType))
-		if ot != NormalObj && ot != LinkObj {
+		if ot == NopObj { // There is no need to test NopObj.
 			ot = NormalObj
 		}
-		oids[i] = MakeOID(uint32(TestBoxID), uint32(gid), uint32(grains), digests[i], ot)
+		oids[i] = MakeOID(uint32(gid), uint32(grains), digests[i], ot)
 	}
 
 	return oids

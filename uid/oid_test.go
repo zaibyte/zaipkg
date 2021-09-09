@@ -51,22 +51,22 @@ func TestBytesToGrains(t *testing.T) {
 
 func TestOIDMinMax(t *testing.T) {
 
-	min := MakeOID(1, 1, 0, 0, 0)
-	boxID, groupID, grains, digest, otype, err := ParseOID(min)
+	min := MakeOID(1, 0, 0, 0)
+	groupID, grains, digest, otype, err := ParseOID(min)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != 1 || groupID != 1 || grains != 0 ||
+	if groupID != 1 || grains != 0 ||
 		digest != 0 || otype != NopObj {
-		t.Fatal("min mismatch", boxID, groupID, grains, digest, otype)
+		t.Fatal("min mismatch", groupID, grains, digest, otype)
 	}
 
-	max := MakeOID(MaxBoxID, MaxGroupID, MaxGrains, math.MaxUint32, MaxOType)
-	boxID, groupID, grains, digest, otype, err = ParseOID(max)
+	max := MakeOID(MaxGroupID, MaxGrains, math.MaxUint32, MaxOType)
+	groupID, grains, digest, otype, err = ParseOID(max)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if boxID != MaxBoxID || groupID != MaxGroupID || grains != MaxGrains ||
+	if groupID != MaxGroupID || grains != MaxGrains ||
 		digest != math.MaxUint32 || otype != MaxOType {
 		t.Fatal("max mismatch")
 	}
@@ -77,29 +77,24 @@ func TestOIDMakeParse(t *testing.T) {
 
 	n := 1024
 	for i := 0; i < n; i++ {
-		boxID := uint32(rand.Intn(MaxBoxID + 1))
 		groupID := uint32(rand.Intn(MaxGroupID + 1))
 		otype := uint8(rand.Intn(MaxOType + 1))
 		grain := uint32(rand.Intn(MaxGrains + 1))
 		digest := uint32(rand.Intn(math.MaxUint32 + 1))
 
-		if boxID == 0 {
-			boxID = 1
-		}
 		if groupID == 0 {
 			groupID = 2
 		}
 		if otype == 0 {
 			otype = 3
 		}
-		oid := MakeOID(boxID, groupID, grain, digest, otype)
+		oid := MakeOID(groupID, grain, digest, otype)
 
-		boxIDAct, groupIDAct, sizeAct, digestAct, otypeAct, err := ParseOID(oid)
+		groupIDAct, sizeAct, digestAct, otypeAct, err := ParseOID(oid)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, boxID, boxIDAct)
 		assert.Equal(t, groupID, groupIDAct)
 		assert.Equal(t, grain, sizeAct)
 		assert.Equal(t, digest, digestAct)
@@ -110,15 +105,15 @@ func TestOIDMakeParse(t *testing.T) {
 func BenchmarkMakeOID(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
-		_ = MakeOID(1, 1, 1, 1, 1)
+		_ = MakeOID(1, 1, 1, 1)
 	}
 }
 
 func BenchmarkParseOID(b *testing.B) {
 
-	oid := MakeOID(1, 2, 3, 4, 1)
+	oid := MakeOID(2, 3, 4, 1)
 
 	for i := 0; i < b.N; i++ {
-		_, _, _, _, _, _ = ParseOID(oid)
+		_, _, _, _, _ = ParseOID(oid)
 	}
 }
