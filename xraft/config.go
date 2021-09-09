@@ -2,7 +2,7 @@ package xraft
 
 import "g.tesamc.com/IT/zaipkg/config"
 
-// Raft config.
+// Config of Raft.
 type Config struct {
 	RaftNode RaftNodeConfig `toml:"raft_node"`
 	Member   MemberConfig   `toml:"member"`
