@@ -14,6 +14,9 @@ import (
 )
 
 type Config struct {
+	// KeeperClusterID is the cluster ID of keeper,
+	// used for ensuring connecting the correct cluster.
+	KeeperClusterID uint64 `toml:"keeper_cluster_id"`
 	// Every instance has its own unique instanceID
 	InstanceID string `toml:"instance_id"`
 
