@@ -76,7 +76,7 @@ var (
 		return _pool.maxPool.Get()[:n]
 	}
 	PutBytes = func(b []byte) {
-		n := len(b)
+		n := cap(b)
 		b = b[:0]
 		if n <= _MaxSyncPoolSize {
 			_pool.spPool.Put(b)
@@ -113,7 +113,7 @@ var (
 		return _alignPool.maxPool.Get()[:n]
 	}
 	PutAlignedBytes = func(b []byte) {
-		n := len(b)
+		n := cap(b)
 		b = b[:0]
 		if n <= _MaxSyncPoolSize {
 			_alignPool.spPool.Put(b)
