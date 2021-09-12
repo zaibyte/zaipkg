@@ -78,22 +78,24 @@ var (
 	PutBytes = func(b []byte) {
 		n := cap(b)
 		b = b[:0]
-		if n <= _MaxSyncPoolSize {
-			_pool.spPool.Put(b)
-			return
-		}
-		if n <= _MaxTinySize {
-			_pool.tinyPool.Put(b)
-			return
-		}
-		if n <= _MaxSmallSize {
-			_pool.smallPool.Put(b)
-			return
-		}
-		if n <= _MaxMidSize {
+		if n >= _MaxMidSize {
 			_pool.MidPool.Put(b)
 			return
 		}
+		if n >= _MaxSmallSize {
+			_pool.smallPool.Put(b)
+			return
+		}
+		if n >= _MaxTinySize {
+			_pool.tinyPool.Put(b)
+			return
+		}
+
+		if n >= _MaxSyncPoolSize {
+			_pool.spPool.Put(b)
+			return
+		}
+
 		_pool.maxPool.Put(b)
 	}
 
@@ -115,22 +117,23 @@ var (
 	PutAlignedBytes = func(b []byte) {
 		n := cap(b)
 		b = b[:0]
-		if n <= _MaxSyncPoolSize {
-			_alignPool.spPool.Put(b)
-			return
-		}
-		if n <= _MaxTinySize {
-			_alignPool.tinyPool.Put(b)
-			return
-		}
-		if n <= _MaxSmallSize {
-			_alignPool.smallPool.Put(b)
-			return
-		}
-		if n <= _MaxMidSize {
+		if n >= _MaxMidSize {
 			_alignPool.MidPool.Put(b)
 			return
 		}
+		if n >= _MaxSmallSize {
+			_alignPool.smallPool.Put(b)
+			return
+		}
+		if n >= _MaxTinySize {
+			_alignPool.tinyPool.Put(b)
+			return
+		}
+		if n >= _MaxSyncPoolSize {
+			_alignPool.spPool.Put(b)
+			return
+		}
+
 		_alignPool.maxPool.Put(b)
 	}
 )
