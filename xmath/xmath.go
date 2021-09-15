@@ -1,6 +1,9 @@
 package xmath
 
-import "math"
+import (
+	"math"
+	"math/bits"
+)
 
 // Round rounds a float64 and cuts it by n.
 // n: decimal places.
@@ -14,4 +17,13 @@ func Round(f float64, n int) float64 {
 // AlignSize returns size after n aligns to align.
 func AlignSize(n int64, align int64) int64 {
 	return (n + align - 1) &^ (align - 1)
+}
+
+// NextPower2 gets next number which is pow(2,x).
+func NextPower2(n uint64) uint64 {
+	if n <= 1 {
+		return 1
+	}
+
+	return 1 << (64 - bits.LeadingZeros64(n-1)) // TODO may use BSR instruction.
 }
