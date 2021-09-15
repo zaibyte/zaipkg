@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"g.tesamc.com/IT/zaipkg/xmath"
+
 	"g.tesamc.com/IT/zaipkg/orpc"
 
 	"github.com/templexxx/cpu"
@@ -33,25 +35,30 @@ type Ring struct {
 	buffer          []unsafe.Pointer
 }
 
+const (
+	MinCap = 1 << 7
+	MaxCap = 1 << 20
+)
+
 // New creates a new diode (ring buffer). The Ring diode
 // is optimzed for many writers (on go-routines B-n) and a single reader
 // (on go-routine A).
 //
-// ring size = 2 ^ n.
-// The min ring size is 128.
-// The max ring size is 2^20.
+// ring size = 2 ^ x.
 func New(n uint64) *Ring {
 
-	if n <= 7 {
-		n = 7
+	n = xmath.NextPower2(n)
+
+	if n < MinCap {
+		n = MinCap
 	}
-	if n >= 20 {
-		n = 20
+	if n > MaxCap {
+		n = MaxCap
 	}
 
 	d := &Ring{
-		buffer: make([]unsafe.Pointer, 1<<n),
-		mask:   (1 << n) - 1,
+		buffer: make([]unsafe.Pointer, n),
+		mask:   n - 1,
 	}
 
 	// Start write index at the value before 0

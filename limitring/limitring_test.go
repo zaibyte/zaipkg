@@ -9,14 +9,14 @@ import (
 
 func TestLimitRing(t *testing.T) {
 
-	r := New(7)
+	r := New(0)
 
-	a := 1
-	err := r.Push(unsafe.Pointer(&a))
-	assert.Nil(t, err)
-
-	d, ok := r.Pop()
-	assert.True(t, ok)
-
-	assert.Equal(t, a, *(*int)(d))
+	for i := 0; i < MinCap; i++ {
+		a := i
+		err := r.Push(unsafe.Pointer(&a))
+		assert.Nil(t, err)
+		d, ok := r.Pop()
+		assert.True(t, ok)
+		assert.Equal(t, a, *(*int)(d))
+	}
 }
