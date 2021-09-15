@@ -169,7 +169,7 @@ func (s *Scheduler) FindRunnableLoop() {
 			}
 		}
 		r.Err <- err
-	}, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(true))
+	}, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(false))
 	defer ioWorkers.Release()
 
 	start := tsc.UnixNano()
