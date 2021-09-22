@@ -231,3 +231,12 @@ func NewPool(tiny, small, mid, max int, isAligned bool) *BufferPool {
 		maxPool:   NewLeakyBuf(max, makeMaxFn),
 	}
 }
+
+type PoolBytesCloser struct {
+	P []byte
+}
+
+func (r PoolBytesCloser) Close() error {
+	PutBytes(r.P)
+	return nil
+}
