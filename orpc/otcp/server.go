@@ -156,7 +156,7 @@ func (s *Server) Start() error {
 	}
 
 	var err error
-	s.handlerPool, err = ants.NewPool(s.Concurrency, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(true))
+	s.handlerPool, err = ants.NewPool(s.Concurrency, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(false))
 	if err != nil {
 		return err
 	}

@@ -40,42 +40,50 @@
 package otcp
 
 import (
+	"fmt"
 	"math/rand"
-	"runtime"
+	"sync"
 	"testing"
 	"time"
-
-	"g.tesamc.com/IT/zaipkg/xbytes"
 
 	"g.tesamc.com/IT/zaipkg/uid"
 	"g.tesamc.com/IT/zaipkg/xdigest"
 	"g.tesamc.com/IT/zaipkg/xtest"
-	"github.com/panjf2000/ants/v2"
-	"github.com/templexxx/xorsimd"
+
+	"github.com/elastic/go-hdrhistogram"
+	"github.com/templexxx/tsc"
 )
 
-// TODO if you want to run bench, should raise the xbytes leaky pool capacities.
-// which has been adjusted to smaller numbers.
+// Single thread request.
+func TestClient_Put_Latency_Single(t *testing.T) {
 
-func BenchmarkClient_Put(b *testing.B) {
-
-	rand.Seed(time.Now().UnixNano())
+	if !xtest.IsPropEnabled() {
+		t.Skip("skip prop testing")
+	}
 
 	addr := getRandomAddr()
 
 	s := NewServer(addr, nopHandler())
 
 	if err := s.Start(); err != nil {
-		b.Fatalf("cannot start server: %s", err)
+		t.Fatalf("cannot start server: %s", err)
 	}
 	defer s.Stop()
 
+	n := 10000
+
 	c := newTestClient(addr)
-	c.Conns = 4
+
+	value := make([]byte, 128)
+	rand.Read(value)
+	key := make([]byte, 8)
+	rand.Read(key)
+
+	lat := hdrhistogram.New(100, time.Second.Nanoseconds(), 3)
 
 	err := c.Start()
 	if err != nil {
-		b.Fatal(err)
+		t.Fatal(err)
 	}
 	defer c.Close(nil)
 
@@ -84,193 +92,96 @@ func BenchmarkClient_Put(b *testing.B) {
 	digest := xdigest.Sum32(objData)
 	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-			err := c.PutObj(uid.MakeReqID(), oid, 1, objData, 0)
-			if err != nil {
-				b.Fatalf("Unexpected error: %s", err)
-			}
+	jobStart := tsc.UnixNano()
+	for i := 0; i < n; i++ {
+		start := tsc.UnixNano()
+		err := c.PutObj(uid.MakeReqID(), oid, 1, objData, 0)
+		if err != nil {
+			t.Fatal(err)
 		}
-	})
+		_ = lat.RecordValue(tsc.UnixNano() - start)
+	}
+	cost := tsc.UnixNano() - jobStart
+
+	printLat("set", lat, cost)
 }
 
-func newBenchGetHandler() *testHandler {
+// Multi threads request.
+func TestClient_Put_Latency_Concurrency(t *testing.T) {
 
-	return &testHandler{
-		putFn: func(reqid uint64, oid uint64, objData []byte) error {
-			return nil
-		},
-		getFn: func(reqid uint64, oid uint64) (objData []byte, crc uint32, err error) {
-			_, grains, _, _, _ := uid.ParseOID(oid)
-			objData = xbytes.GetAlignedBytes(int(grains * uid.GrainSize))
-			xorsimd.Bytes(objData, objData, objData) // Return empty data block.
-			crc = uid.GetDigest(oid)
-			return
-		},
-		delFn: func(reqid uint64, oid uint64) error {
-			return nil
-		},
+	if !xtest.IsPropEnabled() {
+		t.Skip("skip prop testing")
 	}
-}
-
-func BenchmarkClient_Get(b *testing.B) {
-
-	rand.Seed(time.Now().UnixNano())
-
-	addr := getRandomAddr()
-
-	s := NewServer(addr, newBenchGetHandler())
-
-	if err := s.Start(); err != nil {
-		b.Fatalf("cannot start server: %s", err)
-	}
-	defer s.Stop()
-
-	c := newTestClient(addr)
-	c.Conns = 4
-
-	err := c.Start()
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer c.Close(nil)
-
-	objData := make([]byte, 4096)
-	oid := uid.MakeOID(1, 1, xdigest.Sum32(objData), uid.NormalObj)
-
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-			err := c.GetObj(uid.MakeReqID(), oid, 1, objData, 0, 0, false, 0)
-			if err != nil {
-				b.Fatalf("Unexpected error: %s", err)
-			}
-		}
-	})
-}
-
-func BenchmarkClient_Delete(b *testing.B) {
-
-	rand.Seed(time.Now().UnixNano())
 
 	addr := getRandomAddr()
 
 	s := NewServer(addr, nopHandler())
+
 	if err := s.Start(); err != nil {
-		b.Fatalf("cannot start server: %s", err)
+		t.Fatalf("cannot start server: %s", err)
 	}
 	defer s.Stop()
 
+	threads := 64
+
 	c := newTestClient(addr)
+
+	value := make([]byte, 128)
+	rand.Read(value)
+	key := make([]byte, 8)
+	rand.Read(key)
+
+	lat := hdrhistogram.New(100, time.Second.Nanoseconds(), 3)
+
+	n := 10000
+	wg := new(sync.WaitGroup)
+	wg.Add(threads)
+
 	err := c.Start()
 	if err != nil {
-		b.Fatal(err)
+		t.Fatal(err)
 	}
 	defer c.Close(nil)
 
-	req := make([]byte, 4096)
-	rand.Read(req)
-	digest := xdigest.Sum32(req)
+	objData := make([]byte, 4096)
+	rand.Read(objData)
+	digest := xdigest.Sum32(objData)
 	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)
 
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-			err := c.DeleteObj(uid.MakeReqID(), oid, 1, 0)
-			if err != nil {
-				b.Fatalf("Unexpected error: %s", err)
+	jobStart := tsc.UnixNano()
+	for j := 0; j < threads; j++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < n; i++ {
+				start := tsc.UnixNano()
+				err := c.PutObj(uid.MakeReqID(), oid, 1, objData, 0)
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				_ = lat.RecordValueAtomic(tsc.UnixNano() - start)
 			}
-
-		}
-	})
-}
-
-// Compare goroutine pool & using chan to limit goroutine numbers.
-// TODO should I use goroutine pool?
-func BenchmarkGoroutinePool(b *testing.B) {
-	p, _ := ants.NewPool(128, ants.WithMaxBlockingTasks(1<<30))
-	defer p.Release()
-
-	b.StartTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-
-			_ = p.Submit(func() {
-				demoFunc()
-			})
-		}
-	})
-
-	b.StopTimer()
-}
-
-func BenchmarkChanLimitGoroutine(b *testing.B) {
-
-	c := make(chan struct{}, 128)
-
-	b.StartTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for i := 0; pb.Next(); i++ {
-
-			c <- struct{}{}
-			go func() {
-				demoFunc()
-				<-c
-			}()
-		}
-	})
-
-	b.StopTimer()
-}
-
-// Bench channel.
-func BenchmarkStructChan(b *testing.B) {
-	ch := make(chan struct{}, 1024)
-	go func() {
-		for {
-			<-ch
-		}
-	}()
-
-	for i := 0; i < b.N; i++ {
-		ch <- struct{}{}
+		}()
 	}
+	wg.Wait()
+	cost := tsc.UnixNano() - jobStart
+
+	printLat("set", lat, cost)
 }
 
-func BenchmarkChanContended(b *testing.B) {
-	const C = 100
-	myc := make(chan int, C*runtime.GOMAXPROCS(0))
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			for i := 0; i < C; i++ {
-				myc <- 0
-			}
-			for i := 0; i < C; i++ {
-				<-myc
-			}
-		}
-	})
-}
-
-func BenchmarkChanMultiProds(b *testing.B) {
-
-	const C = 2048
-	myc := make(chan int, C*runtime.GOMAXPROCS(0))
-	go func() {
-		for {
-			<-myc
-		}
-	}()
-	b.SetParallelism(1024)
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			myc <- 1
-		}
-	})
-
-}
-
-func demoFunc() {
-	xtest.DoNothing(10) // About 400ns.
+func printLat(name string, lats *hdrhistogram.Histogram, cost int64) {
+	fmt.Println(fmt.Sprintf("%s min: %d, avg: %.2f, max: %d, iops: %.2f",
+		name, lats.Min(), lats.Mean(), lats.Max(), float64(lats.TotalCount())/(float64(cost)/float64(time.Second))))
+	fmt.Println("percentiles (nsec):")
+	fmt.Print(fmt.Sprintf(
+		"|  1.00th=[%d],  5.00th=[%d], 10.00th=[%d], 20.00th=[%d],\n"+
+			"| 30.00th=[%d], 40.00th=[%d], 50.00th=[%d], 60.00th=[%d],\n"+
+			"| 70.00th=[%d], 80.00th=[%d], 90.00th=[%d], 95.00th=[%d],\n"+
+			"| 99.00th=[%d], 99.50th=[%d], 99.90th=[%d], 99.95th=[%d],\n"+
+			"| 99.99th=[%d]\n",
+		lats.ValueAtQuantile(1), lats.ValueAtQuantile(5), lats.ValueAtQuantile(10), lats.ValueAtQuantile(20),
+		lats.ValueAtQuantile(30), lats.ValueAtQuantile(40), lats.ValueAtQuantile(50), lats.ValueAtQuantile(60),
+		lats.ValueAtQuantile(70), lats.ValueAtQuantile(80), lats.ValueAtQuantile(90), lats.ValueAtQuantile(95),
+		lats.ValueAtQuantile(99), lats.ValueAtQuantile(99.5), lats.ValueAtQuantile(99.9), lats.ValueAtQuantile(99.95),
+		lats.ValueAtQuantile(99.99)))
 }

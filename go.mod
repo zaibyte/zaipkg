@@ -8,6 +8,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/docker/go-units v0.4.0
 	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/elastic/go-hdrhistogram v0.1.0
 	github.com/go-redis/redis/v8 v8.11.2
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.2.0
@@ -24,7 +25,6 @@ require (
 	github.com/templexxx/cpu v0.0.8-0.20210423085042-1c810926b5dd
 	github.com/templexxx/fnc v1.0.1
 	github.com/templexxx/tsc v0.0.3
-	github.com/templexxx/xorsimd v0.4.1
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/zaibyte/nanozap v0.0.6
 	go.uber.org/multierr v1.6.0 // indirect

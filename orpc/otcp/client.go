@@ -146,7 +146,7 @@ const (
 	DefaultClientRecvBufferSize = 64 * 1024
 
 	// DefaultClientConns is the default connection numbers for Client.
-	DefaultClientConns = 16
+	DefaultClientConns = 4
 
 	DefaultCloseWait = 3 * time.Second
 )
