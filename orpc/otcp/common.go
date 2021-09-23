@@ -58,5 +58,5 @@ const (
 
 	// DefaultFlushDelay is the default delay between message flushes
 	// on Client and Server.
-	DefaultFlushDelay = time.Microsecond * 100
+	DefaultFlushDelay = time.Duration(-1)
 )
