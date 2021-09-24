@@ -2,9 +2,11 @@ package xrand
 
 import (
 	"math/bits"
+	"math/rand"
 	"sync/atomic"
 
 	"github.com/templexxx/tsc"
+	"github.com/zeebo/xxh3"
 )
 
 const falseSharingRange = 128
@@ -16,7 +18,11 @@ var (
 )
 
 func init() {
-	fastrand = tsc.RDTSC()
+	// TODO need to test how good the fastrand is.
+	rand.Seed(int64(tsc.RDTSC()))
+	randData := make([]byte, rand.Int31n(33344))
+	rand.Read(randData)
+	fastrand = xxh3.HashSeed(randData, tsc.RDTSC())
 }
 
 func Uint32() uint32 {
@@ -52,20 +58,4 @@ func PickTwo(n int64) (a, b int64) {
 	}
 
 	return int64(Uint32n(uint32(n))), int64(Uint32n(uint32(n)))
-}
-
-func Mul64(x, y uint64) (hi, lo uint64) {
-	const mask32 = 1<<32 - 1
-	x0 := x & mask32
-	x1 := x >> 32
-	y0 := y & mask32
-	y1 := y >> 32
-	w0 := x0 * y0
-	t := x1*y0 + w0>>32
-	w1 := t & mask32
-	w2 := t >> 32
-	w1 += x0 * y1
-	hi = x1*y1 + w2 + w1>>32
-	lo = x * y
-	return
 }

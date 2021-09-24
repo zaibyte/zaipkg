@@ -27,6 +27,7 @@ require (
 	github.com/templexxx/tsc v0.0.3
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/zaibyte/nanozap v0.0.6
+	github.com/zeebo/xxh3 v1.0.0-rc3.0.20210921232450-c77878a38204
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
 	google.golang.org/grpc v1.29.1
