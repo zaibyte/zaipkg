@@ -556,7 +556,7 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	}
 	defer c.Close(nil)
 
-	testCnt := 128
+	testCnt := 32
 	oids := make([]uint64, testCnt)
 	for i := 0; i < testCnt; i++ {
 
@@ -649,9 +649,10 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	}
 	defer c.Close(nil)
 
-	oids := make([]uint64, 1024)
+	testCnt := 32
+	oids := make([]uint64, testCnt)
 
-	for i := 0; i < 128; i++ {
+	for i := 0; i < testCnt; i++ {
 
 		size := rand.Intn(1025)
 		if size == 0 {
