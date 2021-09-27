@@ -17,7 +17,7 @@ require (
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lni/goutils v1.2.0
-	github.com/panjf2000/ants/v2 v2.4.3
+	github.com/panjf2000/ants/v2 v2.4.6
 	github.com/pierrec/lz4/v4 v4.1.8
 	github.com/prometheus/client_golang v1.6.0
 	github.com/spf13/cast v1.3.1
