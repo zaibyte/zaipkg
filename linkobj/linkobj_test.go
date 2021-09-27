@@ -116,7 +116,7 @@ func BenchmarkGetOffsets(b *testing.B) {
 	}
 }
 
-// Link_Obj total size about 100MB.
+// Link_Obj total size about 100 MB.
 func BenchmarkGetOffsets100MB(b *testing.B) {
 
 	grains := 256

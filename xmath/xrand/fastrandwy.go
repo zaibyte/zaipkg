@@ -19,10 +19,10 @@ var (
 
 func init() {
 	// TODO need to test how good the fastrand is.
-	rand.Seed(int64(tsc.RDTSC()))
+	rand.Seed(tsc.UnixNano())
 	randData := make([]byte, rand.Int31n(33344))
 	rand.Read(randData)
-	fastrand = xxh3.HashSeed(randData, tsc.RDTSC())
+	fastrand = xxh3.HashSeed(randData, uint64(tsc.UnixNano()))
 }
 
 func Uint32() uint32 {

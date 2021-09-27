@@ -9,7 +9,7 @@ import (
 	"github.com/templexxx/tsc"
 )
 
-const DefaultTimeCalibrateInterval = 15 * time.Minute
+const DefaultTimeCalibrateInterval = 5 * time.Minute // < 1/2 ntpd default sync interval(11min).
 
 func TimeCalibrateLoop(ctx context.Context, interval time.Duration) {
 

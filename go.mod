@@ -24,9 +24,9 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/templexxx/cpu v0.0.8-0.20210423085042-1c810926b5dd
 	github.com/templexxx/fnc v1.0.1
-	github.com/templexxx/tsc v0.0.3
+	github.com/templexxx/tsc v1.0.1
 	github.com/urfave/negroni/v2 v2.0.2
-	github.com/zaibyte/nanozap v0.0.6
+	github.com/zaibyte/nanozap v0.0.7
 	github.com/zeebo/xxh3 v1.0.0-rc3.0.20210921232450-c77878a38204
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
