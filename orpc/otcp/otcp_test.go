@@ -578,8 +578,8 @@ func TestClient_GetObj_Concurrency(t *testing.T) {
 	errC := make(chan error, testCnt)
 
 	var wg sync.WaitGroup
+	wg.Add(len(oids))
 	for _, oid := range oids {
-		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
 			v, ok := sizes.Load(oid)
@@ -671,8 +671,8 @@ func TestClient_GetObj_Error_Concurrency(t *testing.T) {
 	errC := make(chan error, len(oids))
 
 	var wg sync.WaitGroup
+	wg.Add(len(oids))
 	for _, oid := range oids {
-		wg.Add(1)
 		go func(oid uint64) {
 			defer wg.Done()
 			err := c.GetObj(0, oid, 1, make([]byte, 0), 0, 0, false, 0)
