@@ -152,7 +152,7 @@ func (l *ErrorLogger) Warnf(reqid uint64, format string, args ...interface{}) {
 }
 
 func (l *ErrorLogger) Debugf(reqid uint64, format string, args ...interface{}) {
-	l.Logger.Debug(reqid, fmt.Sprintf(format, args...))
+	l.Logger.Debugf(reqid, format, args)
 }
 
 func (l *ErrorLogger) Fatalf(reqid uint64, format string, args ...interface{}) {

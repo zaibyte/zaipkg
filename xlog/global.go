@@ -74,7 +74,7 @@ func Warnf(format string, args ...interface{}) {
 }
 
 func Debugf(format string, args ...interface{}) {
-	_global.Debug(0, fmt.Sprintf(format, args...))
+	_global.Debugf(0, format, args)
 }
 
 func Fatalf(format string, args ...interface{}) {
@@ -122,7 +122,7 @@ func WarnIDf(reqid uint64, format string, args ...interface{}) {
 }
 
 func DebugIDf(reqid uint64, format string, args ...interface{}) {
-	_global.Debug(reqid, fmt.Sprintf(format, args...))
+	_global.Debugf(reqid, format, args)
 }
 
 func FatalIDf(reqid uint64, format string, args ...interface{}) {
@@ -248,7 +248,7 @@ func (g *GRPCLogV2) Debugln(args ...interface{}) {
 }
 
 func (g *GRPCLogV2) Debugf(format string, args ...interface{}) {
-	g.logger.Debug(0, fmt.Sprintf(format, args))
+	g.logger.Debugf(0, format, args)
 }
 
 // no trace in xlog, using debug replaceing.
