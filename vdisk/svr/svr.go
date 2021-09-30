@@ -142,6 +142,43 @@ func (d *ZBufDisks) AddDisk(diskID string) {
 	d.Disks.Store(diskID, v)
 }
 
+// AddDisk adds single disk, if alrady has update its usage.
+func (d *ZBufDisks) AddDiskAndUpdateUsage(diskID string) {
+
+	di, ok := d.Disks.Load(diskID)
+	if ok {
+		dd := di.(*ZBufDisk)
+		path := MakeDiskDir(diskID, d.DataRoot)
+		d.VDisk.InitUsage(path, dd.Info)
+
+		return
+	}
+
+	v := new(ZBufDisk)
+
+	meta := (*vdisk.SyncMeta)(new(metapb.Disk))
+	meta.State = metapb.DiskState_Disk_ReadWrite
+	meta.Id = diskID
+	path := MakeDiskDir(diskID, d.DataRoot)
+	meta.Type = d.VDisk.GetType(path)
+	meta.SN = d.VDisk.GetSN(path)
+	_ = d.VDisk.InitUsage(path, meta)
+	meta.InstanceId = d.InstanceID
+
+	if meta.Used >= meta.Size_ {
+		meta.State = metapb.DiskState_Disk_Full
+	}
+
+	v.Info = meta
+	v.DiskID = diskID
+	if d.schedCfg != nil {
+		v.Sched = sched.New(d.ctx, d.schedCfg, v.Info)
+	} else {
+		v.Sched = new(xio.NopScheduler)
+	}
+	d.Disks.Store(diskID, v)
+}
+
 // StartSched starts disk I/O scheduler.
 // If diskIDs is not empty, using diskIDs, if diskID is not found, ignore.
 // If it's empty, starting all schedulers which haven't started.
@@ -341,6 +378,35 @@ func (d *ZBufDisks) DetectLoop() {
 				continue
 			}
 			d.AddDisks(diskIDs)
+			d.StartSched()
+		}
+	}
+}
+
+func (d *ZBufDisks) DetectLoopWithUsage() {
+	defer d.wg.Done()
+
+	ctx, cancel := context.WithCancel(d.ctx)
+	defer cancel()
+
+	t := xtime.AcquireTimer(10 * time.Minute)
+	defer xtime.ReleaseTimer(t)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			diskIDs, err := ListDiskIDs(d.FS, d.DataRoot)
+			if err != nil {
+				xlog.Warn(fmt.Sprintf("failed to list disk ids in detect loop: %s", err.Error()))
+				continue
+			}
+
+			for _, diskID := range diskIDs {
+				d.AddDiskAndUpdateUsage(diskID)
+			}
+
 			d.StartSched()
 		}
 	}
