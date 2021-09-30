@@ -73,18 +73,6 @@ const DefaultIsolationLevel = IsolationInstance
 const DefaultReplicas = 2
 
 const (
-	// DefaultExtV1SegSize is 1GB, which means the extent size is 256GB.
-	// For a 8TB NVMe driver(raw capacity), in real world, there will be space for over-provisioning & other things.
-	// So we have about less than 30 extents on each disk.
-	//
-	// It's obvious that the bigger extent, the lower rate of losing group when there are broken disks.
-	// But we can't make it too bigger either, because we may lose the property of distributed repairing,
-	// we hope if there is a broken disk, more disks could help to reconstruct the data, it'll reduce the
-	// load of reconstruction on disks in avg. and speeding up the process.
-	//
-	// More details about the rate of group failed see: https://g.tesamc.com/IT/zai-docs/issues/19
-	DefaultExtV1SegSize = typeutil.ByteSize(gb)
-
 	ExtV1SegCnt = 256
 )
 
@@ -94,4 +82,15 @@ const (
 	DefaultZBufHeartbeatInterval = 15 * time.Second
 
 	DefaultExtHeartbeatInterval = 30 * time.Second
+)
+
+// Different sizes of objects will be put into different versions of extents for avoiding high hash collision.
+// In these settings, we will get 3% - 11.8% hash collision at most when extents are full.
+// For details, see issue: https://g.tesamc.com/IT/zai/issues/40
+const (
+	DefaultV1SegmentSize = typeutil.ByteSize(4 * 1024 * 1024) // 4MB, Low hash collision for (0, 64KB] objects.
+	DefaultV2SegmentSize = DefaultV1SegmentSize * 4           // 16MB,  Low hash collision for (64KB, 256KB] objects.
+	DefaultV3SegmentSize = DefaultV2SegmentSize * 4           // 64MB, Low hash collision for (256KB, 1MB] objects.
+	DefaultV4SegmentSize = DefaultV3SegmentSize * 4           // 256MB, Low hash collision for (1MB, 4MB) objects.
+	DefaultV5SegmentSize = DefaultV4SegmentSize * 2           // 512MB, Low hash collision for [4MB] objects.
 )

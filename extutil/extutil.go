@@ -13,8 +13,8 @@ import (
 )
 
 // ExtPreallocate is the disk size maybe taken by an extent.
-// Used in Keeper when it want to create a new extent on a certain disk,
-// after picking up disk, we should updating the disk usage by this size,
+// Used in Keeper when it wants to create a new extent on a certain disk,
+// after picking up disk, we should update the disk usage by this size,
 // then beginning to pick up the next disk.
 //
 // It's not a precise number, but it's okay because the more accurate usage will be report by disk heartbeat.
@@ -38,14 +38,28 @@ func ExtV1Preallocate(params []byte) uint64 {
 
 func GetExtV1Preallocate(segSize uint64) uint64 {
 	if segSize == 0 {
-		segSize = uint64(settings.DefaultExtV1SegSize)
+		segSize = uint64(settings.DefaultV1SegmentSize)
 	}
 
 	return (settings.ExtV1SegCnt + 1) * segSize
 }
 
 var DefaultExtV1Params = &stmpb.ExtV1Params{
-	SegmentSize: uint64(settings.DefaultExtV1SegSize),
+	SegmentSize: uint64(settings.DefaultV1SegmentSize),
+}
+
+var DefaultExtV2Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(settings.DefaultV2SegmentSize),
+}
+var DefaultExtV3Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(settings.DefaultV3SegmentSize),
+}
+
+var DefaultExtV4Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(settings.DefaultV4SegmentSize),
+}
+var DefaultExtV5Params = &stmpb.ExtV1Params{
+	SegmentSize: uint64(settings.DefaultV5SegmentSize),
 }
 
 func makeExtV1Params(segSize typeutil.ByteSize) *stmpb.ExtV1Params {
@@ -65,9 +79,29 @@ func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
 // DefaultExtParams is the default extent params collection.
 var DefaultExtParams = map[uint16]*stmpb.ExtParams{
 	settings.ExtV1: {
-		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultExtV1SegSize)),
-		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultExtV1SegSize),
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultV1SegmentSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultV1SegmentSize),
 		Params:   marshalExtV1Params(DefaultExtV1Params),
+	},
+	settings.ExtV2: {
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultV2SegmentSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultV2SegmentSize),
+		Params:   marshalExtV1Params(DefaultExtV2Params),
+	},
+	settings.ExtV3: {
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultV3SegmentSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultV3SegmentSize),
+		Params:   marshalExtV1Params(DefaultExtV3Params),
+	},
+	settings.ExtV4: {
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultV4SegmentSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultV4SegmentSize),
+		Params:   marshalExtV1Params(DefaultExtV4Params),
+	},
+	settings.ExtV5: {
+		DiskSize: GetExtV1Preallocate(uint64(settings.DefaultV5SegmentSize)),
+		ExtSize:  settings.ExtV1SegCnt * uint64(settings.DefaultV5SegmentSize),
+		Params:   marshalExtV1Params(DefaultExtV5Params),
 	},
 }
 
