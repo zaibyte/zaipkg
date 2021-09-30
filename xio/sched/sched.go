@@ -15,7 +15,6 @@ import (
 	"g.tesamc.com/IT/zaipkg/xlog"
 	"g.tesamc.com/IT/zproto/pkg/metapb"
 
-	"github.com/panjf2000/ants/v2"
 	"github.com/templexxx/tsc"
 )
 
@@ -24,9 +23,8 @@ const (
 	// Beyond 128, we may get higher IOPS, but much higher latency.
 	//
 	// In an enterprise-class TLC/QLC NVMe driver, 16-64 would be a good choice for daily using.
-	// For large I/O, 16 is a better choice.
-	// I set a big number here for hitting the largest IOPS with randomly read small data blocks,
-	// after peak, the extra goroutines will be recycled, won't cause any wasting.
+	// For large size of I/O, 16 is a better choice.
+	// I set a big number here for hitting the largest IOPS when randomly read small data blocks.
 	//
 	// This value is the result of combination of Intel manual & my experience & testing results.
 	DefaultThreads = 128
@@ -146,31 +144,31 @@ const (
 	noReqSleepSATA    = 2 * time.Millisecond
 )
 
+func doIO(ar *xio.AsyncRequest, workersCh <- chan struct{}) {
+
+	var err error
+	if xio.IsReqRead(ar.Type) {
+		_, err = ar.File.ReadAt(ar.Data, ar.Offset)
+	} else {
+		_, err = ar.File.WriteAt(ar.Data, ar.Offset)
+		if err == nil {
+			// I don't want update ctime, utime etc. at the same time.
+			// The file size is pre-allocated, data sync is enough.
+			// (data sync will allocate space too, even we've already used pre-allocate,
+			// some file system are using lazy allocation)
+			err = ar.File.Fdatasync()
+		}
+	}
+
+	<-workersCh
+	ar.Err <- err
+}
+
 // FindRunnableLoop finds runnable request by scheduler rules round and round.
 func (s *Scheduler) FindRunnableLoop() {
 	defer s.stopWg.Done()
 
-	// ioWorkers is a Goroutine pool, for saving goroutine creating/destroy/scheduling cost.
-	// error here could be ignore because we won't pass illegal params.
-	ioWorkers, _ := ants.NewPoolWithFunc(s.cfg.Threads, func(i interface{}) {
-
-		r := i.(*xio.AsyncRequest)
-		var err error
-		if xio.IsReqRead(r.Type) {
-			_, err = r.File.ReadAt(r.Data, r.Offset)
-		} else {
-			_, err = r.File.WriteAt(r.Data, r.Offset)
-			if err == nil {
-				// I don't want update ctime, utime etc. at the same time.
-				// The file size is pre-allocated, data sync is enough.
-				// (data sync will allocate space too, even we've already used pre-allocate,
-				// some file system are using lazy allocation)
-				err = r.File.Fdatasync()
-			}
-		}
-		r.Err <- err
-	}, ants.WithLogger(xlog.GetLogger()), ants.WithExpiryDuration(3*time.Second), ants.WithPreAlloc(false))
-	defer ioWorkers.Release()
+	workersCh := make(chan struct{}, s.cfg.Threads)
 
 	start := tsc.UnixNano()
 	for {
@@ -204,10 +202,19 @@ func (s *Scheduler) FindRunnableLoop() {
 			continue
 		}
 
+		// Blocking until we have free worker.
+		select {
+		case workersCh <- struct{}{}:
+		default:
+			select {
+			case workersCh <- struct{}{}:
+			case <-s.ctx.Done():
+				return
+			}
+		}
+		go doIO(ar, workersCh)
+
 		now := tsc.UnixNano()
-
-		_ = ioWorkers.Invoke(ar)
-
 		if now-start >= s.cfg.balanceWindow {
 			s.setCostsZero()
 			start = now
