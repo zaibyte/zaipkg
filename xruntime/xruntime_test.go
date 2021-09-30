@@ -14,6 +14,8 @@ func BenchmarkGoroutinePool(b *testing.B) {
 	p, _ := ants.NewPool(128, ants.WithMaxBlockingTasks(1<<30))
 	defer p.Release()
 
+	b.SetParallelism(128)
+
 	b.StartTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for i := 0; pb.Next(); i++ {
@@ -27,9 +29,12 @@ func BenchmarkGoroutinePool(b *testing.B) {
 	b.StopTimer()
 }
 
+// When I raise parallelism, the chan version gets better performance.
 func BenchmarkChanLimitGoroutine(b *testing.B) {
 
 	c := make(chan struct{}, 128)
+
+	b.SetParallelism(128)
 
 	b.StartTimer()
 	b.RunParallel(func(pb *testing.PB) {
