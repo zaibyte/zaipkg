@@ -25,7 +25,7 @@ import (
 // │    ├── disk_<disk_id0>
 //
 const (
-	diskNamePrefix = "disk_"
+	DiskNamePrefix = "disk_"
 )
 
 // ZBufDisks contains all avail disks on single zBuf server.
