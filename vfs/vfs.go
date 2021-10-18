@@ -106,6 +106,11 @@ type FS interface {
 
 	// PathDir returns all but the last element of path, typically the path's directory.
 	PathDir(path string) string
+
+
+	// GetFreeSpace returns the amount of free disk space for the filesystem
+	// where path is any file or directory within that filesystem.
+	GetFreeSpace(path string) (uint64, error)
 }
 
 // DefaultFS is a vfs instance using underlying OS fs.

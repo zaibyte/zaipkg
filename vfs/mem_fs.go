@@ -763,3 +763,7 @@ func (f *memFile) Sync() error {
 	}
 	return nil
 }
+
+func (*MemFS) GetFreeSpace(string) (uint64, error) {
+	return 0, errors.New("not supported")
+}
