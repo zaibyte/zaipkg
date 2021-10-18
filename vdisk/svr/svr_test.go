@@ -39,7 +39,7 @@ func TestListDiskIDs(t *testing.T) {
 	fs := vfs.GetFS()
 
 	for _, id := range ids {
-		dir := filepath.Join(root, diskNamePrefix+cast.ToString(id))
+		dir := filepath.Join(root, DiskNamePrefix+cast.ToString(id))
 		err = fs.MkdirAll(dir, 0777)
 		if err != nil {
 			t.Fatal(err)

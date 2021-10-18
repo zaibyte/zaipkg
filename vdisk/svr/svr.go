@@ -24,6 +24,7 @@ import (
 // ├── <data_root>
 // │    ├── disk_<disk_id0>
 //
+
 const (
 	DiskNamePrefix = "disk_"
 )
@@ -87,9 +88,9 @@ func ListDiskIDs(fs vfs.FS, root string) (diskIDs []string, err error) {
 	diskIDs = make([]string, 0, len(diskFns))
 	cnt := 0
 	for _, fn := range diskFns {
-		if strings.HasPrefix(fn, diskNamePrefix) {
+		if strings.HasPrefix(fn, DiskNamePrefix) {
 			cnt++
-			id := strings.TrimPrefix(fn, diskNamePrefix)
+			id := strings.TrimPrefix(fn, DiskNamePrefix)
 			if uid.IsValidDiskID(id) {
 				diskIDs = append(diskIDs, id)
 			}
@@ -240,7 +241,7 @@ func (d *ZBufDisks) CloseSched(diskIDs ...string) {
 
 // MakeDiskDir makes disk path according diskID
 func MakeDiskDir(diskID string, root string) string {
-	return filepath.Join(root, diskNamePrefix+diskID)
+	return filepath.Join(root, DiskNamePrefix+diskID)
 }
 
 // GetInfo gets disk info by diskID.
