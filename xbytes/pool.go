@@ -240,3 +240,12 @@ func (r PoolBytesCloser) Close() error {
 	PutBytes(r.P)
 	return nil
 }
+
+type PoolAlignedBytesCloser struct {
+	P []byte
+}
+
+func (r PoolAlignedBytesCloser) Close() error {
+	PutAlignedBytes(r.P)
+	return nil
+}
