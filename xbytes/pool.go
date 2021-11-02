@@ -22,6 +22,7 @@ const (
 
 func init() {
 	_pool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
+	_alignPool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, true)
 }
 
 // Need indicates what kinds of bytes do we need.
