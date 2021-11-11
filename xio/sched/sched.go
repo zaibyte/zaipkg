@@ -37,7 +37,7 @@ const (
 // Config is Scheduler's config.
 type Config struct {
 	Threads     int
-	NVMeThread  int          `toml:"nv_me_thread"`
+	NVMeThread  int          `toml:"nvme_thread"`
 	SATAThread  int          `toml:"sata_thread"`
 	QueueConfig *QueueConfig `toml:"queue_config"`
 
@@ -121,12 +121,12 @@ func (c *Config) adjust(dt metapb.DiskType) {
 
 	if dt == metapb.DiskType_Disk_SATA {
 		config.Adjust(&c.SATAThread, DefaultThreadsSATA)
-		config.Adjust(&c.Threads, &c.SATAThread)
+		config.Adjust(&c.Threads, c.SATAThread)
 		config.Adjust(&c.balanceWindow, balanceWindowsSATA)
 		config.Adjust(&c.noReqSleep, noReqSleepSATA)
 	} else {
 		config.Adjust(&c.NVMeThread, DefaultThreads)
-		config.Adjust(&c.Threads, &c.NVMeThread)
+		config.Adjust(&c.Threads, c.NVMeThread)
 		config.Adjust(&c.balanceWindow, defaultBalanceWindows)
 		config.Adjust(&c.noReqSleep, defaultNoReqSleep)
 	}
@@ -144,7 +144,7 @@ const (
 	noReqSleepSATA    = 2 * time.Millisecond
 )
 
-func doIO(ar *xio.AsyncRequest, workersCh <- chan struct{}) {
+func doIO(ar *xio.AsyncRequest, workersCh <-chan struct{}) {
 
 	var err error
 	if xio.IsReqRead(ar.Type) {
