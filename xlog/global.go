@@ -74,7 +74,7 @@ func Warnf(format string, args ...interface{}) {
 }
 
 func Debugf(format string, args ...interface{}) {
-	_global.Debugf(0, format, args)
+	_global.Debugf(0, format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
