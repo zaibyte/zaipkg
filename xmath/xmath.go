@@ -19,6 +19,11 @@ func AlignSize(n int64, align int64) int64 {
 	return (n + align - 1) &^ (align - 1)
 }
 
+// AlignToLast aligns n to the last align.
+func AlignToLast(n int64, align int64) int64 {
+	return AlignSize(n-(align-1), align)
+}
+
 // NextPower2 gets next number which is pow(2,x).
 func NextPower2(n uint64) uint64 {
 	if n <= 1 {

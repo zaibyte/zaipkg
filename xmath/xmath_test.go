@@ -19,6 +19,30 @@ func TestRound(t *testing.T) {
 	}
 }
 
+func TestAlignToLast(t *testing.T) {
+
+	var align int64 = 1 << 12
+	var i int64
+
+	if AlignToLast(0, align) != 0 {
+		t.Fatal("mismatch")
+	}
+
+	for i = 1; i < align; i++ {
+		n := AlignToLast(i, align)
+		if n != 0 {
+			t.Fatal("align mismatch")
+		}
+	}
+
+	for i = align; i < align*2; i++ {
+		n := AlignToLast(i, align)
+		if n != align {
+			t.Fatal("align mismatch", i, n, align)
+		}
+	}
+}
+
 func TestAlignTo(t *testing.T) {
 	var align int64 = 1 << 12
 	var i int64
@@ -34,7 +58,7 @@ func TestAlignTo(t *testing.T) {
 		}
 	}
 
-	for i = align + 1; i < align*2; i++ {
+	for i = align + 1; i <= align*2; i++ {
 		n := AlignSize(i, align)
 		if n != align*2 {
 			t.Fatal("align mismatch")
