@@ -24,21 +24,21 @@ func TestAlignToLast(t *testing.T) {
 	var align int64 = 1 << 12
 	var i int64
 
-	if AlignToLast(0, align) != 0 {
+	if AlignToLast(0, align) != 0 { // 0 should be 0.
 		t.Fatal("mismatch")
 	}
 
-	for i = 1; i < align; i++ {
+	for i = 1; i < align; i++ { // [1, align) should be 0.
 		n := AlignToLast(i, align)
 		if n != 0 {
 			t.Fatal("align mismatch")
 		}
 	}
 
-	for i = align; i < align*2; i++ {
+	for i = align; i < align*2; i++ { // [align, align*2) should be align.
 		n := AlignToLast(i, align)
 		if n != align {
-			t.Fatal("align mismatch", i, n, align)
+			t.Fatal("align mismatch")
 		}
 	}
 }
