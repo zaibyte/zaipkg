@@ -20,6 +20,10 @@ const (
 	NeedBoth
 )
 
+const (
+	MaxSizeInPool = _MaxSize
+)
+
 func init() {
 	_pool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, false)
 	_alignPool = NewPool(defaultTinySizeLeaky, defaultSmallSizeLeaky, defaultMidSizeLeaky, defaultMaxSizeLeaky, true)
