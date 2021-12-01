@@ -54,6 +54,41 @@ import (
 	"github.com/templexxx/tsc"
 )
 
+func makeChans(n int) (bCh chan struct{}, nbCh chan struct{}) {
+	nbCh = make(chan struct{}, n)
+	bCh = make(chan struct{})
+	return
+}
+
+func BenchmarkBlockingSelect(b *testing.B) {
+	bCh, nbCh := makeChans(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		select {
+		case nbCh <- struct{}{}: // query queue emulation
+		case <-bCh: // timer emulation
+		}
+	}
+}
+
+func BenchmarkNonBlockingSelect(b *testing.B) {
+	bCh, nbCh := makeChans(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		select {
+		case nbCh <- struct{}{}:
+		default:
+			b.Fatalf("Unexpected code path")
+			select {
+			case nbCh <- struct{}{}:
+			case <-bCh:
+			}
+		}
+	}
+}
+
 // Single thread request.
 func TestClient_Put_Latency_Single(t *testing.T) {
 
