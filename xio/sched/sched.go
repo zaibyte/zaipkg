@@ -173,8 +173,16 @@ func (s *Scheduler) FindRunnableLoop() {
 	start := tsc.UnixNano()
 	for {
 
-		if atomic.LoadInt64(&s.isRunning) != 1 {
-			return
+		select {
+		case <-s.queue.notifyQ:
+		default:
+			// // Give the last chance for ready goroutines filling notify chan :)
+			// runtime.Gosched()
+			select {
+			case <-s.queue.notifyQ:
+			case <-s.ctx.Done():
+				return
+			}
 		}
 
 		var min = math.MaxFloat64
@@ -188,14 +196,9 @@ func (s *Scheduler) FindRunnableLoop() {
 			}
 		}
 
-		var ar *xio.AsyncRequest
-		if minQ != -1 {
-			ar = <-s.queue.pqs[minQ].reqQueue.queue
-			atomic.AddInt64(&s.queue.pqs[minQ].pending, -1)
-		} else {
-			time.Sleep(s.cfg.noReqSleep)
-			continue
-		}
+		// minQ must have.
+		ar := <-s.queue.pqs[minQ].reqQueue.queue
+		atomic.AddInt64(&s.queue.pqs[minQ].pending, -1)
 
 		if err := s.preproc(ar.Type); err != nil {
 			ar.Err <- err

@@ -22,6 +22,13 @@ func (p *ReqQueue) add(reqType uint64, f xio.File, offset int64, d []byte) (ar *
 	ar.Err = make(chan error)
 	ar.PTS = tsc.UnixNano()
 
-	p.queue <- ar // Block until send succeed.
+	select {
+	case p.queue <- ar:
+	default:
+		select {
+		case p.queue <- ar:
+
+		}
+	}
 	return ar, err
 }

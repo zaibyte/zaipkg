@@ -18,7 +18,8 @@ const (
 
 // Queue is Scheduler's request queue.
 type Queue struct {
-	pqs PriorityQueues
+	notifyQ chan struct{}
+	pqs     PriorityQueues
 }
 
 const (
@@ -50,6 +51,8 @@ func NewQueue(cfg *QueueConfig) *Queue {
 
 	q := &Queue{}
 
+	q.notifyQ = make(chan struct{}, cfg.ObjPending+cfg.ChunkPending+cfg.GCPending+cfg.MetaPending)
+
 	q.pqs = make([]*PriorityQueue, 4)
 	q.pqs[objq] = NewPriorityQueue(objq, objShares, cfg.ObjPending)
 	q.pqs[chunkq] = NewPriorityQueue(chunkq, chunkShares, cfg.ChunkPending)
@@ -68,6 +71,10 @@ func (c *QueueConfig) adjust() {
 }
 
 func (q *Queue) Add(reqType uint64, f xio.File, offset int64, d []byte) (*xio.AsyncRequest, error) {
+
+	defer func() {
+		q.notifyQ <- struct{}{} // After request queue being filled, notify.
+	}()
 
 	switch reqType {
 	case xio.ReqObjRead, xio.ReqObjWrite:
