@@ -19,7 +19,6 @@ type U64Ring struct {
 	// writeIndex cache for Pop, only get new write index when read catch write.
 	// Help to reduce caching missing.
 	writeIndexCache uint64
-	_               [falseSharingRange]byte
 	readIndex       uint64
 
 	buckets []uint64
@@ -55,19 +54,15 @@ func (r *U64Ring) Push(v uint64) {
 // return (nil, false) if no data available.
 func (r *U64Ring) TryPop() (uint64, bool) {
 
-	if r.readIndex > r.writeIndexCache {
+	if r.readIndex >= r.writeIndexCache {
 		r.writeIndexCache = atomic.LoadUint64(&r.writeIndex)
-		if r.readIndex > r.writeIndexCache {
+		if r.readIndex >= r.writeIndexCache {
 			return 0, false
 		}
 	}
 
 	idx := r.readIndex & r.mask
 	data := atomic.SwapUint64(&r.buckets[idx], 0)
-
-	if data == 0 {
-		return 0, false
-	}
 
 	r.readIndex++
 	return data, true
