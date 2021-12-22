@@ -23,6 +23,10 @@ import (
 // It unmarshal failed, it must be a serious unrecoverable bug which making data broken.
 var ExtPreallocate = map[uint16]func(params []byte) uint64{
 	settings.ExtV1: ExtV1Preallocate,
+	settings.ExtV2: ExtV1Preallocate,
+	settings.ExtV3: ExtV1Preallocate,
+	settings.ExtV4: ExtV1Preallocate,
+	settings.ExtV5: ExtV1Preallocate,
 }
 
 func ExtV1Preallocate(params []byte) uint64 {
