@@ -25,7 +25,7 @@ require (
 	github.com/templexxx/tsc v1.3.0
 	github.com/urfave/negroni/v2 v2.0.2
 	github.com/zaibyte/nanozap v0.0.8
-	github.com/zaibyte/zproto v0.0.0
+	github.com/zaibyte/zproto v0.0.2
 	github.com/zeebo/xxh3 v1.1.0
 	golang.org/x/sys v0.42.0
 	google.golang.org/grpc v1.80.0
@@ -63,6 +63,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 )
-
-// TODO GitLAB proxy issues
-replace github.com/zaibyte/zproto v0.0.0 => ../zproto
