@@ -1,6 +1,6 @@
 # zaipkg
 
-[![Unit Test](https://github.com/templexxx/zaipkg/actions/workflows/unit-test.yml/badge.svg)](https://github.com/templexxx/zaipkg/actions/workflows/unit-test.yml)
+[![Unit Test](https://github.com/zaibyte/zaipkg/actions/workflows/unit-test.yml/badge.svg)](https://github.com/zaibyte/zaipkg/actions/workflows/unit-test.yml)
 
 A collection of Go toolkit packages for distributed system development.
 
