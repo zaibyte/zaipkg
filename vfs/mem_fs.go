@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	lvfs "github.com/lni/goutils/vfs"
+	lvfs "github.com/lni/vfs"
 )
 
 const sep = "/"
@@ -38,22 +38,23 @@ func NewMem() *MemFS {
 // at which point they are discarded and no longer visible.
 //
 // Expected usage:
-//  strictFS := NewStrictMem()
-//  db := Open(..., &Options{FS: strictFS})
-//  // Do and commit various operations.
-//  ...
-//  // Prevent any more changes to finalized state.
-//  strictFS.SetIgnoreSyncs(true)
-//  // This will finish any ongoing background flushes, compactions but none of these writes will
-//  // be finalized since syncs are being ignored.
-//  db.Close()
-//  // Discard unsynced state.
-//  strictFS.ResetToSyncedState()
-//  // Allow changes to finalized state.
-//  strictFS.SetIgnoreSyncs(false)
-//  // Open the DB. This DB should have the same state as if the earlier strictFS operations and
-//  // db.Close() were not called.
-//  db := Open(..., &Options{FS: strictFS})
+//
+//	strictFS := NewStrictMem()
+//	db := Open(..., &Options{FS: strictFS})
+//	// Do and commit various operations.
+//	...
+//	// Prevent any more changes to finalized state.
+//	strictFS.SetIgnoreSyncs(true)
+//	// This will finish any ongoing background flushes, compactions but none of these writes will
+//	// be finalized since syncs are being ignored.
+//	db.Close()
+//	// Discard unsynced state.
+//	strictFS.ResetToSyncedState()
+//	// Allow changes to finalized state.
+//	strictFS.SetIgnoreSyncs(false)
+//	// Open the DB. This DB should have the same state as if the earlier strictFS operations and
+//	// db.Close() were not called.
+//	db := Open(..., &Options{FS: strictFS})
 func NewStrictMem() *MemFS {
 	return &MemFS{
 		root: &memNode{
@@ -158,6 +159,7 @@ func (y *MemFS) iterate(node *memNode,
 //   - "/", "foo", false
 //   - "/foo/", "bar", false
 //   - "/foo/bar/", "x", true
+//
 // Similarly, walking "/y/z/", with a trailing slash, will result in 3 calls to f:
 //   - "/", "y", false
 //   - "/y/", "z", false

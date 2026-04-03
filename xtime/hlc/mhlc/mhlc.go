@@ -46,7 +46,7 @@ func (c *MHLC) Next() (ts uint64) {
 		if atomic.CompareAndSwapUint64(&c.lastTS, last, ts) {
 			return
 		}
-		xtest.DoNothing(16) // Avoiding too frequently, reducing CPU wasting.
+		xruntime.ProcYield(16) // Avoiding too frequently, reducing CPU wasting.
 	}
 }
 

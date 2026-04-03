@@ -164,7 +164,7 @@ func (l *ErrorLogger) Panicf(reqid uint64, format string, args ...interface{}) {
 }
 
 func (l *ErrorLogger) Printf(format string, args ...interface{}) {
-	l.Logger.Errorf(0, fmt.Sprintf(format, args...))
+	l.Logger.Error(0, fmt.Sprintf(format, args...))
 }
 
 // Sync syncs ErrorLogger.

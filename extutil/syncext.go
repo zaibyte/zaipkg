@@ -20,7 +20,7 @@ func (p *SyncExt) Clone() *metapb.Extent {
 	return &metapb.Extent{
 		State:      p.GetState(),
 		Id:         p.Id,
-		Size_:      p.Size_,
+		Size:       p.Size,
 		Avail:      p.GetAvail(),
 		DiskId:     p.DiskId,
 		InstanceId: p.InstanceId,

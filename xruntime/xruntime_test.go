@@ -99,5 +99,5 @@ func BenchmarkChanMultiProds(b *testing.B) {
 }
 
 func demoFunc() {
-	xtest.DoNothing(10) // About 400ns.
+	ProcYield(10) // About 400ns.
 }

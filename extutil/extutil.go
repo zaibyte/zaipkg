@@ -32,7 +32,7 @@ var ExtPreallocate = map[uint16]func(params []byte) uint64{
 func ExtV1Preallocate(params []byte) uint64 {
 
 	p := new(stmpb.ExtV1Params)
-	err := p.Unmarshal(params)
+	err := proto.Unmarshal(params, p)
 	if err != nil {
 		panic(fmt.Sprintf("parse ext.v1 params failed: %s", err.Error()))
 	}
@@ -73,7 +73,7 @@ func makeExtV1Params(segSize typeutil.ByteSize) *stmpb.ExtV1Params {
 }
 
 func marshalExtV1Params(p *stmpb.ExtV1Params) []byte {
-	b, err := p.Marshal()
+	b, err := proto.Marshal(p)
 	if err != nil {
 		panic(err)
 	}

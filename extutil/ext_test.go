@@ -3,10 +3,11 @@ package extutil
 import (
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xmath/xrand"
-	"g.tesamc.com/IT/zaipkg/xtest"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/gogo/protobuf/proto"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xmath/xrand"
+	"github.com/zaibyte/zaipkg/xtest"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 func TestExtentSize(t *testing.T) {
@@ -18,7 +19,7 @@ func TestExtentSize(t *testing.T) {
 	ext := &metapb.Extent{
 		Id:         uint32(xrand.Int63()),
 		State:      metapb.ExtentState_Extent_Broken,
-		Size_:      xrand.Uint64(),
+		Size:       xrand.Uint64(),
 		Avail:      xrand.Uint64(),
 		DiskId:     uid.GenRandDiskID(),
 		InstanceId: uid.GenRandInstanceID(),
@@ -34,7 +35,7 @@ func TestExtentSize(t *testing.T) {
 		},
 	}
 
-	d, err := ext.Marshal()
+	d, err := proto.Marshal(ext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +44,7 @@ func TestExtentSize(t *testing.T) {
 
 	ext.CloneJob = nil
 
-	d, err = ext.Marshal()
+	d, err = proto.Marshal(ext)
 	if err != nil {
 		t.Fatal(err)
 	}

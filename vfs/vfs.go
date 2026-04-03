@@ -19,7 +19,7 @@ import (
 	"os"
 	"path/filepath"
 
-	lvfs "github.com/lni/goutils/vfs"
+	lvfs "github.com/lni/vfs"
 )
 
 // FS is a namespace for files.
@@ -106,7 +106,6 @@ type FS interface {
 
 	// PathDir returns all but the last element of path, typically the path's directory.
 	PathDir(path string) string
-
 
 	// GetFreeSpace returns the amount of free disk space for the filesystem
 	// where path is any file or directory within that filesystem.

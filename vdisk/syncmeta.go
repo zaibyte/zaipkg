@@ -18,7 +18,7 @@ func (d *SyncMeta) Clone() *metapb.Disk {
 	return &metapb.Disk{
 		State:      d.GetState(),
 		Id:         d.Id,
-		Size_:      d.Size_,
+		Size:       d.Size,
 		Used:       d.GetUsed(),
 		Type:       d.Type,
 		InstanceId: d.InstanceId,
@@ -74,7 +74,7 @@ func (d *SyncMeta) GetUsed() uint64 {
 
 // IsAvailForExt checks if the disk has enough space for making a new extent.
 func (d *SyncMeta) IsAvailForExt(minSpace uint64) bool {
-	avail := d.Size_ - d.GetUsed()
+	avail := d.Size - d.GetUsed()
 	if avail < minSpace {
 		return false
 	}
@@ -87,11 +87,11 @@ func (d *SyncMeta) IsLowSpace(lowSpaceRatio float64) bool {
 }
 
 func (d *SyncMeta) AvailRatio() float64 {
-	if d.Size_ == 0 {
+	if d.Size == 0 {
 		return 0
 	}
-	avail := d.Size_ - d.GetUsed()
-	return float64(avail) / float64(d.Size_)
+	avail := d.Size - d.GetUsed()
+	return float64(avail) / float64(d.Size)
 }
 
 func (d *SyncMeta) IsTombstone() bool {

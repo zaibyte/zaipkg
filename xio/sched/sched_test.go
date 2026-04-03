@@ -152,17 +152,17 @@ type NopFile struct {
 }
 
 func (n2 *NopFile) ReadAt(p []byte, off int64) (n int, err error) {
-	xtest.DoNothing(512)
+	xruntime.ProcYield(512)
 	return
 }
 
 func (n2 *NopFile) WriteAt(p []byte, off int64) (n int, err error) {
-	xtest.DoNothing(5)
+	xruntime.ProcYield(5)
 	return
 }
 
 func (n2 *NopFile) Fdatasync() error {
-	xtest.DoNothing(5)
+	xruntime.ProcYield(5)
 	return nil
 }
 

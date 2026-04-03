@@ -23,7 +23,7 @@ func (p *PhyDisk) InitUsage(path string, meta *SyncMeta) error {
 	if err != nil {
 		return err
 	}
-	atomic.StoreUint64(&meta.Size_, usage.Size)
+	atomic.StoreUint64(&meta.Size, usage.Size)
 	atomic.StoreUint64(&meta.Used, usage.Used)
 	return nil
 }

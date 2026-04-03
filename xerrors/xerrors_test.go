@@ -91,7 +91,7 @@ func TestWithMessagef(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := WithMessagef(tt.err, tt.message).Error()
+		got := WithMessage(tt.err, tt.message).Error()
 		if got != tt.want {
 			t.Errorf("WithMessage(%v, %q): got: %q, want %q", tt.err, tt.message, got, tt.want)
 		}
@@ -112,7 +112,7 @@ func TestWithMessageIs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		errWithMsg := WithMessagef(tt.err, tt.message)
+		errWithMsg := WithMessage(tt.err, tt.message)
 		if !errors.Is(errWithMsg, target) {
 			t.Errorf("WithMessage(%v, %q): is not target", tt.err, tt.message)
 		}
