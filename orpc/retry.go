@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xmath/xrand"
+	"github.com/zaibyte/zaipkg/xmath/xrand"
 )
 
 // Retryer provides methods to give the sleep duration which indicating when to start the next retrying.

@@ -21,10 +21,10 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"g.tesamc.com/IT/zaipkg/directio"
 	"github.com/templexxx/fnc"
+	"github.com/zaibyte/zaipkg/directio"
 
-	lvfs "github.com/lni/goutils/vfs"
+	lvfs "github.com/lni/vfs"
 )
 
 // DirectFS is a FS implementation backed by the underlying operating system's

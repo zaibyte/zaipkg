@@ -7,12 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/vdisk"
-	"g.tesamc.com/IT/zaipkg/vfs"
-	"g.tesamc.com/IT/zaipkg/xio"
-	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
-	"g.tesamc.com/IT/zaipkg/xtest"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zaipkg/vdisk"
+	"github.com/zaibyte/zaipkg/vfs"
+	"github.com/zaibyte/zaipkg/xio"
+	_ "github.com/zaibyte/zaipkg/xlog/xlogtest"
+	"github.com/zaibyte/zaipkg/xruntime"
+	"github.com/zaibyte/zaipkg/xtest"
+	"github.com/zaibyte/zproto/pkg/metapb"
 
 	"github.com/templexxx/tsc"
 )

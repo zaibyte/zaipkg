@@ -10,14 +10,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/vdisk"
-	"g.tesamc.com/IT/zaipkg/vfs"
-	"g.tesamc.com/IT/zaipkg/xio"
-	"g.tesamc.com/IT/zaipkg/xio/sched"
-	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zaipkg/xtime"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/vdisk"
+	"github.com/zaibyte/zaipkg/vfs"
+	"github.com/zaibyte/zaipkg/xio"
+	"github.com/zaibyte/zaipkg/xio/sched"
+	"github.com/zaibyte/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xtime"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 // .
@@ -129,7 +129,7 @@ func (d *ZBufDisks) AddDisk(diskID string) {
 	_ = d.VDisk.InitUsage(path, meta)
 	meta.InstanceId = d.InstanceID
 
-	if meta.Used >= meta.Size_ {
+	if meta.Used >= meta.Size {
 		meta.State = metapb.DiskState_Disk_Full
 	}
 
@@ -166,7 +166,7 @@ func (d *ZBufDisks) AddDiskAndUpdateUsage(diskID string) {
 	_ = d.VDisk.InitUsage(path, meta)
 	meta.InstanceId = d.InstanceID
 
-	if meta.Used >= meta.Size_ {
+	if meta.Used >= meta.Size {
 		meta.State = metapb.DiskState_Disk_Full
 	}
 
@@ -294,7 +294,7 @@ func (d *ZBufDisks) CloneAllDiskMeta() map[string]*metapb.Disk {
 		ret0 := sm.Clone()
 
 		// I'm using estimate value for each extent, then add to the disk used.
-		// https://g.tesamc.com/IT/zbuf/issues/294
+		// https://github.com/zaibyte/zbuf/issues/294
 		// usage, err := diskutil.GetUsageState(MakeDiskDir(bd.DiskID, d.DataRoot))
 		// if err != nil {
 		// 	xlog.Warnf(fmt.Sprintf("failed to get usage of disk: %s in CloneAllDiskMeta", bd.DiskID))
@@ -330,7 +330,7 @@ func (d *ZBufDisks) UpdateDiskStates(dss map[string]metapb.DiskState) {
 			_ = d.VDisk.InitUsage(path, meta)
 			meta.InstanceId = d.InstanceID
 
-			if meta.Used >= meta.Size_ {
+			if meta.Used >= meta.Size {
 				meta.State = metapb.DiskState_Disk_Full
 			}
 

@@ -3,7 +3,7 @@ package vdisk
 import (
 	"testing"
 
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 
 	"github.com/stretchr/testify/assert"
 )

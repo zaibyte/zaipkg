@@ -20,11 +20,11 @@ import (
 	"net"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xbytes"
+	"github.com/zaibyte/zaipkg/xbytes"
 
-	"g.tesamc.com/IT/zaipkg/xdigest"
+	"github.com/zaibyte/zaipkg/xdigest"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
 )
 
 type timeoutConnReader struct {

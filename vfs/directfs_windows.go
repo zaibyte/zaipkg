@@ -4,8 +4,8 @@ import (
 	"os"
 	"syscall"
 
-	"g.tesamc.com/IT/zaipkg/directio"
 	"github.com/templexxx/fnc"
+	"github.com/zaibyte/zaipkg/directio"
 )
 
 // Create creates a new file read/write, and sync the directory.

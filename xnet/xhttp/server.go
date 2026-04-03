@@ -23,12 +23,12 @@ import (
 	"strconv"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/uid"
 
-	"g.tesamc.com/IT/zaipkg/config"
-	"g.tesamc.com/IT/zaipkg/version"
-	"g.tesamc.com/IT/zaipkg/xchecksum"
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/config"
+	"github.com/zaibyte/zaipkg/version"
+	"github.com/zaibyte/zaipkg/xchecksum"
+	"github.com/zaibyte/zaipkg/xlog"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/urfave/negroni/v2"

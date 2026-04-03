@@ -8,10 +8,10 @@ import (
 	"runtime"
 	"strconv"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xchecksum"
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xchecksum"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 type withRecovery struct{}

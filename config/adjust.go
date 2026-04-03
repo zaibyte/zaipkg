@@ -19,7 +19,7 @@ package config
 import (
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/typeutil"
 )
 
 // Adjust val in config to default value if need.

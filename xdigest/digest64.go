@@ -3,7 +3,7 @@ package xdigest
 import (
 	"hash"
 
-	"g.tesamc.com/IT/zaipkg/xstrconv"
+	"github.com/zaibyte/zaipkg/xstrconv"
 
 	"github.com/cespare/xxhash/v2"
 )

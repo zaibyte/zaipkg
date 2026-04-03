@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xlog"
 
 	"github.com/templexxx/tsc"
 )

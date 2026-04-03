@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xmath/xrand"
 	"github.com/templexxx/tsc"
+	"github.com/zaibyte/zaipkg/xmath/xrand"
 
 	"github.com/stretchr/testify/assert"
 )

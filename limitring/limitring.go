@@ -8,9 +8,8 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"g.tesamc.com/IT/zaipkg/xmath"
-
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/xmath"
 
 	"github.com/templexxx/cpu"
 )
@@ -41,7 +40,7 @@ const (
 )
 
 // New creates a new diode (ring buffer). The Ring diode
-// is optimzed for many writers (on go-routines B-n) and a single reader
+// is optimized for many writers (on go-routines B-n) and a single reader
 // (on go-routine A).
 //
 // ring size = 2 ^ x.

@@ -4,8 +4,10 @@ import (
 	"runtime"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xtest"
+	"github.com/klauspost/cpuid/v2"
 	"github.com/panjf2000/ants/v2"
+	"github.com/templexxx/tsc"
+	"github.com/zaibyte/zaipkg/xtest"
 )
 
 // Compare goroutine pool & using chan to limit goroutine numbers.

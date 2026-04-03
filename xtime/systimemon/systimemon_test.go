@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
 	"github.com/templexxx/tsc"
+	_ "github.com/zaibyte/zaipkg/xlog/xlogtest"
 )
 
 func TestSystimeMonitor(t *testing.T) {

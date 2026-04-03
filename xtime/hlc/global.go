@@ -1,6 +1,6 @@
 package hlc
 
-import "g.tesamc.com/IT/zaipkg/xtime/hlc/mhlc"
+import "github.com/zaibyte/zaipkg/xtime/hlc/mhlc"
 
 var (
 	_global HLC = mhlc.New()

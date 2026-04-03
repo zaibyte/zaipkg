@@ -34,9 +34,9 @@ package otcp
 import (
 	"encoding/binary"
 
-	"g.tesamc.com/IT/zaipkg/xchecksum"
+	"github.com/zaibyte/zaipkg/xchecksum"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
 )
 
 type header interface {

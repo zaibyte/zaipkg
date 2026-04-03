@@ -1,7 +1,7 @@
 package grouputil
 
 import (
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 // GroupsAvail implements sort.Interface for sorting avail of groups.

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xtest"
+	"github.com/zaibyte/zaipkg/xtest"
 )
 
 // Reference:

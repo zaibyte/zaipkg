@@ -21,9 +21,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
 	"github.com/zaibyte/nanozap"
 	"github.com/zaibyte/nanozap/zapcore"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 func init() {

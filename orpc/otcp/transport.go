@@ -43,7 +43,7 @@ import (
 	"net"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
 )
 
 var handshake = [1]byte{0x1}

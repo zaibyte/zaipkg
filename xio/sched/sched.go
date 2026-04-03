@@ -8,12 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/config"
-	"g.tesamc.com/IT/zaipkg/orpc"
-	"g.tesamc.com/IT/zaipkg/vdisk"
-	"g.tesamc.com/IT/zaipkg/xio"
-	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zaipkg/config"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/vdisk"
+	"github.com/zaibyte/zaipkg/xio"
+	"github.com/zaibyte/zaipkg/xlog"
+	"github.com/zaibyte/zproto/pkg/metapb"
 
 	"github.com/templexxx/tsc"
 )

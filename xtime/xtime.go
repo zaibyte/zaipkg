@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 var nopTime = make(chan time.Time)
@@ -24,22 +24,23 @@ func init() {
 // e.g.
 // t := time.NewTimer(duration)
 // var tChan <-chan time.Time
-// for {
-// 	var m *msg
 //
-// 	select {
-// 		case m = <-msgChan:
-// 		case <-tChan:
-// 			foo()
-// 			tChan = nil
-// 			continue
-// 		}
-// 	}
+//	for {
+//		var m *msg
 //
-// 	if tChan == nil {
-// 		tChan = xtime.GetTimeEvent(t, s.FlushDelay)
-// 	}
-//	...
+//		select {
+//			case m = <-msgChan:
+//			case <-tChan:
+//				foo()
+//				tChan = nil
+//				continue
+//			}
+//		}
+//
+//		if tChan == nil {
+//			tChan = xtime.GetTimeEvent(t, s.FlushDelay)
+//		}
+//		...
 func GetTimerEvent(t *time.Timer, duration time.Duration) <-chan time.Time {
 	if duration <= 0 {
 		return nopTime

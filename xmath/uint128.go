@@ -7,7 +7,7 @@ package xmath
 import (
 	"encoding/binary"
 
-	"g.tesamc.com/IT/zaipkg/xbytes"
+	"github.com/zaibyte/zaipkg/xbytes"
 )
 
 type Uint128 struct {

@@ -3,14 +3,14 @@ package app
 import (
 	"fmt"
 
-	"g.tesamc.com/IT/zaipkg/config"
+	"github.com/zaibyte/zaipkg/config"
 
-	"g.tesamc.com/IT/zaipkg/xruntime"
+	"github.com/zaibyte/zaipkg/xruntime"
 
-	"g.tesamc.com/IT/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/uid"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 type Config struct {

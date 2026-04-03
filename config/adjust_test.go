@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/typeutil"
 
 	"github.com/stretchr/testify/assert"
 )

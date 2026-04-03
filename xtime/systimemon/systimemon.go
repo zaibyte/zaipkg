@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 // StartMonitor calls systimeErrHandler if system time jump backward.

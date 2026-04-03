@@ -3,10 +3,10 @@ package sched
 import (
 	"sync/atomic"
 
-	"g.tesamc.com/IT/zaipkg/config"
-	"g.tesamc.com/IT/zaipkg/orpc"
-	"g.tesamc.com/IT/zaipkg/xerrors"
-	"g.tesamc.com/IT/zaipkg/xio"
+	"github.com/zaibyte/zaipkg/config"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/xerrors"
+	"github.com/zaibyte/zaipkg/xio"
 )
 
 const (

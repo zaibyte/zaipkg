@@ -1,7 +1,7 @@
 package sched
 
 import (
-	"g.tesamc.com/IT/zaipkg/xio"
+	"github.com/zaibyte/zaipkg/xio"
 )
 
 // PriorityQueue provides requests queue for a certain priority class.

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"g.tesamc.com/IT/zaipkg/xbytes"
+	"github.com/zaibyte/zaipkg/xbytes"
 )
 
 var (

@@ -47,13 +47,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xbytes"
-	"g.tesamc.com/IT/zaipkg/xdigest"
-	"g.tesamc.com/IT/zaipkg/xerrors"
-	"g.tesamc.com/IT/zaipkg/xlog"
-	"g.tesamc.com/IT/zaipkg/xtime"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xbytes"
+	"github.com/zaibyte/zaipkg/xdigest"
+	"github.com/zaibyte/zaipkg/xerrors"
+	"github.com/zaibyte/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xtime"
 )
 
 // Server implements orpc.Server.

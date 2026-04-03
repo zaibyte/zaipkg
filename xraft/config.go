@@ -1,6 +1,6 @@
 package xraft
 
-import "g.tesamc.com/IT/zaipkg/config"
+import "github.com/zaibyte/zaipkg/config"
 
 // Config of Raft.
 type Config struct {

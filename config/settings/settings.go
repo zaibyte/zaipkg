@@ -21,7 +21,7 @@ package settings
 import (
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/typeutil"
 )
 
 const (
@@ -86,7 +86,7 @@ const (
 
 // Different sizes of objects will be put into different versions of extents for avoiding high hash collision.
 // In these settings, we will get 3% - 11.8% hash collision at most when extents are full.
-// For details, see issue: https://g.tesamc.com/IT/zai/issues/40
+// For details, see issue: https://github.com/zaibyte/zai/issues/40
 const (
 	DefaultV1SegmentSize = typeutil.ByteSize(4 * 1024 * 1024) // 4MB, Low hash collision for (0, 64KB] objects.
 	DefaultV2SegmentSize = DefaultV1SegmentSize * 4           // 16MB,  Low hash collision for (64KB, 256KB] objects.

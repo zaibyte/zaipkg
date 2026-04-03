@@ -6,16 +6,17 @@
 // After instance crash, it has chance going backwards because we have no reference time.
 // But it's rare to happen because we cannot making a new device that fast(in dozens ms, which is NTP jitter).
 // And we could set ntp never go backwards:
-// https://g.tesamc.com/IT/zai-docs/issues/15
+// https://github.com/zaibyte/zai-docs/issues/15
+
 package mhlc
 
 import (
 	"sync/atomic"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xtime/hlc/hlcutil"
+	"github.com/zaibyte/zaipkg/xruntime"
+	"github.com/zaibyte/zaipkg/xtime/hlc/hlcutil"
 
-	"g.tesamc.com/IT/zaipkg/xtest"
 	"github.com/templexxx/tsc"
 )
 

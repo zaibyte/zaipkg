@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"g.tesamc.com/IT/zaipkg/config/settings"
+	"github.com/zaibyte/zaipkg/config/settings"
 
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 // SyncMeta provides thread-safe methods to access metapb.Disk.

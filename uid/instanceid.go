@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"g.tesamc.com/IT/zaipkg/xmath/xrand"
-	"g.tesamc.com/IT/zaipkg/xstrconv"
+	"github.com/zaibyte/zaipkg/xmath/xrand"
+	"github.com/zaibyte/zaipkg/xstrconv"
 )
 
 const InstanceIDLen = 14

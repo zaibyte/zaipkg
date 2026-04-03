@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xmath"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xmath"
 )
 
 // link object links multi normal object together.

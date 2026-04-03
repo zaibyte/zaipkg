@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 func TestGroupsSort(t *testing.T) {

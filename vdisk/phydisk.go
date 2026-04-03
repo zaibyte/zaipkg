@@ -3,8 +3,8 @@ package vdisk
 import (
 	"sync/atomic"
 
-	"g.tesamc.com/IT/zaipkg/diskutil"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zaipkg/diskutil"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 // PhyDisk is the physical disk.

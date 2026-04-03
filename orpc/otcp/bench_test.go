@@ -46,9 +46,9 @@ import (
 	"testing"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xdigest"
-	"g.tesamc.com/IT/zaipkg/xtest"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xdigest"
+	"github.com/zaibyte/zaipkg/xtest"
 
 	"github.com/elastic/go-hdrhistogram"
 	"github.com/templexxx/tsc"
@@ -109,10 +109,10 @@ func TestClient_Put_Latency_Single(t *testing.T) {
 
 	c := newTestClient(addr)
 
-	value := make([]byte, 128)
-	rand.Read(value)
-	key := make([]byte, 8)
-	rand.Read(key)
+	// value := make([]byte, 128)
+	// rand.Read(value)
+	// key := make([]byte, 8)
+	// rand.Read(key)
 
 	lat := hdrhistogram.New(100, time.Second.Nanoseconds(), 3)
 
@@ -122,7 +122,7 @@ func TestClient_Put_Latency_Single(t *testing.T) {
 	}
 	defer c.Close(nil)
 
-	objData := make([]byte, 4096)
+	objData := make([]byte, 16)
 	rand.Read(objData)
 	digest := xdigest.Sum32(objData)
 	oid := uid.MakeOID(1, 1, digest, uid.NormalObj)

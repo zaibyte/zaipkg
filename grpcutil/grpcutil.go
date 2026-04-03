@@ -18,7 +18,7 @@ import (
 	"crypto/tls"
 	"net/url"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xlog"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

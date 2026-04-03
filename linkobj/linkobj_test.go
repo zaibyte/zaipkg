@@ -8,8 +8,8 @@ import (
 
 	"github.com/templexxx/tsc"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/xmath"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/xmath"
 )
 
 func genFixedSizeOIDs(cnt int, grains int) []uint64 {

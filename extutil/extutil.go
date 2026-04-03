@@ -3,11 +3,11 @@ package extutil
 import (
 	"fmt"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/typeutil"
 
-	"g.tesamc.com/IT/zaipkg/config/settings"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
-	"g.tesamc.com/IT/zproto/pkg/stmpb"
+	"github.com/zaibyte/zaipkg/config/settings"
+	"github.com/zaibyte/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/stmpb"
 
 	"github.com/gogo/protobuf/proto"
 )

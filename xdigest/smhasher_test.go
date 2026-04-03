@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xstrconv"
-	"g.tesamc.com/IT/zaipkg/xtest"
+	"github.com/zaibyte/zaipkg/xstrconv"
+	"github.com/zaibyte/zaipkg/xtest"
 )
 
 func TestMain(m *testing.M) {

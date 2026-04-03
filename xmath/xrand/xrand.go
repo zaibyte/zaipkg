@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/xatomic"
-	"g.tesamc.com/IT/zaipkg/xbytes"
-	"g.tesamc.com/IT/zaipkg/xmath"
+	"github.com/zaibyte/zaipkg/xatomic"
+	"github.com/zaibyte/zaipkg/xbytes"
+	"github.com/zaibyte/zaipkg/xmath"
 )
 
 var (
@@ -45,7 +45,9 @@ func Int63n(n int64) int64 {
 // if seeded by Seed(time.Now().UnixNano()).
 //
 // State = (((__uint128_t)splitmix64_stateless(seed)) << 64) +
-//                     splitmix64_stateless(seed + 1);
+//
+//	splitmix64_stateless(seed + 1);
+//
 // It's safe for concurrent use.
 func Seed(s int64) {
 	a := xmath.Uint128{L: splitMix64Stateless(uint64(s))}.ShiftLeft(64)

@@ -3,15 +3,15 @@
 // Warning:
 // 1. Do not use it when you only need <= 32KB byte slice, and this slice will not escape to the heap.
 // In this situation, using sync.Pool will let the slice escapes to the heap, bringing the extra GC overhead.
-// Discussion in: https://g.tesamc.com/IT/zaipkg/issues/11
+// Discussion in: https://github.com/zaibyte/zaipkg/issues/11
 // 2. Do not use it when you want bytes more than 4MB. Otherwise, it'll panic.
 package xbytes
 
 import (
 	"sync"
 
-	"g.tesamc.com/IT/zaipkg/config/settings"
-	"g.tesamc.com/IT/zaipkg/directio"
+	"github.com/zaibyte/zaipkg/config/settings"
+	"github.com/zaibyte/zaipkg/directio"
 )
 
 const (

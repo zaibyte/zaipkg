@@ -1,7 +1,7 @@
 package vdisk
 
 import (
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 type Disk interface {

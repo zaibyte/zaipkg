@@ -1,7 +1,7 @@
 package zbufutil
 
 import (
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 func SetState(zBuf *metapb.ZBuf, state metapb.ZBufState) {

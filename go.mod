@@ -1,4 +1,4 @@
-module g.tesamc.com/IT/zaipkg
+module github.com/zaibyte/zaipkg
 
 go 1.16
 
@@ -34,4 +34,4 @@ require (
 )
 
 // TODO GitLAB proxy issues
-replace g.tesamc.com/IT/zproto v0.0.0 => ../zproto
+replace github.com/zaibyte/zproto v0.0.0 => ../zproto

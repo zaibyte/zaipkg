@@ -3,7 +3,7 @@ package xredis
 import (
 	"testing"
 
-	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	_ "github.com/zaibyte/zaipkg/xlog/xlogtest"
 )
 
 func TestOlderThan(t *testing.T) {

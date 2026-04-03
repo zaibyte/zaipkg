@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xtime/hlc/hlcutil"
+	"github.com/zaibyte/zaipkg/xtime/hlc/hlcutil"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/xlog"
 )
 
 type version struct {

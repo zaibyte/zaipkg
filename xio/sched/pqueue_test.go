@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xio"
+	"github.com/zaibyte/zaipkg/xio"
 )
 
 func TestPriorityQueues_Sort(t *testing.T) {

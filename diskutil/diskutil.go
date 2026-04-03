@@ -22,8 +22,8 @@ import (
 	"strings"
 	"syscall"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zaipkg/orpc"
+	"github.com/zaibyte/zproto/pkg/metapb"
 
 	"github.com/gyuho/linux-inspect/df"
 	"github.com/jaypipes/ghw/pkg/block"

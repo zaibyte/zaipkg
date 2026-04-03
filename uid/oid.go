@@ -3,7 +3,7 @@ package uid
 import (
 	"fmt"
 
-	"g.tesamc.com/IT/zaipkg/xmath"
+	"github.com/zaibyte/zaipkg/xmath"
 )
 
 // oid struct(uint64):

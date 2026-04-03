@@ -3,8 +3,8 @@ package uid
 import (
 	"math/rand"
 
-	"g.tesamc.com/IT/zaipkg/xdigest"
 	"github.com/templexxx/tsc"
+	"github.com/zaibyte/zaipkg/xdigest"
 )
 
 // GenRandOIDs generates cnt unique random oids.

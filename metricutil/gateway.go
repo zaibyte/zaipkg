@@ -23,8 +23,8 @@ import (
 	"strconv"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/typeutil"
-	"g.tesamc.com/IT/zaipkg/xlog"
+	"github.com/zaibyte/zaipkg/typeutil"
+	"github.com/zaibyte/zaipkg/xlog"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"

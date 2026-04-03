@@ -3,7 +3,7 @@ package zbufutil
 import (
 	"sync/atomic"
 
-	"g.tesamc.com/IT/zproto/pkg/metapb"
+	"github.com/zaibyte/zproto/pkg/metapb"
 )
 
 // SyncMeta provides thread-safe methods to access metapb.ZBuf.

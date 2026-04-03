@@ -27,12 +27,12 @@ import (
 	"strings"
 	"time"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
 
-	"g.tesamc.com/IT/zaipkg/xchecksum"
+	"github.com/zaibyte/zaipkg/xchecksum"
 
-	"g.tesamc.com/IT/zaipkg/uid"
-	"g.tesamc.com/IT/zaipkg/version"
+	"github.com/zaibyte/zaipkg/uid"
+	"github.com/zaibyte/zaipkg/version"
 )
 
 // Client is an xhttp client.

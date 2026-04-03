@@ -19,7 +19,7 @@ import (
 	"math"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/xerrors"
+	"github.com/zaibyte/zaipkg/xerrors"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -21,11 +21,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"g.tesamc.com/IT/zaipkg/orpc"
+	"github.com/zaibyte/zaipkg/orpc"
 
-	"g.tesamc.com/IT/zaipkg/version"
-	"g.tesamc.com/IT/zaipkg/xlog"
-	_ "g.tesamc.com/IT/zaipkg/xlog/xlogtest"
+	"github.com/zaibyte/zaipkg/version"
+	"github.com/zaibyte/zaipkg/xlog"
+	_ "github.com/zaibyte/zaipkg/xlog/xlogtest"
 )
 
 var (
