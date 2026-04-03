@@ -46,7 +46,7 @@ const (
 // ring size = 2 ^ x.
 func New(n uint64) *Ring {
 
-	n = xmath.NextPower2(n)
+	n = xmath.NextPow2(n)
 
 	if n < MinCap {
 		n = MinCap

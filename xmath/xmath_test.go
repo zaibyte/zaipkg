@@ -9,16 +9,21 @@ func TestRound(t *testing.T) {
 	var i float64
 	for i = 0; i < 0.05; i += 0.01 {
 		if Round(f+i, 1) != 1.1 {
-			t.Fatal("mismatch")
+			testRound(t, f+i, 1.1, Round(f+i, 1), 1)
 		}
 	}
 	for i = 0.05; i < 0.1; i += 0.01 {
 		if Round(f+i, 1) != 1.2 {
-			t.Fatal("mismatch")
+			testRound(t, f+i, 1.2, Round(f+i, 1), 1)
 		}
 	}
 }
 
+func testRound(t *testing.T, input, exp, got float64, decimal int) {
+	if exp != got {
+		t.Fatalf("mismatch: input=%f, exp=%f, got=%f, decimal=%d", input, exp, got, decimal)
+	}
+}
 func TestAlignToLast(t *testing.T) {
 
 	var align int64 = 1 << 12
@@ -66,16 +71,19 @@ func TestAlignTo(t *testing.T) {
 	}
 }
 
-func TestNextPower2(t *testing.T) {
-	for i := 0; i <= 1025; i++ {
-		p := NextPower2(uint64(i))
-		if p != slowNextPower2(uint64(i)) {
-			t.Fatal("power2 mismatch", p, i)
-		}
+func TestNextPow2(t *testing.T) {
+
+	testNextPow2(t, 1, 1, NextPow2(1))
+	testNextPow2(t, 2, 2, NextPow2(2))
+	testNextPow2(t, 3, 4, NextPow2(3))
+	testNextPow2(t, 4, 4, NextPow2(4))
+
+	for i := 5; i <= 1025; i++ {
+		testNextPow2(t, uint64(i), slowNextPow2(uint64(i)), NextPow2(uint64(i)))
 	}
 }
 
-func slowNextPower2(n uint64) uint64 {
+func slowNextPow2(n uint64) uint64 {
 	var p uint64 = 1
 	for {
 		if p < n {
@@ -85,4 +93,10 @@ func slowNextPower2(n uint64) uint64 {
 		}
 	}
 	return p
+}
+
+func testNextPow2(t *testing.T, n, exp, got uint64) {
+	if exp != got {
+		t.Fatalf("mismatch: n=%d, exp=%d, got=%d", n, exp, got)
+	}
 }

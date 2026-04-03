@@ -1,6 +1,6 @@
 #include "textflag.h"
 
-TEXT ·spin(SB),NOSPLIT,$0-0
+TEXT ·pyield(SB),NOSPLIT,$0-0
 	MOVL	cycles+0(FP), AX
 
 loop:
