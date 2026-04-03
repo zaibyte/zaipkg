@@ -1,14 +1,33 @@
-# pkg
-A collection of toolkit lib for distributed system development in Go
+# zaipkg
+
+[![Unit Test](https://github.com/templexxx/zaipkg/actions/workflows/unit-test.yml/badge.svg)](https://github.com/templexxx/zaipkg/actions/workflows/unit-test.yml)
+
+A collection of Go toolkit packages for distributed system development.
+
+## Install
+
+```bash
+go get github.com/zaibyte/zaipkg@latest
+```
 
 ## Usage
 
-Add it to your go mod.
+Import the package(s) you need:
+
+```go
+import "github.com/zaibyte/zaipkg/<package>"
+```
 
 ## Testing
 
-### Properties
+Run all tests:
 
-There are some properties need long time to run, there is no necessary to run it every time.
+```bash
+make test
+```
 
-The properties testing will only run when 
+Or run directly with Go:
+
+```bash
+go test -race -cover ./...
+```
